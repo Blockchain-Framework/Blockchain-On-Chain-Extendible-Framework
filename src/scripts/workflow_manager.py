@@ -1,13 +1,44 @@
 # workflow_manager.py
-from blockchain.avalanche.avalanche_data_extraction import fetch_transactions
-from services.data_extraction_service import parse_avalanche_transactions
+import sys
+import os
+import logging
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
-def main():
-    json_data = fetch_transactions()
-    if json_data:
-        transactions = parse_avalanche_transactions(json_data)
-        for tx in transactions:
-            print(f"`Transaction Hash: {tx.tx_hash}, Block Height: {tx.block_height}, Type: {tx.tx_type}`")
+from src.blockchain.avalanche.avalanche_data_extraction import extract_avalanche_data
+from src.services.data_storage_service import store_data
+# from data_processing import process_data  
+class WorkflowManager:
+    def __init__(self):
+        # Initialize any required variables, connections, etc.
+        self.logger = logging.getLogger(__name__)
+    
+    def run_avalanche_data_workflow(self):
+        """
+        Orchestrates the workflow for extracting, processing, and storing Avalanche blockchain data.
+        """
+        try:
+            # Step 1: Extract data
+            self.logger.info("Extracting Avalanche data...")
+            avalanche_data = extract_avalanche_data()
+
+            if avalanche_data.empty:
+                self.logger.info("No data extracted.")
+                return
+
+            # # Step 2: Process data
+            # self.logger.info("Processing data...")
+            # processed_data = process_data(avalanche_data)
+
+            # Step 3: Store data
+            self.logger.info("Storing data...")
+            store_data(avalanche_data)
+
+            self.logger.info("Workflow completed successfully.")
+
+        except Exception as e:
+            self.logger.error(f"An error occurred during the workflow: {e}")
+            # Handle or raise the exception as per your error handling policy
 
 if __name__ == "__main__":
-    main()
+    manager = WorkflowManager()
+    manager.run_avalanche_data_workflow()
