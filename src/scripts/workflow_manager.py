@@ -6,11 +6,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 from src.blockchain.avalanche.avalanche_data_extraction import extract_avalanche_data
 from src.services.data_storage_service import store_data
-# from data_processing import process_data  
+# from data_processing import process_data
+
 class WorkflowManager:
     def __init__(self):
         # Initialize any required variables, connections, etc.
         self.logger = logging.getLogger(__name__)
+        # Update these with your actual file path and database credentials
+        self.file_path = "path/to/your/file.tsv.gz"
+        self.db_connection_string = "postgresql://username:password@localhost:5432/yourdbname"
     
     def run_avalanche_data_workflow(self):
         """
@@ -31,7 +35,7 @@ class WorkflowManager:
 
             # Step 3: Store data
             self.logger.info("Storing data...")
-            store_data(avalanche_data)
+            store_data(avalanche_data, self.file_path, self.db_connection_string)
 
             self.logger.info("Workflow completed successfully.")
 
@@ -40,5 +44,6 @@ class WorkflowManager:
             # Handle or raise the exception as per your error handling policy
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)  # Set up basic logging configuration
     manager = WorkflowManager()
     manager.run_avalanche_data_workflow()
