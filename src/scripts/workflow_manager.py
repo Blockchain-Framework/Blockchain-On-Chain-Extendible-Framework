@@ -13,8 +13,8 @@ class WorkflowManager:
         # Initialize any required variables, connections, etc.
         self.logger = logging.getLogger(__name__)
         # Update these with your actual file path and database credentials
-        self.file_path = "path/to/your/file.tsv.gz"
-        self.db_connection_string = "postgresql://username:password@localhost:5432/yourdbname"
+        self.file_path = "file_store/file.tsv.gz"
+        self.db_connection_string = "postgresql://postgres:12345@localhost:5432/onchain"
     
     def run_avalanche_data_workflow(self):
         """

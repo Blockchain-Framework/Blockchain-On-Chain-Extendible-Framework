@@ -8,10 +8,10 @@ def store_data(dataframe, file_path, db_connection_string):
     
     # Connect to PostgreSQL and create database and table if not exists
     create_database_and_table(db_connection_string)
-
+    print("Database created successfully")
     # Store to PostgreSQL
     engine = create_engine(db_connection_string)
-    dataframe.to_sql('avalanche_data', engine, if_exists='replace', index=False)
+    dataframe.to_sql('x_avalanche_data', engine, if_exists='replace', index=False)
 
 def create_database_and_table(db_connection_string):
     # Extracting the database name from the connection string
@@ -35,7 +35,7 @@ def create_database_and_table(db_connection_string):
 
     # Create table if it does not exist
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS avalanche_data (
+        CREATE TABLE IF NOT EXISTS x_avalanche_data (
             txHash TEXT,
             blockHash TEXT,
             timestamp BIGINT,
