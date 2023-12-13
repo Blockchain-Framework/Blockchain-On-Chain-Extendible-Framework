@@ -2,6 +2,12 @@ import pandas as pd
 import psycopg2
 from sqlalchemy import create_engine
 
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+MY_ENV_VAR = os.getenv('MY_ENV_VAR')
 def store_data(dataframe, file_path, data_base, db_connection_string):
     # TO DO : Store date vise
     # Store as .tsv.gz
@@ -48,7 +54,7 @@ def create_database_and_table(db_connection_string):
             chainFormat TEXT
             -- Add other fields as necessary
         );
-        CREATE TABLE c_avalanche_data (
+        CREATE TABLE IF NOT EXISTS c_avalanche_data (
             txHash VARCHAR(255) NOT NULL,
             blockHash VARCHAR(255) NOT NULL,
             timestamp BIGINT,

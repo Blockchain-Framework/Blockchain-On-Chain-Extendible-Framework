@@ -31,7 +31,7 @@ class WorkflowManager:
         try:
             # Step 1: Extract data
             self.logger.info("Extracting Avalanche data...")
-            avalanche_X_data,avalanche_C_data = extract_avalanche_data()
+            avalanche_X_data,avalanche_C_data = extract_avalanche_data(218000,39003000)
 
             if avalanche_X_data.empty or avalanche_C_data.empty:
                 self.logger.info("No data extracted.")

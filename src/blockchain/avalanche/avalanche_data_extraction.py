@@ -28,7 +28,6 @@ def extract_x_chain_data(last_block):
 
         for tx in transactions:
           block_height = tx.get("blockHeight")
-          print(block_height)
           if block_height<= last_block:
             run = False
             break
@@ -96,17 +95,8 @@ def extract_c_chain_data(last_block):
           
           data.append(avalanche_tx.__dict__)
     
-    return pd.DataFrame(data),
+    return pd.DataFrame(data)
 
-# def extract_p_chain_data(last_block):
-#     url = "https://glacier-api.avax.network/v1/networks/mainnet/blockchains/p-chain/transactions"
-#     transactions = fetch_transactions(url, "P_CHAIN", last_block)
-#     data = []
-
-#     for tx in transactions:
-#         avalanche_tx = Avalanche_P_Model(tx)
-#         data.append(avalanche_tx.__dict__)
-#     return pd.DataFrame(data)
 
 def calculate_x_transaction_value(transaction):
     #TO DO : Handle whwn asset not avalanche
@@ -139,8 +129,10 @@ def calculate_c_chain_transaction_value(transaction):
 
     return total_input_value, total_output_value
 
-def run_avalanche_extraction(last_block):
-    x_chain_data = extract_x_chain_data(last_block)
-    x_chain_data = extract_c_chain_data(last_block)
+def extract_avalanche_data(last_x_block, last_c_block):
+    x_chain_data = extract_x_chain_data(last_x_block)
+    c_chain_data = extract_c_chain_data(last_c_block)
+    print(type(c_chain_data))
+    
     # p_chain_data = extract_p_chain_data(last_block)
-    return x_chain_data, x_chain_data
+    return x_chain_data, c_chain_data
