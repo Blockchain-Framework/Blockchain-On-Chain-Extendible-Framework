@@ -7,6 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 from src.blockchain.avalanche.avalanche_data_extraction import extract_avalanche_data
 from src.services.data_storage_service import store_data, get_last_transaction_data, set_last_transaction_data
+from src.services.metrics_computation_service import compute_transaction_count
 # from data_processing import process_data
 
 import os
@@ -69,8 +70,10 @@ class WorkflowManager:
             
             # Step 3: metrics
             # TO DO : Metric computations
+            self.logger.info("Computing metrics...")
+            compute_transaction_count(avalanche_X_data, date_str, "X_CHAIN", os.environ.get("DATABASE_CONNECTION"))
+            self.logger.info("Computed metrics !")
             
-
             self.logger.info("Workflow completed successfully.")
 
         except Exception as e:
