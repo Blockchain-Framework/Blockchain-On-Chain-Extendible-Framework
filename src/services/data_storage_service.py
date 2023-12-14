@@ -58,6 +58,7 @@ def set_last_transaction_data(db_connection_string, blockchain, timestamp, task=
     conn.close()
 
 
+
     
 def create_database_and_table(db_connection_string):
     # Extracting the database name from the connection string
