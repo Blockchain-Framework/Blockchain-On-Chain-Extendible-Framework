@@ -122,6 +122,32 @@ def compute_average_transaction_value(dataframe, date, chain, db_connection_stri
     conn.close()
     return average_transaction_value
 
+# Large Transaction Monitoring (Whale Watching) - C
+def compute_large_transaction_monitoring(dataframe, date, chain, db_connection_string, table_name='large_transaction_monitoring', large_transaction_threshold=1000000):
+    conn = psycopg2.connect(db_connection_string)
+    conn.autocommit = True
+    cursor = conn.cursor()
+
+    # Filter large transactions
+    large_transactions = dataframe[dataframe['total_output_value'] > large_transaction_threshold]
+
+    # Count of large transactions
+    large_transaction_count = len(large_transactions)
+
+    # Create table and insert data
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            date VARCHAR(100),
+            chain_name VARCHAR(255),
+            large_transaction_count INTEGER
+        );
+        INSERT INTO {table_name} (date, chain_name, large_transaction_count) VALUES (%s, %s, %s)""",
+                   (date, chain, large_transaction_count))
+
+    cursor.close()
+    conn.close()
+    return large_transaction_count
+
 
 # (2) Daily Transaction Volume
 
