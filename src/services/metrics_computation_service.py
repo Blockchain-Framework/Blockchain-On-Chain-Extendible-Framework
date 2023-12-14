@@ -99,6 +99,29 @@ def compute_total_burned_amount(dataframe, date, chain, db_connection_string, ta
     conn.close()
     return total_burned_amount
 
+# Average Transaction Value - C
+def compute_average_transaction_value(dataframe, date, chain, db_connection_string, table_name='average_transaction_value'):
+    conn = psycopg2.connect(db_connection_string)
+    conn.autocommit = True
+    cursor = conn.cursor()
+
+    # Calculate average transaction value
+    average_transaction_value = (dataframe['total_input_value'] + dataframe['total_output_value']).mean()
+
+    # Create table and insert data
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            date VARCHAR(100),
+            chain_name VARCHAR(255),
+            average_transaction_value FLOAT
+        );
+        INSERT INTO {table_name} (date, chain_name, average_transaction_value) VALUES (%s, %s, %s)""",
+                   (date, chain, average_transaction_value))
+
+    cursor.close()
+    conn.close()
+    return average_transaction_value
+
 
 # (2) Daily Transaction Volume
 
