@@ -76,6 +76,29 @@ def compute_total_staked_amount(dataframe, date, chain, db_connection_string, ta
     conn.close()
     return total_staked_amount
 
+# Total Burned Amount - P
+def compute_total_burned_amount(dataframe, date, chain, db_connection_string, table_name='total_burned_amount'):
+    conn = psycopg2.connect(db_connection_string)
+    conn.autocommit = True
+    cursor = conn.cursor()
+
+    # Calculate total burned amount
+    total_burned_amount = dataframe['amountBurned'].sum()
+
+    # Create table and insert data
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            date VARCHAR(100),
+            chain_name VARCHAR(255),
+            total_burned_amount FLOAT
+        );
+        INSERT INTO {table_name} (date, chain_name, total_burned_amount) VALUES (%s, %s, %s)""",
+                   (date, chain, total_burned_amount))
+
+    cursor.close()
+    conn.close()
+    return total_burned_amount
+
 
 # (2) Daily Transaction Volume
 
