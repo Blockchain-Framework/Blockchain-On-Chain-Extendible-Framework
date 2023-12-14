@@ -3,7 +3,7 @@ import psycopg2
 import numpy as np
 from sqlalchemy import create_engine
 
-# (1) Daily Transaction Count
+# (1) Daily Transaction Count - X, P, C
 def compute_transaction_count(dataframe, date, chain, db_connection_string, table_name = 'daily_transaction_count'):
 
     # Connect to PostgreSQL Server
@@ -29,7 +29,7 @@ def compute_transaction_count(dataframe, date, chain, db_connection_string, tabl
     conn.close()
     return transaction_count
 
-# Average Transactions Per Block
+# Average Transactions Per Block - X
 def compute_average_transactions_per_block(dataframe, date, chain, db_connection_string, table_name='average_transactions_per_block'):
     conn = psycopg2.connect(db_connection_string)
     conn.autocommit = True
@@ -53,6 +53,28 @@ def compute_average_transactions_per_block(dataframe, date, chain, db_connection
     return avg_transactions_per_block
 
 
+# Total Staked Amount - P
+def compute_total_staked_amount(dataframe, date, chain, db_connection_string, table_name='total_staked_amount'):
+    conn = psycopg2.connect(db_connection_string)
+    conn.autocommit = True
+    cursor = conn.cursor()
+
+    # Calculate total staked amount
+    total_staked_amount = dataframe['amountStaked'].sum()
+
+    # Create table and insert data
+    cursor.execute(f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            date VARCHAR(100),
+            chain_name VARCHAR(255),
+            total_staked_amount FLOAT
+        );
+        INSERT INTO {table_name} (date, chain_name, total_staked_amount) VALUES (%s, %s, %s)""",
+                   (date, chain, total_staked_amount))
+
+    cursor.close()
+    conn.close()
+    return total_staked_amount
 
 
 # (2) Daily Transaction Volume
