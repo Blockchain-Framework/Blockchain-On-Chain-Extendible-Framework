@@ -181,4 +181,4 @@ def extract_avalanche_data(last_x_time, last_c_time,last_p_time):
 
     
     # p_chain_data = extract_p_chain_data(last_block)
-    return x_chain_data, c_chain_data, 
+    return x_chain_data, c_chain_data, p_chain_data
