@@ -3,7 +3,7 @@ import psycopg2
 import numpy as np
 from sqlalchemy import create_engine
 
-# (1) Daily Transaction Count - X, P, C
+#Daily Transaction Count - X, P, C
 def compute_transaction_count(dataframe, date, chain, db_connection_string, table_name = 'daily_transaction_count'):
 
     # Connect to PostgreSQL Server
@@ -51,7 +51,6 @@ def compute_average_transactions_per_block(dataframe, date, chain, db_connection
     cursor.close()
     conn.close()
     return avg_transactions_per_block
-
 
 # Total Staked Amount - P
 def compute_total_staked_amount(dataframe, date, chain, db_connection_string, table_name='total_staked_amount'):

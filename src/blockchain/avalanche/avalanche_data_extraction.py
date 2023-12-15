@@ -133,9 +133,7 @@ def extract_p_chain_data(last_timestamp):
                 amountBurned=amountBurned
             )
             data.append(p_tx.__dict__)
-
         page_token = res_data.get('nextPageToken')
-
     return pd.DataFrame(data)
 
 def calculate_p_transaction_value(amounts):
@@ -172,7 +170,6 @@ def calculate_c_chain_transaction_value(transaction):
     total_output_value /= 10**9
 
     return total_input_value, total_output_value
-
 
 def extract_avalanche_data(last_x_time, last_c_time,last_p_time):
     x_chain_data = extract_x_chain_data(last_x_time)
