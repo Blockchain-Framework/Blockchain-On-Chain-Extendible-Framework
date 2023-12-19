@@ -7,7 +7,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 
 from src.blockchain.avalanche.avalanche_data_extraction import extract_avalanche_data
 from src.services.data_storage_service import store_data, get_last_transaction_data, set_last_transaction_data
-from src.services.metrics_computation_service import compute_transaction_count
+from src.services.metrics_computation_service import compute_transaction_count,compute_average_transactions_per_block,compute_total_staked_amount,compute_total_burned_amount, compute_average_transaction_value, compute_large_transaction_monitoring, compute_cross_chain_whale_activity
 # from data_processing import process_data
 
 import os
@@ -37,9 +37,9 @@ class WorkflowManager:
             # last_time_stamp_c = get_last_transaction_data(os.environ.get("DATABASE_CONNECTION"), "AVALANCHE_C_CHAIN")
             # last_time_stamp_p = get_last_transaction_data(os.environ.get("DATABASE_CONNECTION"), "AVALANCHE_P_CHAIN")
             
-            last_time_stamp_x = 1702512000
-            last_time_stamp_c = 1702512000
-            last_time_stamp_c = 1702512000
+            last_time_stamp_x = 1702598400
+            last_time_stamp_c = 1702598400
+            last_time_stamp_c = 1702598400
             
             avalanche_X_data,avalanche_C_data, avalanche_P_data = extract_avalanche_data(last_time_stamp_x, last_time_stamp_c, last_time_stamp_c)
 
@@ -70,9 +70,23 @@ class WorkflowManager:
             
             # Step 3: metrics
             # TO DO : Metric computations
+            
             self.logger.info("Computing metrics...")
+            
             compute_transaction_count(avalanche_X_data, date_str, "X_CHAIN", os.environ.get("DATABASE_CONNECTION"))
-            self.logger.info("Computed metrics !")
+            self.logger.info("Computed transaction count !")
+            compute_average_transactions_per_block(avalanche_X_data, date_str, "X_CHAIN", os.environ.get("DATABASE_CONNECTION"))
+            self.logger.info("Computed average transactions per block !")
+            compute_total_staked_amount(avalanche_P_data, date_str, "X_CHAIN", os.environ.get("DATABASE_CONNECTION"))
+            self.logger.info("Computed total staked amount !")
+            compute_total_burned_amount(avalanche_P_data, date_str, "X_CHAIN", os.environ.get("DATABASE_CONNECTION"))
+            self.logger.info("Computed total staked amount !")
+            compute_average_transaction_value(avalanche_C_data, date_str, "X_CHAIN", os.environ.get("DATABASE_CONNECTION"))
+            self.logger.info("Computed average transaction value !")
+            compute_large_transaction_monitoring(avalanche_C_data, date_str, "X_CHAIN", os.environ.get("DATABASE_CONNECTION"))
+            self.logger.info("Computed large transaction monitoring !")
+            compute_cross_chain_whale_activity(avalanche_C_data, date_str, "X_CHAIN", os.environ.get("DATABASE_CONNECTION"))
+            self.logger.info("Computed cross chain whale activity !")
             
             self.logger.info("Workflow completed successfully.")
 
