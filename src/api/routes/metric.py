@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify
-from ..models.metric import db, DailyTransactionCount, AverageTransactionsPerBlock, TotalStakedAmount, TotalBurnedAmount, AverageTransactionValue, LargeTransactionMonitoring, CrossChainWhaleActivity
+from models.metric import db, DailyTransactionCount, AverageTransactionsPerBlock, TotalStakedAmount, TotalBurnedAmount, AverageTransactionValue, LargeTransactionMonitoring, CrossChainWhaleActivity
 
 metrics_blueprint = Blueprint('metrics', __name__)
 
