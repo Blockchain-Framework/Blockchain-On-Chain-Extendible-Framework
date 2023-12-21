@@ -11,7 +11,7 @@ class DailyTransactionCount(db.Model):
         return {
             'date': self.date,
             'chain_name': self.chain_name,
-            'count': self.count
+            'value': self.count
         }
 
 class AverageTransactionsPerBlock(db.Model):
@@ -24,7 +24,7 @@ class AverageTransactionsPerBlock(db.Model):
         return {
             'date': self.date,
             'chain_name': self.chain_name,
-            'avg_transactions_per_block': self.avg_transactions_per_block
+            'value': self.avg_transactions_per_block
         }
 
 class TotalStakedAmount(db.Model):
@@ -37,7 +37,7 @@ class TotalStakedAmount(db.Model):
         return {
             'date': self.date,
             'chain_name': self.chain_name,
-            'total_staked_amount': self.total_staked_amount
+            'value': self.total_staked_amount
         }
 
 class TotalBurnedAmount(db.Model):
@@ -50,7 +50,7 @@ class TotalBurnedAmount(db.Model):
         return {
             'date': self.date,
             'chain_name': self.chain_name,
-            'total_burned_amount': self.total_burned_amount
+            'value': self.total_burned_amount
         }
 
 class AverageTransactionValue(db.Model):
@@ -63,7 +63,7 @@ class AverageTransactionValue(db.Model):
         return {
             'date': self.date,
             'chain_name': self.chain_name,
-            'average_transaction_value': self.average_transaction_value
+            'value': self.average_transaction_value
         }
 
 class LargeTransactionMonitoring(db.Model):
@@ -76,7 +76,7 @@ class LargeTransactionMonitoring(db.Model):
         return {
             'date': self.date,
             'chain_name': self.chain_name,
-            'large_transaction_count': self.large_transaction_count
+            'value': self.large_transaction_count
         }
 
 class CrossChainWhaleActivity(db.Model):
@@ -89,5 +89,5 @@ class CrossChainWhaleActivity(db.Model):
         return {
             'date': self.date,
             'chain_name': self.chain_name,
-            'cross_chain_large_transaction_count': self.cross_chain_large_transaction_count
+            'value': self.cross_chain_large_transaction_count
         }
