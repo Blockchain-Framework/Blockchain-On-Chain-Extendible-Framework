@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from app import db
 
-
 class DailyTransactionCount(db.Model):
     __tablename__ = 'daily_transaction_count'
     date = db.Column(db.String, primary_key=True)

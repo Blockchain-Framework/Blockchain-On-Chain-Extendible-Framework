@@ -6,6 +6,7 @@ from models.response import Response # Import the custom Response
 from utils.json_utils import jsonify  # Import the custom jsonify
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
+import logging
 
 metrics_blueprint = Blueprint('metrics', __name__)
 
@@ -34,7 +35,10 @@ def get_paginated_data(model, query):
     """
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 10, type=int)
-    return query.paginate(page, page_size, False)
+
+    # Correctly using keyword arguments for paginate
+    return query.paginate(page=page, per_page=page_size, error_out=False)
+
 
 def handle_metric_route(model):
     """
@@ -56,7 +60,9 @@ def handle_metric_route(model):
         return jsonify(response.to_dict()), 200
     except ValueError as ve:
         return jsonify(Response(False, error=str(ve)).to_dict()), 400
-    except SQLAlchemyError:
+    except SQLAlchemyError as e:
+        # Log the detailed error message for debugging
+        logging.error(f"Database error: {e}")
         return jsonify(Response(False, error="Database error").to_dict()), 500
     except Exception as e:
         # Generic catch for any other unexpected exceptions
