@@ -37,9 +37,9 @@ class WorkflowManager:
             # last_time_stamp_c = get_last_transaction_data(os.environ.get("DATABASE_CONNECTION"), "AVALANCHE_C_CHAIN")
             # last_time_stamp_p = get_last_transaction_data(os.environ.get("DATABASE_CONNECTION"), "AVALANCHE_P_CHAIN")
             
-            last_time_stamp_x = 1702598400
-            last_time_stamp_c = 1702598400
-            last_time_stamp_c = 1702598400
+            last_time_stamp_x = 1703116800
+            last_time_stamp_c = 1703116800
+            last_time_stamp_c = 1703116800
             
             avalanche_X_data,avalanche_C_data, avalanche_P_data = extract_avalanche_data(last_time_stamp_x, last_time_stamp_c, last_time_stamp_c)
 
@@ -89,7 +89,7 @@ class WorkflowManager:
             self.logger.info("Computed cross chain whale activity !")
             
             self.logger.info("Workflow completed successfully.")
-
+            
         except Exception as e:
             self.logger.error(f"An error occurred during the workflow: {e}")
             # Handle or raise the exception as per your error handling policy

@@ -18,6 +18,8 @@ def filter_by_date(model, query, start_date, end_date):
         query = query.filter(model.date >= start_date)
     if end_date:
         query = query.filter(model.date <= end_date)
+    # if chain:
+    #     query = query.filter(model.chain_name == chain)
     return query
 
 def validate_date(date_str):
@@ -34,7 +36,7 @@ def get_paginated_data(model, query):
     Apply pagination to a database query and return the paginated query.
     """
     page = request.args.get('page', 1, type=int)
-    page_size = request.args.get('page_size', 10, type=int)
+    page_size = request.args.get('page_size', 30, type=int)
 
     # Correctly using keyword arguments for paginate
     return query.paginate(page=page, per_page=page_size, error_out=False)
@@ -47,7 +49,7 @@ def handle_metric_route(model):
     try:
         start_date = validate_date(request.args.get('start_date'))
         end_date = validate_date(request.args.get('end_date'))
-
+        
         if start_date is None or end_date is None:
             raise ValueError("Invalid date format. Use YYYY-MM-DD.")
 
@@ -58,6 +60,21 @@ def handle_metric_route(model):
 
         response = Response(True, [item.serialize() for item in items], len(items))
         return jsonify(response.to_dict()), 200
+    # try:
+    #     start_date = validate_date(request.args.get('start_date'))
+    #     end_date = validate_date(request.args.get('end_date'))
+    #     chain =  validate_date(request.args.get('chain'))
+        
+    #     if start_date is None or end_date is None or chain is None:
+    #         raise ValueError("Invalid date format. Use YYYY-MM-DD.")
+
+    #     query = model.query
+    #     query = filter_by_date(model, query, start_date, end_date, chain)
+    #     paginated_query = get_paginated_data(model, query)
+    #     items = paginated_query.items
+
+    #     response = Response(True, [item.serialize() for item in items], len(items))
+    #     return jsonify(response.to_dict()), 200
     except ValueError as ve:
         return jsonify(Response(False, error=str(ve)).to_dict()), 400
     except SQLAlchemyError as e:
