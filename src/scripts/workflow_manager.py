@@ -37,9 +37,9 @@ class WorkflowManager:
             # last_time_stamp_c = get_last_transaction_data(os.environ.get("DATABASE_CONNECTION"), "AVALANCHE_C_CHAIN")
             # last_time_stamp_p = get_last_transaction_data(os.environ.get("DATABASE_CONNECTION"), "AVALANCHE_P_CHAIN")
             
-            last_time_stamp_x = 1703116800
-            last_time_stamp_c = 1703116800
-            last_time_stamp_c = 1703116800
+            last_time_stamp_x = 1705084200
+            last_time_stamp_c = 1705084200
+            last_time_stamp_c = 1705084200
             
             avalanche_X_data,avalanche_C_data, avalanche_P_data = extract_avalanche_data(last_time_stamp_x, last_time_stamp_c, last_time_stamp_c)
 
@@ -59,9 +59,22 @@ class WorkflowManager:
             date = datetime.datetime.fromtimestamp(max_timstamp_x) 
             date_str = date.strftime("%Y-%m-%d")
             
-            store_data(avalanche_X_data, self.file_path+f"/{date_str}_x_file.tsv.gz", 'x_avalanche_data', self.db_connection_string)
-            store_data(avalanche_C_data, self.file_path+f"/{date_str}_c_file.tsv.gz", 'c_avalanche_data', self.db_connection_string)
-            store_data(avalanche_C_data, self.file_path+f"/{date_str}_p_file.tsv.gz", 'p_avalanche_data', self.db_connection_string)
+            if not os.path.exists(self.file_path):
+                # Create the directory
+                os.makedirs(self.file_path)
+                # Get the directory of the current script
+                
+            script_directory = os.path.dirname(os.path.abspath(__file__))
+
+            # Get the parent directory of the script directory
+            parent_directory = os.path.dirname(script_directory)
+
+            # Set the file_path to the file_store directory parallel to the src directory
+            file_path = os.path.join(parent_directory, 'file_store')
+            
+            store_data(avalanche_X_data, file_path+f"/{date_str}_x_file.tsv.gz", 'x_avalanche_data', self.db_connection_string)
+            store_data(avalanche_C_data, file_path+f"/{date_str}_c_file.tsv.gz", 'c_avalanche_data', self.db_connection_string)
+            store_data(avalanche_C_data, file_path+f"/{date_str}_p_file.tsv.gz", 'p_avalanche_data', self.db_connection_string)
             self.logger.info("Stored data !")
             
             set_last_transaction_data(os.environ.get("DATABASE_CONNECTION"), "AVALANCHE_X_CHAIN", max_timstamp_x)
