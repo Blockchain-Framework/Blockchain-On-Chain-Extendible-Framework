@@ -2,7 +2,7 @@
 from src.models.general_blockchain_model import GeneralBlockchainModel
 from src.blockchain.avalanche.avalanche_UTXO_model import AvalancheUTXO
 class Avalanche_X_Model(GeneralBlockchainModel):
-    def __init__(self, txHash, blockHash, blockHeight, txType, timestamp, value, memo, chainFormat,  amountUnlocked, amountCreated, active_senders, active_adreesess, consumedUtxos=[], emittedUtxos = []):
+    def __init__(self, txHash, blockHash, blockHeight, txType, timestamp, value, memo, chainFormat,  amountUnlocked, amountCreated, consumedUtxos=[], emittedUtxos = []):
         super().__init__(txHash, blockHash, timestamp, value)
         self.blockHeight = blockHeight
         self.txType = txType
@@ -12,8 +12,6 @@ class Avalanche_X_Model(GeneralBlockchainModel):
         self.emittedUtxos = emittedUtxos
         self.amountUnlocked = amountUnlocked
         self.amountCreated = amountCreated
-        self.active_senders = active_senders
-        self.active_adreesess = active_adreesess
 class Avalanche_C_Model(GeneralBlockchainModel):
     def __init__(self, txHash, blockHash, blockHeight, txType, timestamp, sourceChain, destinationChain, memo,  amountUnlocked, amountCreated, deployer_addresses,contract_deploy_count,active_addresses, evmInputs = [], emittedUtxos=[]):
         super().__init__(txHash, blockHash, timestamp, None)

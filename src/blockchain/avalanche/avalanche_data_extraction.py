@@ -2,6 +2,12 @@ import pandas as pd
 import requests
 import time
 from datetime import datetime
+import json
+
+import os
+import sys
+sys.path.insert(0, 'D:\\Academics\\FYP\\Repos\\Blockchain-On-Chain-Extendible-Framework')
+
 from src.utils.http_utils import fetch_transactions
 from src.blockchain.avalanche.avalanche_model import Avalanche_X_Model, Avalanche_C_Model, Avalanche_P_Model
 from src.blockchain.avalanche.avalanche_UTXO_model import AvalancheUTXO
@@ -33,13 +39,10 @@ def extract_x_chain_data(last_timestamp):
             if timestamp <= last_timestamp:
                 run = False
                 break
-            # for utxo in tx.get('emittedUtxos', []):
-            #     print(utxo)
-            # consumed_utxos = [AvalancheUTXO(**parse_utxo(utxo)) for utxo in tx.get('consumedUtxos', [])]
-            # emitted_utxos = [AvalancheUTXO(**parse_utxo(utxo)) for utxo in tx.get('emittedUtxos', [])]
             txHash = tx.get("txHash")
             blockHash = tx.get("blockHash")
             amount_unlocked, amount_created = calculate_x_transaction_values(tx)
+            
             avalanche_tx = Avalanche_X_Model(
                 txHash=txHash,
                 blockHash=blockHash,
@@ -49,79 +52,58 @@ def extract_x_chain_data(last_timestamp):
                 memo=tx.get("memo"),
                 chainFormat=tx.get("chainFormat"),
                 txType=tx.get("txType"),
-                # consumedUtxos=consumed_utxos,
-                # emittedUtxos=emitted_utxos,
-                # amountUnlocked = amount_unlocked,
-                # amountCreated = amount_created,
-                # active_senders = extract_active_senders(tx),
-                # active_adreesess = extract_addresses_from_transaction(tx)
+                amountUnlocked = amount_unlocked,
+                amountCreated = amount_created
             )
             
-            for utxo in tx.get('emittedUtxos', []):
-                assets = []
-                for asset in utxo['asset']:
-                    {
-                        "assetId": utxo['assetId'],
-                        "name": utxo.get('name', ''),
-                        "symbol": utxo.get('symbol', ''),
-                        "denomination": utxo.get('denomination',0),
-                        "type": utxo.get('type',''),
-                        "amount": utxo.get('amount','')
-                    }
-                AvalancheUTXO(
-                    txHash = txHash,
-                    blockHash = blockHash,
-                    addresses = utxo['addresses'],
-                    utxoId= utxo['utxoId'],
-                    assets = assets
+            # emmitted UTXOs
+            for e_utxo in tx.get('emittedUtxos', []):
+                
+                print(len(e_utxo['asset']))
+                asset =  e_utxo['asset']
+                
+                emit_utxo = AvalancheUTXO(
+                        txHash = txHash,
+                        blockHash = blockHash,
+                        addresses = e_utxo['addresses'],
+                        utxoId= e_utxo['utxoId'],
+                        assetId = asset.get('assetId'),
+                        asset_name = asset.get('name', ''),
+                        symbol = asset.get('symbol', ''),
+                        denomination = asset.get('denomination',0),
+                        asset_type = asset.get('type',''),
+                        amount = asset.get('amount',0)
                     )
+                
+                emitted_utxos.append(emit_utxo.__dict__)
+
+            # consumed UTXOs
+            for c_utxo in tx.get('consumedUtxos', []):
+                
+                asset =  c_utxo['asset']
+                
+                commit_utxo = AvalancheUTXO(
+                        txHash = txHash,
+                        blockHash = blockHash,
+                        addresses = c_utxo['addresses'],
+                        utxoId= c_utxo['utxoId'],
+                        assetId = asset.get('assetId'),
+                        asset_name = asset.get('name', ''),
+                        symbol = asset.get('symbol', ''),
+                        denomination = asset.get('denomination',0),
+                        asset_type = asset.get('type',''),
+                        amount = asset.get('amount',0)
+                    )
+                consumed_utxos.append(commit_utxo.__dict__)
+
             page_token = res_data.get('nextPageToken')
-            
+
             data.append(avalanche_tx.__dict__)
+    return pd.DataFrame(data), emitted_utxos, consumed_utxos
 
-    return pd.DataFrame(data)
-
-def parse_utxo(utxo):
-    print(utxo)
-    return {
-        'utxoId': utxo['utxoId'],
-        'txHash': utxo.get('creationTxHash', ''),
-        'outputIndex': utxo['outputIndex'],
-        'addresses': utxo['addresses'],
-        'amount': int(utxo['asset']['amount']),
-        'assetId': utxo['asset']['assetId'],
-        'assetName': utxo['asset'].get('name', ''),
-        'assetSymbol': utxo['asset'].get('symbol', ''),
-        'assetDenomination': utxo['asset'].get('denomination', 0),
-        'utxoType': utxo.get('utxoType', ''),
-        'consumingTxHash': utxo.get('consumingTxHash', ''),
-        'consumingTxTimestamp': utxo.get('consumingTxTimestamp', 0),
-        'credentials': utxo.get('credentials', [])
-    }
-
-def extract_active_senders(transactions):
-    active_senders = set()
-    for utxo in transactions.get("consumedUtxos", []):
-        active_senders.update(utxo.get("addresses", []))
-
-    return active_senders
-
-def extract_addresses_from_transaction(transaction):
-    all_addresses = set()
-
-    # Extract addresses from consumed UTXOs
-    for utxo in transaction.get("consumedUtxos", []):
-        all_addresses.update(utxo.get("addresses", []))
-
-    # Extract addresses from emitted UTXOs
-    for utxo in transaction.get("emittedUtxos", []):
-        all_addresses.update(utxo.get("addresses", []))
-
-    return all_addresses
 
 
 def calculate_x_transaction_values(transaction):
-    print("ok")
     
     amountUnlocked = transaction.get('amountUnlocked', [])
     amountCreated = transaction.get('amountCreated', [])
@@ -131,18 +113,20 @@ def calculate_x_transaction_values(transaction):
     
     for amount in amountUnlocked:
         if amount['name'] in amount_unlocked:
-            amount_unlocked[amount['name']] += amount['amount'] / amount['denomination']
+            amount_unlocked[amount['name']] += int(amount['amount']) / int(amount['denomination'])
         else:
-            amount_unlocked[amount['name']] = amount['amount'] / amount['denomination']
+            amount_unlocked[amount['name']] = int(amount['amount']) / int(amount['denomination'])
     
     for amount in amountCreated:
         if amount['name'] in amount_created:
-            amount_created[amount['name']] += amount['amount'] / amount['denomination']
+            amount_created[amount['name']] += int(amount['amount']) / int(amount['denomination'])
         else:
-            amount_created[amount['name']] = amount['amount'] / amount['denomination']
+            amount_created[amount['name']] = int(amount['amount']) / int(amount['denomination'])
         
     return amount_unlocked, amount_created
 
+
+# C chain
 def extract_c_chain_data(last_timestamp):
     page_token = None
     
@@ -340,12 +324,13 @@ def calculate_c_chain_transaction_value(transaction):
 
 def extract_avalanche_data(last_x_time, last_c_time,last_p_time):
     x_chain_data = extract_x_chain_data(last_x_time)
-    c_chain_data = extract_c_chain_data(last_c_time)
-    p_chain_data = extract_p_chain_data(last_p_time)
+    # c_chain_data = extract_c_chain_data(last_c_time)
+    # p_chain_data = extract_p_chain_data(last_p_time)
 
     
     # p_chain_data = extract_p_chain_data(last_block)
-    return x_chain_data, c_chain_data, p_chain_data
+    #return x_chain_data, c_chain_data, p_chain_data
+    return x_chain_data
 
 class EVMInput:
     def __init__(self, asset, fromAddress, credentials):
@@ -361,3 +346,6 @@ class Asset:
         self.denomination = denomination
         self.type = type
         self.amount = amount
+        
+if __name__ == "__main__":
+    extract_x_chain_data(1705276800)
