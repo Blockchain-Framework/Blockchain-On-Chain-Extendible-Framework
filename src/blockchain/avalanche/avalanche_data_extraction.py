@@ -41,6 +41,7 @@ def extract_x_chain_data(last_timestamp):
                 break
             txHash = tx.get("txHash")
             blockHash = tx.get("blockHash")
+            txType=tx.get("txType")
             amount_unlocked, amount_created = calculate_x_transaction_values(tx)
             
             avalanche_tx = Avalanche_X_Model(
@@ -50,7 +51,7 @@ def extract_x_chain_data(last_timestamp):
                 timestamp=timestamp,
                 memo=tx.get("memo"),
                 chainFormat=tx.get("chainFormat"),
-                txType=tx.get("txType"),
+                txType=txType,
                 amountUnlocked = amount_unlocked,
                 amountCreated = amount_created
             )
@@ -58,11 +59,11 @@ def extract_x_chain_data(last_timestamp):
             # emmitted UTXOs
             for e_utxo in tx.get('emittedUtxos', []):
                 
-                print(len(e_utxo['asset']))
                 asset =  e_utxo['asset']
                 
                 emit_utxo = AvalancheUTXO(
                         txHash = txHash,
+                        txType = txType,
                         blockHash = blockHash,
                         addresses = e_utxo['addresses'],
                         utxoId= e_utxo['utxoId'],
@@ -83,6 +84,7 @@ def extract_x_chain_data(last_timestamp):
                 
                 commit_utxo = AvalancheUTXO(
                         txHash = txHash,
+                        txType = txType,
                         blockHash = blockHash,
                         addresses = c_utxo['addresses'],
                         utxoId= c_utxo['utxoId'],
@@ -150,8 +152,7 @@ def extract_c_chain_data(last_timestamp):
         transactions = res_data.get('transactions', [])
 
         for tx in transactions:
-            print(tx.get("txType"))
-            print(tx.keys())
+            
             timestamp=int(tx.get("timestamp"))          
             if timestamp <= last_timestamp:
                 run = False
@@ -178,11 +179,12 @@ def extract_c_chain_data(last_timestamp):
                 # env inputs 
                 for env_inputs in tx.get('evmInputs', []):
                     
-                    print(len(env_inputs['asset']))
+                    
                     asset =  env_inputs['asset']
                     
                     emit_utxo = AvalancheUTXO(
                             txHash = txHash,
+                            txType = txType,
                             blockHash = blockHash,
                             addresses = env_inputs['fromAddress'],
                             utxoId= None,
@@ -199,11 +201,12 @@ def extract_c_chain_data(last_timestamp):
                 # emmitted UTXOs
                 for e_utxo in tx.get('emittedUtxos', []):
                     
-                    print(len(e_utxo['asset']))
+                    
                     asset =  e_utxo['asset']
                     
                     emit_utxo = AvalancheUTXO(
                             txHash = txHash,
+                            txType = txType,
                             blockHash = blockHash,
                             addresses = e_utxo['addresses'],
                             utxoId= e_utxo['utxoId'],
@@ -217,14 +220,14 @@ def extract_c_chain_data(last_timestamp):
                     
                     emitted_utxos.append(emit_utxo.__dict__)
                     
-                    
             elif(txType == "ImportTx"):
-                print(tx)
+                
                 for env_inputs in tx.get('evmOutputs', []):
                     asset =  env_inputs['asset']
                     
                     emit_utxo = AvalancheUTXO(
                             txHash = txHash,
+                            txType = txType,
                             blockHash = blockHash,
                             addresses = env_inputs['toAddress'],
                             utxoId= None,
@@ -241,11 +244,12 @@ def extract_c_chain_data(last_timestamp):
                 # emmitted UTXOs
                 for e_utxo in tx.get('consumedUtxos', []):
                     
-                    print(len(e_utxo['asset']))
+                    
                     asset =  e_utxo['asset']
                     
                     emit_utxo = AvalancheUTXO(
                             txHash = txHash,
+                            txType = txType,
                             blockHash = blockHash,
                             addresses = e_utxo['addresses'],
                             utxoId= e_utxo['utxoId'],
@@ -266,11 +270,13 @@ def extract_c_chain_data(last_timestamp):
 
 
 def extract_p_chain_data(last_timestamp):
-    print("start p chain extraction")
     page_token = None
     params = {"pageSize": 100}
     url = "https://glacier-api.avax.network/v1/networks/mainnet/blockchains/p-chain/transactions"
     data = []
+    emitted_utxos= []
+    consumed_utxos = []
+    
     run = True
 
     while run:
@@ -285,94 +291,88 @@ def extract_p_chain_data(last_timestamp):
             if timestamp <= last_timestamp:
                 run = False
                 break
-
+                
             amountStaked = calculate_p_transaction_value(tx.get("amountStaked", []))
             amountBurned = calculate_p_transaction_value(tx.get("amountBurned", []))
 
-            # consumed_utxos = [AvalancheUTXO(**utxo) for utxo in tx.get('consumedUtxos', [])]
-            # emitted_utxos = [AvalancheUTXO(**utxo) for utxo in tx.get('emittedUtxos', [])]
-
+            txHash=tx.get("txHash")
+            blockHash=tx.get("blockHash")
+            txType=tx.get("txType")
+            
             p_tx = Avalanche_P_Model(
                 txHash=tx.get("txHash"),
                 txType=tx.get("txType"),
                 blockTimestamp=timestamp,
                 blockNumber=tx.get("blockNumber"),
                 blockHash=tx.get("blockHash"),
+                sourceChain = tx.get("sourceChain",''),
+                destinationChain =  tx.get("destinationChain",''),
                 memo=tx.get("memo"),
-                nodeId=tx.get("nodeId"),
-                subnetId=tx.get("subnetId"),
+                rewardAddresses = tx.get("rewardAddresses",''),
+                estimatedReward = tx.get("estimatedReward",''),
+                startTimestamp = tx.get("startTimestamp",''),
+                endTimestamp = tx.get("endTimestamp",''),
+                delegationFeePercent = tx.get("delegationFeePercent",''),
+                nodeId=tx.get("nodeId",''),
+                subnetId=tx.get("subnetId",''),
+                value = tx.get("value",''),
                 amountStaked=amountStaked,
                 amountBurned=amountBurned,
-                # consumedUtxos=consumed_utxos,
-                # emittedUtxos=emitted_utxos,
-                active_adreesess = get_p_chain_active_addresses(tx),
-                active_senders = get_p_chain_sender_addresses(tx)
             )
+            
+            # emmitted UTXOs
+            for e_utxo in tx.get('emittedUtxos', []):
+                
+                
+                asset =  e_utxo['asset']
+                
+                emit_utxo = AvalancheUTXO(
+                        txHash = txHash,
+                        txType=txType,
+                        blockHash = blockHash,
+                        addresses = e_utxo['addresses'],
+                        utxoId= e_utxo['utxoId'],
+                        assetId = asset.get('assetId'),
+                        asset_name = asset.get('name', ''),
+                        symbol = asset.get('symbol', ''),
+                        denomination = asset.get('denomination',0),
+                        asset_type = asset.get('type',''),
+                        amount = asset.get('amount',0)
+                    )
+                
+                emitted_utxos.append(emit_utxo.__dict__)
+            
+            # consumed UTXOs
+            for c_utxo in tx.get('consumedUtxos', []):
+                
+                asset =  c_utxo['asset']
+                
+                commit_utxo = AvalancheUTXO(
+                        txHash = txHash,
+                        txType = txType,
+                        blockHash = blockHash,
+                        addresses = c_utxo['addresses'],
+                        utxoId= c_utxo['utxoId'],
+                        assetId = asset.get('assetId'),
+                        asset_name = asset.get('name', ''),
+                        symbol = asset.get('symbol', ''),
+                        denomination = asset.get('denomination',0),
+                        asset_type = asset.get('type',''),
+                        amount = asset.get('amount',0)
+                    )
+                consumed_utxos.append(commit_utxo.__dict__)
+            
             data.append(p_tx.__dict__)
         page_token = res_data.get('nextPageToken')
-        
-    return pd.DataFrame(data)
-
-def get_p_chain_active_addresses(transaction):
-    active_addresses = set()
-
-    # Add addresses from consumed UTXOs
-    for utxo in transaction.get('consumedUtxos', []):
-        for address in utxo.get('addresses', []):
-            active_addresses.add(address)
-
-    # Add addresses from emitted UTXOs
-    for utxo in transaction.get('emittedUtxos', []):
-        for address in utxo.get('addresses', []):
-            active_addresses.add(address)
-
-    return active_addresses
-
-def get_p_chain_sender_addresses(transaction):
-    sender_addresses = set()
-
-    # Add addresses from consumed UTXOs
-    for utxo in transaction.get('consumedUtxos', []):
-        for address in utxo.get('addresses', []):
-            sender_addresses.add(address)
-
-    return sender_addresses
+    
+    return pd.DataFrame(data), emitted_utxos, consumed_utxos
 
 
 def calculate_p_transaction_value(amounts):
     total_value = sum(int(asset['amount']) for asset in amounts) / 10**9  # Convert to AVAX
     return total_value
 
-# def calculate_x_transaction_value(transaction):
-#     #TO DO : Handle whwn asset not avalanche
-#     total_consumed = sum(int(utxo['asset']['amount']) for utxo in transaction.get('consumedUtxos', []))
-#     total_emitted = sum(int(utxo['asset']['amount']) for utxo in transaction.get('emittedUtxos', []))
-#     return (total_consumed - total_emitted) / 10**9
-
-def calculate_c_chain_transaction_value(transaction):
-    # Initialize total values
-    total_input_value = 0
-    total_output_value = 0
-
-    # Calculate the total input value
-    if 'evmInputs' in transaction:
-        for input_item in transaction['evmInputs']:
-            # Ensure the 'amount' field is present
-            if 'asset' in input_item and 'amount' in input_item['asset']:
-                total_input_value += int(input_item['asset']['amount'])
-
-    # Calculate the total output value
-    if 'evmOutputs' in transaction:
-        for output_item in transaction['evmOutputs']:
-            # Ensure the 'amount' field is present
-            if 'asset' in output_item and 'amount' in output_item['asset']:
-                total_output_value += int(output_item['asset']['amount'])
-
-    # Convert amounts from smallest unit to AVAX (assuming denomination is 9)
-    total_input_value /= 10**9
-    total_output_value /= 10**9
-
-    return total_input_value, total_output_value
+#---------------------------------------------------------
 
 def extract_avalanche_data(last_x_time, last_c_time,last_p_time):
     x_chain_data = extract_x_chain_data(last_x_time)
@@ -400,4 +400,6 @@ class Asset:
         self.amount = amount
         
 if __name__ == "__main__":
+    extract_p_chain_data(1705276800)
     extract_c_chain_data(1705276800)
+    extract_x_chain_data(1705276800)

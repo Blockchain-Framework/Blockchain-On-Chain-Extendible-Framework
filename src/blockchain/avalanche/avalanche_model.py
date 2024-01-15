@@ -1,6 +1,6 @@
 # avalanche_model.py
 from src.models.general_blockchain_model import GeneralBlockchainModel
-from src.blockchain.avalanche.avalanche_UTXO_model import AvalancheUTXO
+
 class Avalanche_X_Model(GeneralBlockchainModel):
     def __init__(self, txHash, blockHash, blockHeight, txType, timestamp , memo, chainFormat,  amountUnlocked, amountCreated):
         super().__init__(txHash, blockHash, timestamp, None)
@@ -22,24 +22,9 @@ class Avalanche_C_Model(GeneralBlockchainModel):
         self.amountUnlocked = amountUnlocked
         self.amountCreated = amountCreated
 
-class EVMInput:
-    def __init__(self, asset, fromAddress, credentials):
-        self.asset = Asset(**asset)
-        self.fromAddress = fromAddress
-        self.credentials = credentials
-
-class Asset:
-    def __init__(self, assetId, name, symbol, denomination, type, amount):
-        self.assetId = assetId
-        self.name = name
-        self.symbol = symbol
-        self.denomination = denomination
-        self.type = type
-        self.amount = amount
-
 class Avalanche_P_Model(GeneralBlockchainModel):
-    def __init__(self, txHash, txType, blockTimestamp, blockNumber, blockHash, memo, nodeId, active_adreesess, subnetId, amountStaked, amountBurned, active_senders, consumedUtxos=[], emittedUtxos=[]):
-        super().__init__(txHash, blockHash, blockTimestamp, None)
+    def __init__(self, txHash, txType, blockTimestamp, blockNumber, blockHash, memo, sourceChain, destinationChain, rewardAddresses, estimatedReward, startTimestamp, endTimestamp, delegationFeePercent, nodeId, subnetId, value, amountStaked, amountBurned):
+        super().__init__(txHash, blockHash, blockTimestamp, value)
         self.txType = txType
         self.blockNumber = blockNumber
         self.memo = memo
@@ -47,10 +32,11 @@ class Avalanche_P_Model(GeneralBlockchainModel):
         self.subnetId = subnetId
         self.amountStaked = amountStaked
         self.amountBurned = amountBurned
-        # self.consumedUtxos = [AvalancheUTXO(**utxo) for utxo in consumedUtxos]
-        # self.emittedUtxos = [AvalancheUTXO(**utxo) for utxo in emittedUtxos]
-        self.active_senders = active_senders
-        self.active_adreesess = active_adreesess
-
-
+        self.sourceChain = sourceChain
+        self.destinationChain = destinationChain
+        self.rewardAddresses = rewardAddresses
+        self.estimatedReward = estimatedReward
+        self.startTimestamp = startTimestamp
+        self.endTimestamp = endTimestamp
+        self.delegationFeePercent = delegationFeePercent
 
