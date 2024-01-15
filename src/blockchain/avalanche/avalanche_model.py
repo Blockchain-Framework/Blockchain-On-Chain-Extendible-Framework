@@ -2,31 +2,25 @@
 from src.models.general_blockchain_model import GeneralBlockchainModel
 from src.blockchain.avalanche.avalanche_UTXO_model import AvalancheUTXO
 class Avalanche_X_Model(GeneralBlockchainModel):
-    def __init__(self, txHash, blockHash, blockHeight, txType, timestamp, value, memo, chainFormat,  amountUnlocked, amountCreated, consumedUtxos=[], emittedUtxos = []):
-        super().__init__(txHash, blockHash, timestamp, value)
+    def __init__(self, txHash, blockHash, blockHeight, txType, timestamp , memo, chainFormat,  amountUnlocked, amountCreated):
+        super().__init__(txHash, blockHash, timestamp, None)
         self.blockHeight = blockHeight
         self.txType = txType
         self.memo = memo
         self.chainFormat = chainFormat
-        self.consumedUtxos = consumedUtxos
-        self.emittedUtxos = emittedUtxos
         self.amountUnlocked = amountUnlocked
         self.amountCreated = amountCreated
+        
 class Avalanche_C_Model(GeneralBlockchainModel):
-    def __init__(self, txHash, blockHash, blockHeight, txType, timestamp, sourceChain, destinationChain, memo,  amountUnlocked, amountCreated, deployer_addresses,contract_deploy_count,active_addresses, evmInputs = [], emittedUtxos=[]):
+    def __init__(self, txHash, blockHash, blockHeight, txType, timestamp, sourceChain, destinationChain, memo,  amountUnlocked, amountCreated):
         super().__init__(txHash, blockHash, timestamp, None)
         self.blockHeight = blockHeight
         self.txType = txType
         self.sourceChain = sourceChain
         self.destinationChain = destinationChain
         self.memo = memo
-        # self.evmInputs = [EVMInput(**input) for input in evmInputs]
-        # self.emittedUtxos = [AvalancheUTXO(**utxo) for utxo in emittedUtxos]
         self.amountUnlocked = amountUnlocked
         self.amountCreated = amountCreated
-        self.deployer_addresses = deployer_addresses,
-        self.contract_deploy_count = contract_deploy_count,
-        self.active_addresses = active_addresses
 
 class EVMInput:
     def __init__(self, asset, fromAddress, credentials):
