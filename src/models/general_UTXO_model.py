@@ -3,6 +3,6 @@ class GeneralUTXO:
         self.utxoId = utxoId
         self.txHash = txHash
         self.txType = txType
-        self.addresses = addresses  # List of addresses associated with the UTXO
+        self.addresses = addresses 
         self.value = value
         

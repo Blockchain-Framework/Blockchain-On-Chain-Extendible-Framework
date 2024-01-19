@@ -23,7 +23,7 @@ class WorkflowManager:
         # TO DO : add following links to env
         self.file_path = "file_store"
         self.db_connection_string = os.environ.get("DATABASE_CONNECTION")
-    
+
     def run_avalanche_data_workflow(self):
         """
         Orchestrates the workflow for extracting, processing, and storing Avalanche blockchain data.

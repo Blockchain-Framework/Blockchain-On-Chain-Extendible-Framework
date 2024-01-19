@@ -30,7 +30,7 @@ def extract_x_chain_data(last_timestamp):
         
         if page_token:
           params["pageToken"] = page_token
-    
+
         res_data = fetch_transactions(url, params)
         transactions = res_data.get('transactions', [])
 
@@ -43,7 +43,7 @@ def extract_x_chain_data(last_timestamp):
             blockHash = tx.get("blockHash")
             txType=tx.get("txType")
             amount_unlocked, amount_created = calculate_x_transaction_values(tx)
-            
+
             avalanche_tx = Avalanche_X_Model(
                 txHash=txHash,
                 blockHash=blockHash,
@@ -76,7 +76,7 @@ def extract_x_chain_data(last_timestamp):
                     )
                 
                 emitted_utxos.append(emit_utxo.__dict__)
-
+            
             # consumed UTXOs
             for c_utxo in tx.get('consumedUtxos', []):
                 
@@ -100,7 +100,7 @@ def extract_x_chain_data(last_timestamp):
             page_token = res_data.get('nextPageToken')
 
             data.append(avalanche_tx.__dict__)
-    return pd.DataFrame(data), emitted_utxos, consumed_utxos
+    return pd.DataFrame(data), pd.DataFrame(emitted_utxos), pd.DataFrame(consumed_utxos)
 
 
 
@@ -175,10 +175,10 @@ def extract_c_chain_data(last_timestamp):
                 amountUnlocked=amount_unlocked,
                 amountCreated=amount_created
             )
+            
             if(txType == "ExportTx"):
                 # env inputs 
                 for env_inputs in tx.get('evmInputs', []):
-                    
                     
                     asset =  env_inputs['asset']
                     
@@ -200,7 +200,6 @@ def extract_c_chain_data(last_timestamp):
 
                 # emmitted UTXOs
                 for e_utxo in tx.get('emittedUtxos', []):
-                    
                     
                     asset =  e_utxo['asset']
                     
@@ -265,7 +264,7 @@ def extract_c_chain_data(last_timestamp):
             
             data.append(avalanche_tx.__dict__)
     
-    return pd.DataFrame(data),input_env,output_env,consumed_utxos,emitted_utxos
+    return pd.DataFrame(data), pd.DataFrame(input_env), pd.DataFrame(output_env), pd.DataFrame(consumed_utxos), pd.DataFrame(emitted_utxos)
 
 
 
@@ -365,7 +364,7 @@ def extract_p_chain_data(last_timestamp):
             data.append(p_tx.__dict__)
         page_token = res_data.get('nextPageToken')
     
-    return pd.DataFrame(data), emitted_utxos, consumed_utxos
+    return pd.DataFrame(data), pd.DataFrame(emitted_utxos), pd.DataFrame(consumed_utxos)
 
 
 def calculate_p_transaction_value(amounts):
@@ -376,13 +375,11 @@ def calculate_p_transaction_value(amounts):
 
 def extract_avalanche_data(last_x_time, last_c_time,last_p_time):
     x_chain_data = extract_x_chain_data(last_x_time)
-    # c_chain_data = extract_c_chain_data(last_c_time)
-    # p_chain_data = extract_p_chain_data(last_p_time)
+    c_chain_data = extract_c_chain_data(last_c_time)
+    p_chain_data = extract_p_chain_data(last_p_time)
 
-    
-    # p_chain_data = extract_p_chain_data(last_block)
-    #return x_chain_data, c_chain_data, p_chain_data
-    return x_chain_data
+    return x_chain_data, c_chain_data, p_chain_data
+    # return x_chain_data
 
 class EVMInput:
     def __init__(self, asset, fromAddress, credentials):
