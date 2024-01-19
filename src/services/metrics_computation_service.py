@@ -173,30 +173,85 @@ def compute_cross_chain_whale_activity(dataframe, date, chain, db_connection_str
     conn.close()
     return cross_chain_large_transaction_count
 
+def calculate_average_utxo_value(transactions):
+    total_utxo_value = 0
+    total_utxo_count = 0
 
-# (2) Daily Transaction Volume
+    for tx in transactions:
+        # Include both consumed and emitted UTXOs
+        all_utxos = tx.consumedUtxos + tx.emittedUtxos
+        for utxo in all_utxos:
+            total_utxo_value += utxo.amount
+            total_utxo_count += 1
 
-# (3) Average Transaction Value
+    # Calculate the average
+    return total_utxo_value / total_utxo_count if total_utxo_count > 0 else 0
 
-# (4) Active Senders
+def cross_chain_whale_activity(transactions, value_threshold, other_chain_transactions):
+    cross_chain_whales = []
+    for tx in transactions:
+        if tx.sourceChain != tx.destinationChain and tx.value >= value_threshold:
+            cross_chain_whales.append(tx)
+    # Check for corresponding transactions in other_chain_transactions
+    # ...
+    return cross_chain_whales
 
-# (5) Active Addresses
+def monitor_whale_addresses(transactions, balance_threshold, historical_balances):
+    whale_addresses = set()
+    for tx in transactions:
+        for utxo in tx.consumedUtxos + tx.emittedUtxos:
+            address = utxo.address
+            new_balance = historical_balances.get(address, 0) + utxo.amount
+            if new_balance >= balance_threshold:
+                whale_addresses.add(address)
+    return whale_addresses
 
-# (6) Block Size
+def identify_whale_transactions(transactions, value_threshold):
+    whale_transactions = []
+    for tx in transactions:
+        if tx.value >= value_threshold:
+            whale_transactions.append(tx)
+    return whale_transactions
 
-# (7) Network Hash Rate (for Proof-of-Work Blockchains)
+def calculate_tps(dataframe):
+    total_seconds = (dataframe['blockTimestamp'].max() - dataframe['blockTimestamp'].min())
+    if total_seconds > 0:
+        return len(dataframe) / total_seconds
+    else:
+        return 0
 
-# (8) Smart Contract Execution Metrics
+def compute_transactions_per_day(dataframe):
+    return len(dataframe)
 
-# (9) Token Transfer Count (for Ethereum-based Tokens)
+def calculate_total_addresses(dataframe):
+    addresses = set()
+    for _, row in dataframe.iterrows():
+        for utxo in row['emittedUtxos'] + row['consumedUtxos']:
+            addresses.update(utxo.addresses)
+    return len(addresses)
 
-# (10) Token Transfer Volume (for Ethereum-based Tokens)
+def calculate_total_addresses(dataframe):
+    addresses = set()
+    for _, row in dataframe.iterrows():
+        for utxo in row['emittedUtxos'] + row['consumedUtxos']:
+            addresses.update(utxo.addresses)
+    return len(addresses)
 
-# (11) Token Holders (for Ethereum-based Tokens)
+def calculate_active_senders(dataframe):
+    senders = set()
+    for _, row in dataframe.iterrows():
+        for evmInput in row.get('evmInputs', []):
+            senders.add(evmInput.fromAddress)
+    return len(senders)
 
-# (12) Token Price (for Ethereum-based Tokens)
-
-
+def calculate_average_utxo_value(dataframe):
+    total_utxo_value = 0
+    total_utxos = 0
+    for _, row in dataframe.iterrows():
+        for utxo in row['emittedUtxos'] + row['consumedUtxos']:
+            total_utxo_value += int(utxo.asset.amount)
+            total_utxos += 1
+    return total_utxo_value / total_utxos if total_utxos > 0 else 0
 
 
 

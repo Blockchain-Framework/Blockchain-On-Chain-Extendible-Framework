@@ -2,11 +2,13 @@ import pandas as pd
 import psycopg2
 import numpy
 from sqlalchemy import create_engine
+import os
 
 def store_data(dataframe, file_path, data_base, db_connection_string):
     # TO DO : Store date vise
     # Store as .tsv.gz
-    dataframe.to_csv(file_path, sep='\t', index=False, compression='gzip')
+        
+    # dataframe.to_csv(file_path, sep='\t', index=False, compression='gzip')
     
     # Connect to PostgreSQL and create database and table if not exists
     create_database_and_table(db_connection_string)
@@ -16,7 +18,6 @@ def store_data(dataframe, file_path, data_base, db_connection_string):
     
     # TO DO:if_exists='append'
     dataframe.to_sql(data_base, engine, if_exists='replace', index=False)
-    
     
 def get_last_transaction_data(db_connection_string, blockchain):
 
@@ -58,8 +59,6 @@ def set_last_transaction_data(db_connection_string, blockchain, timestamp, task=
     conn.close()
 
 
-
-    
 def create_database_and_table(db_connection_string):
     # Extracting the database name from the connection string
     db_name = db_connection_string.split('/')[-1]

@@ -5,5 +5,5 @@ class GeneralBlockchainModel:
         self.txHash = txHash
         self.blockHash = blockHash
         self.timestamp = timestamp
-        self.value = value 
+        self.value = value
         
