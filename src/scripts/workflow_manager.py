@@ -36,9 +36,9 @@ class WorkflowManager:
     def run_avalanche_x_data_workflow(self, start_date):
         try:
             self.logger.info("Extracting Avalanche X data...")
-
+            
             last_date = extract_x_chain_data(start_date)
-
+            
             # Store extracted data and update last timestamps
             set_last_transaction_data(self.db_connection_string, "AVALANCHE_X_CHAIN", last_date, "LastTimeStamp")
             
@@ -97,7 +97,8 @@ class WorkflowManager:
 
         # Format the date as a string in "yyyy-mm-dd" format
         start_date = date_7_days_ago.strftime("%Y-%m-%d")
-
+        
+        #TODO:  fetch last updatede date from database
         for blockchain in self.functions:
             self.run_data_workflow(start_date, blockchain)
             

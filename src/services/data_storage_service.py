@@ -2,8 +2,10 @@ import pandas as pd
 import psycopg2
 import numpy
 from sqlalchemy import create_engine
+import json
 import os
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.engine.reflection import Inspector
 
 def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get("DATABASE_CONNECTION")):
     """
@@ -13,19 +15,24 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
     :param df: DataFrame to be appended.
     :param database_connection: Database connection string.
     """
+    df = df.applymap(lambda x: json.dumps(x) if type(x) == dict else x)
+    
     try:
         # Create the database engine
         engine = create_engine(database_connection)
 
+        # Create an inspector
+        insp = Inspector.from_engine(engine)
+        
         # Check if the table exists
-        if engine.dialect.has_table(engine, table_name):
+        if insp.has_table(table_name):
             # If table exists, append data
-            df.to_sql(table_name, engine, if_exists='append', index=False)
+            with engine.begin() as connection:  # Start a transaction
+                df.to_sql(table_name, connection, if_exists='append', index=False, chunksize=1000)
         else:
             # If table does not exist, create it and append data
-            df.to_sql(table_name, engine, if_exists='fail', index=False)
-
-    
+            with engine.begin() as connection:  # Start a transaction
+                df.to_sql(table_name, connection, if_exists='fail', index=False, chunksize=1000)
 
     except SQLAlchemyError as e:
         print(f"Error: {e}")
@@ -36,7 +43,7 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
 def store_data(dataframe, file_path, data_base, db_connection_string):
     # TO DO : Store date vise
     # Store as .tsv.gz
-        
+    
     # dataframe.to_csv(file_path, sep='\t', index=False, compression='gzip')
     
     # Connect to PostgreSQL and create database and table if not exists

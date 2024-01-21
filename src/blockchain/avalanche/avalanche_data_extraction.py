@@ -79,7 +79,7 @@ def extract_x_chain_data(last_day):
             # Check if the transaction is before the current day
             if timestamp < current_day:
                 # Save data to the database for the day that just completed
-                current_date = current_day.strftime("%Y-%m-%d")
+                current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
                 
                 df_trx = pd.DataFrame(data)
                 df_trx['date'] = current_date
@@ -87,7 +87,7 @@ def extract_x_chain_data(last_day):
                 df_emitted_utxos['date'] = current_date
                 df_consumed_utxos = pd.DataFrame(consumed_utxos)
                 df_consumed_utxos['date'] = current_date
-                
+                # print(df_trx)
                 append_dataframe_to_sql('x_transactions', df_trx)
                 append_dataframe_to_sql('x_emitted_utxos', df_emitted_utxos)
                 append_dataframe_to_sql('x_consumed_utxos', df_consumed_utxos)
@@ -384,8 +384,6 @@ def extract_p_chain_data(last_day):
     data = []
     emitted_utxos= []
     consumed_utxos = []
-    env_inputs = []
-    env_outputs = []
     
     run = True
 
