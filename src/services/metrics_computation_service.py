@@ -2,18 +2,37 @@ import pandas as pd
 import psycopg2
 import numpy as np
 from sqlalchemy import create_engine
+from data_storage_service import get_query_results
+import sys
 
+sys.path.insert(0, 'D:\\Academics\\FYP\\Repos\\Blockchain-On-Chain-Extendible-Framework')
 
-def trx_per_second():
-    pass
+def trx_per_second(table, date):
+    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}'"
+    results = get_query_results(query)
+    
+    # Extract the count value from the DataFrame
+    count = results.iloc[0]['count']
 
-def trx_per_day():
-    pass
+    trx_per_second = count / 86400
+    return trx_per_second
+
+def trx_per_day(table, date):
+    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}'"
+    results = get_query_results(query)
+    
+    # Extract the count value from the DataFrame
+    count = results.iloc[0]['count']
+
+    return count
+
 
 def avg_trx_fee():
     pass
-
+    
+    
 def avg_trx_per_block():
+    
     pass
 
 def avg_trx_size():
@@ -76,3 +95,5 @@ def whale_adrress_activity():
 def cross_chain_whale_trx():
     pass
 
+if __name__ == "__main__":
+    trx_per_second('x_transactions', '2024-01-21')

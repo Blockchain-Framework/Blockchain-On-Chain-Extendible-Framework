@@ -38,7 +38,33 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
         print(f"Error: {e}")
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-        
+
+
+def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNECTION")):
+    """
+    Executes a SQL query and returns the results as a DataFrame.
+
+    :param query: SQL query to be executed.
+    :param database_connection: Database connection string.
+    :return: DataFrame containing the query results.
+    """
+    try:
+        # Create the database engine
+        engine = create_engine(database_connection)
+
+        # Execute the query and fetch the results
+        with engine.connect() as connection:
+            results = pd.read_sql_query(query, connection)
+
+        return results
+
+    except SQLAlchemyError as e:
+        print(f"Database error: {e}")
+        return None
+
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
         
 def store_data(dataframe, file_path, data_base, db_connection_string):
     # TO DO : Store date vise
