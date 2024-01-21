@@ -3,7 +3,36 @@ import psycopg2
 import numpy
 from sqlalchemy import create_engine
 import os
+from sqlalchemy.exc import SQLAlchemyError
 
+def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get("DATABASE_CONNECTION")):
+    """
+    Appends a DataFrame to a SQL table, creating the table if it doesn't exist.
+    
+    :param table_name: Name of the SQL table.
+    :param df: DataFrame to be appended.
+    :param database_connection: Database connection string.
+    """
+    try:
+        # Create the database engine
+        engine = create_engine(database_connection)
+
+        # Check if the table exists
+        if engine.dialect.has_table(engine, table_name):
+            # If table exists, append data
+            df.to_sql(table_name, engine, if_exists='append', index=False)
+        else:
+            # If table does not exist, create it and append data
+            df.to_sql(table_name, engine, if_exists='fail', index=False)
+
+    
+
+    except SQLAlchemyError as e:
+        print(f"Error: {e}")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        
+        
 def store_data(dataframe, file_path, data_base, db_connection_string):
     # TO DO : Store date vise
     # Store as .tsv.gz

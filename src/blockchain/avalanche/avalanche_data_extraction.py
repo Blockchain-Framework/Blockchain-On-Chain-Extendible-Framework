@@ -11,7 +11,7 @@ sys.path.insert(0, 'D:\\Academics\\FYP\\Repos\\Blockchain-On-Chain-Extendible-Fr
 from src.utils.http_utils import fetch_transactions
 from src.blockchain.avalanche.avalanche_model import Avalanche_X_Model, Avalanche_C_Model, Avalanche_P_Model
 from src.blockchain.avalanche.avalanche_UTXO_model import AvalancheUTXO
-
+from src.services.data_storage_service import append_dataframe_to_sql
 
 from datetime import datetime
 import pytz
@@ -79,7 +79,19 @@ def extract_x_chain_data(last_day):
             # Check if the transaction is before the current day
             if timestamp < current_day:
                 # Save data to the database for the day that just completed
-                # save_to_database(current_day.strftime("%Y-%m-%d"), pd.DataFrame(data), pd.DataFrame(emitted_utxos), pd.DataFrame(consumed_utxos))
+                current_date = current_day.strftime("%Y-%m-%d")
+                
+                df_trx = pd.DataFrame(data)
+                df_trx['date'] = current_date
+                df_emitted_utxos = pd.DataFrame(emitted_utxos)
+                df_emitted_utxos['date'] = current_date
+                df_consumed_utxos = pd.DataFrame(consumed_utxos)
+                df_consumed_utxos['date'] = current_date
+                
+                append_dataframe_to_sql('x_transactions', df_trx)
+                append_dataframe_to_sql('x_emitted_utxos', df_emitted_utxos)
+                append_dataframe_to_sql('x_consumed_utxos', df_consumed_utxos)
+                
                 # Move to the previous day
                 current_day -= 86400
                 data = []
@@ -223,6 +235,24 @@ def extract_c_chain_data(last_day):
             if timestamp < current_day:
                 # Save data to the database for the day that just completed
                 # save_to_database(current_day.strftime("%Y-%m-%d"), pd.DataFrame(data), pd.DataFrame(input_env), pd.DataFrame(output_env), pd.DataFrame(consumed_utxos), pd.DataFrame(emitted_utxos))
+                current_date = current_day.strftime("%Y-%m-%d")
+                
+                df_trx = pd.DataFrame(data)
+                df_trx['date'] = current_date
+                df_emitted_utxos = pd.DataFrame(emitted_utxos)
+                df_emitted_utxos['date'] = current_date
+                df_consumed_utxos = pd.DataFrame(consumed_utxos)
+                df_consumed_utxos['date'] = current_date
+                df_input_env = pd.DataFrame(input_env)
+                df_input_env['date'] = current_date
+                df_output_env = pd.DataFrame(output_env)
+                df_output_env['date'] = current_date
+                
+                append_dataframe_to_sql('c_transactions', df_trx)
+                append_dataframe_to_sql('c_emitted_utxos', df_emitted_utxos)
+                append_dataframe_to_sql('c_emitted_utxos', df_consumed_utxos)
+                append_dataframe_to_sql('c_consumed_utxos', df_input_env)
+                append_dataframe_to_sql('c_consumed_utxos', df_output_env)
                 # Move to the previous day
                 current_day -= 86400
                 data = []
@@ -373,6 +403,19 @@ def extract_p_chain_data(last_day):
             if timestamp < current_day:
                 # Save data to the database for the day that just completed
                 # save_to_database(current_day.strftime("%Y-%m-%d"), pd.DataFrame(data), pd.DataFrame(emitted_utxos), pd.DataFrame(consumed_utxos))
+                current_date = current_day.strftime("%Y-%m-%d")
+                
+                df_trx = pd.DataFrame(data)
+                df_trx['date'] = current_date
+                df_emitted_utxos = pd.DataFrame(emitted_utxos)
+                df_emitted_utxos['date'] = current_date
+                df_consumed_utxos = pd.DataFrame(consumed_utxos)
+                df_consumed_utxos['date'] = current_date
+                
+                append_dataframe_to_sql('p_transactions', df_trx)
+                append_dataframe_to_sql('p_emitted_utxos', df_emitted_utxos)
+                append_dataframe_to_sql('p_consumed_utxos', df_consumed_utxos)
+                
                 # Move to the previous day
                 current_day -= 86400
                 data = []

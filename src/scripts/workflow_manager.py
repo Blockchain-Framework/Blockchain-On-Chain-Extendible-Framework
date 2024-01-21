@@ -23,7 +23,7 @@ from src.services.metrics_computation_service import (
 )
 
 class WorkflowManager:
-    # Moved the functions dictionary inside the __init__ method to avoid NameError
+    
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.file_path = "file_store"
