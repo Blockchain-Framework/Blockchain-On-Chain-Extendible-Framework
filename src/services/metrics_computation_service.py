@@ -31,9 +31,19 @@ def avg_trx_fee():
     pass
     
     
-def avg_trx_per_block():
+def avg_trx_per_block(table, date):
+    block_count_query = f"SELECT COUNT(DISTINCT \"blockHeight\") FROM {table} WHERE date = '{date}'"
+
+    trx_count_query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}'"
+    results_block_count = get_query_results(block_count_query)
+    results_trx_count = get_query_results(trx_count_query)
+
+    count_blocks = results_block_count.iloc[0]['count']
+    count_trxs = results_trx_count.iloc[0]['count']
     
-    pass
+    trx_per_block = count_blocks/count_trxs
+    
+    return trx_per_block
 
 def avg_trx_size():
     pass
@@ -96,4 +106,5 @@ def cross_chain_whale_trx():
     pass
 
 if __name__ == "__main__":
-    trx_per_second('x_transactions', '2024-01-21')
+    # trx_per_second('x_transactions', '2024-01-21')
+    avg_trx_per_block('x_transactions', '2024-01-21')
