@@ -39,4 +39,3 @@ class Avalanche_P_Model(GeneralBlockchainModel):
         self.startTimestamp = startTimestamp
         self.endTimestamp = endTimestamp
         self.delegationFeePercent = delegationFeePercent
-
