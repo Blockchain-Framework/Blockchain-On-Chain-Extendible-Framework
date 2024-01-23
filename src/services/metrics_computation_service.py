@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from data_storage_service import get_query_results
 import sys
 
-sys.path.insert(0, 'D:\\Academics\\FYP\\Repos\\Blockchain-On-Chain-Extendible-Framework')
+sys.path.insert(0, 'E:\Uni\Final Year Project\Workspace\codebase\Blockchain-On-Chain-Extendible-Framework')
 
 def trx_per_second(table, date):
     query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}'"
