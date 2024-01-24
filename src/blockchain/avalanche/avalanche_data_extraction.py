@@ -6,7 +6,7 @@ import json
 
 import os
 import sys
-sys.path.insert(0, 'D:\\Academics\\FYP\\Repos\\Blockchain-On-Chain-Extendible-Framework')
+sys.path.insert(0, 'E:\\Uni\\Final Year Project\\Workspace\\codebase\\Blockchain-On-Chain-Extendible-Framework')
 
 from src.utils.http_utils import fetch_transactions
 from src.blockchain.avalanche.avalanche_model import Avalanche_X_Model, Avalanche_C_Model, Avalanche_P_Model
@@ -164,7 +164,7 @@ def extract_x_chain_data(last_day):
 
             data.append(avalanche_tx.__dict__)
             
-    return current_day.strftime("%Y-%m-%d")
+    return current_date
 
 
 
@@ -235,7 +235,7 @@ def extract_c_chain_data(last_day):
             if timestamp < current_day:
                 # Save data to the database for the day that just completed
                 # save_to_database(current_day.strftime("%Y-%m-%d"), pd.DataFrame(data), pd.DataFrame(input_env), pd.DataFrame(output_env), pd.DataFrame(consumed_utxos), pd.DataFrame(emitted_utxos))
-                current_date = current_day.strftime("%Y-%m-%d")
+                current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
                 
                 df_trx = pd.DataFrame(data)
                 df_trx['date'] = current_date
@@ -369,7 +369,7 @@ def extract_c_chain_data(last_day):
             
             data.append(avalanche_tx.__dict__)
     
-    return current_day.strftime("%Y-%m-%d")
+    return current_date
 
 
 
@@ -401,7 +401,7 @@ def extract_p_chain_data(last_day):
             if timestamp < current_day:
                 # Save data to the database for the day that just completed
                 # save_to_database(current_day.strftime("%Y-%m-%d"), pd.DataFrame(data), pd.DataFrame(emitted_utxos), pd.DataFrame(consumed_utxos))
-                current_date = current_day.strftime("%Y-%m-%d")
+                current_date = current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
                 
                 df_trx = pd.DataFrame(data)
                 df_trx['date'] = current_date
@@ -497,7 +497,7 @@ def extract_p_chain_data(last_day):
             data.append(p_tx.__dict__)
         page_token = res_data.get('nextPageToken')
     
-    return current_day.strftime("%Y-%m-%d")
+    return current_date
 
 
 def calculate_p_transaction_value(amounts):
@@ -529,6 +529,6 @@ class EVM:
 
 
 if __name__ == "__main__":
-    # extract_p_chain_data(1705276800)
-    # extract_c_chain_data(1705276800)
+    #extract_c_chain_data("2024-01-19")
     extract_x_chain_data("2024-01-19")
+    #extract_p_chain_data("2024-01-19")
