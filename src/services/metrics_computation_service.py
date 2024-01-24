@@ -27,8 +27,19 @@ def trx_per_day(table, date):
     return count
 
 
-def avg_trx_fee():
-    pass
+# def avg_trx_fee():
+#     pass
+
+def avg_trx_fee(table, date):
+    # Estimating transaction fee based on the difference between amountUnlocked and amountCreated
+    query = f"""
+    SELECT AVG(amountUnlocked - amountCreated) as avg_fee
+    FROM {table}
+    WHERE date = '{date}' AND amountUnlocked IS NOT NULL AND amountCreated IS NOT NULL
+    """
+    results = get_query_results(query)
+    avg_fee = results.iloc[0]['avg_fee'] if results.iloc[0]['avg_fee'] is not None else 0
+    return avg_fee
     
     
 def avg_trx_per_block(table, date):
@@ -107,4 +118,5 @@ def cross_chain_whale_trx():
 
 if __name__ == "__main__":
     # trx_per_second('x_transactions', '2024-01-21')
-    avg_trx_per_block('x_transactions', '2024-01-21')
+    # avg_trx_per_block('x_transactions', '2024-01-21')
+    avg_trx_fee('x_transactions', '2024-01-21')
