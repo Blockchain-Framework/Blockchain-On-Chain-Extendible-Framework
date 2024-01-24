@@ -164,7 +164,7 @@ def extract_x_chain_data(last_day):
 
             data.append(avalanche_tx.__dict__)
             
-    return current_day.strftime("%Y-%m-%d")
+    return current_date
 
 
 
@@ -235,7 +235,7 @@ def extract_c_chain_data(last_day):
             if timestamp < current_day:
                 # Save data to the database for the day that just completed
                 # save_to_database(current_day.strftime("%Y-%m-%d"), pd.DataFrame(data), pd.DataFrame(input_env), pd.DataFrame(output_env), pd.DataFrame(consumed_utxos), pd.DataFrame(emitted_utxos))
-                current_date = current_day.strftime("%Y-%m-%d")
+                current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
                 
                 df_trx = pd.DataFrame(data)
                 df_trx['date'] = current_date
@@ -369,7 +369,7 @@ def extract_c_chain_data(last_day):
             
             data.append(avalanche_tx.__dict__)
     
-    return current_day.strftime("%Y-%m-%d")
+    return current_date
 
 
 
@@ -395,13 +395,14 @@ def extract_p_chain_data(last_day):
         transactions = res_data.get('transactions', [])
 
         for tx in transactions:
-            timestamp = int(tx.get("timestamp"))
-
+            
+            timestamp = int(tx.get("blockTimestamp"))
+            
             # Check if the transaction is before the current day
             if timestamp < current_day:
                 # Save data to the database for the day that just completed
                 # save_to_database(current_day.strftime("%Y-%m-%d"), pd.DataFrame(data), pd.DataFrame(emitted_utxos), pd.DataFrame(consumed_utxos))
-                current_date = current_day.strftime("%Y-%m-%d")
+                current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
                 
                 df_trx = pd.DataFrame(data)
                 df_trx['date'] = current_date
@@ -497,7 +498,7 @@ def extract_p_chain_data(last_day):
             data.append(p_tx.__dict__)
         page_token = res_data.get('nextPageToken')
     
-    return current_day.strftime("%Y-%m-%d")
+    return current_date
 
 
 def calculate_p_transaction_value(amounts):
@@ -506,29 +507,29 @@ def calculate_p_transaction_value(amounts):
 
 #---------------------------------------------------------
 
-def extract_avalanche_data(last_x_time, last_c_time,last_p_time):
-    x_chain_data = extract_x_chain_data(last_x_time)
-    c_chain_data = extract_c_chain_data(last_c_time)
-    p_chain_data = extract_p_chain_data(last_p_time)
+# def extract_avalanche_data(last_x_time, last_c_time,last_p_time):
+#     x_chain_data = extract_x_chain_data(last_x_time)
+#     c_chain_data = extract_c_chain_data(last_c_time)
+#     p_chain_data = extract_p_chain_data(last_p_time)
 
-    return x_chain_data, c_chain_data, p_chain_data
-    # return x_chain_data
+#     return x_chain_data, c_chain_data, p_chain_data
+#     # return x_chain_data
 
-class EVM:
-    def __init__(self, txHash, txType, blockHash, assetId, asssetName, symbol, denomination, type, amount, fromAddress):
-        self.txHash = txHash
-        self.txType = txType
-        self.blockHash = blockHash
-        self.assetId = assetId
-        self.asssetName = asssetName
-        self.symbol = symbol
-        self.denomination = denomination
-        self.type = type
-        self.amount = amount
-        self.fromAddress = fromAddress
+# class EVM:
+#     def __init__(self, txHash, txType, blockHash, assetId, asssetName, symbol, denomination, type, amount, fromAddress):
+#         self.txHash = txHash
+#         self.txType = txType
+#         self.blockHash = blockHash
+#         self.assetId = assetId
+#         self.asssetName = asssetName
+#         self.symbol = symbol
+#         self.denomination = denomination
+#         self.type = type
+#         self.amount = amount
+#         self.fromAddress = fromAddress
 
 
 if __name__ == "__main__":
-    # extract_p_chain_data(1705276800)
-    # extract_c_chain_data(1705276800)
-    extract_x_chain_data("2024-01-19")
+    # extract_p_chain_data("2024-01-19")
+    extract_c_chain_data("2024-01-19")
+    # extract_x_chain_data("2024-01-19")
