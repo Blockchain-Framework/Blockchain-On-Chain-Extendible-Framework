@@ -1,7 +1,8 @@
 from flask import Blueprint, request
 from models.metric import (DailyTransactionCount, AverageTransactionsPerBlock, TotalStakedAmount,
                            TotalBurnedAmount, AverageTransactionValue, LargeTransactionMonitoring,
-                           CrossChainWhaleActivity)
+                           CrossChainWhaleActivity, WhaleAddressActivity, AvgUtxoValue, MedianTransactionValue,
+                           CumulativeNumberOfTransactions, ActiveAddresses, TransactionsPerSecond)
 from models.response import Response # Import the custom Response
 from utils.json_utils import jsonify  # Import the custom jsonify
 from datetime import datetime
@@ -113,3 +114,27 @@ def get_large_transaction_monitoring():
 @metrics_blueprint.route('/cross_chain_whale_activity')
 def get_cross_chain_whale_activity():
     return handle_metric_route(CrossChainWhaleActivity)
+
+@metrics_blueprint.route('/whale_address_activity')
+def get_whale_address_activity():
+    return handle_metric_route(WhaleAddressActivity)
+
+@metrics_blueprint.route('/avg_utxo_value')
+def get_avg_utxo_value():
+    return handle_metric_route(AvgUtxoValue)
+
+@metrics_blueprint.route('/median_trx_value')
+def get_median_trx_value():
+    return handle_metric_route(MedianTransactionValue)
+
+@metrics_blueprint.route('/cumulative_number_of_trx')
+def get_cumulative_number_of_trx():
+    return handle_metric_route(CumulativeNumberOfTransactions)
+
+@metrics_blueprint.route('/active_addresses')
+def get_active_addresses():
+    return handle_metric_route(ActiveAddresses)
+
+@metrics_blueprint.route('/trx_per_second')
+def get_trx_per_second():
+    return handle_metric_route(TransactionsPerSecond)
