@@ -1,4 +1,4 @@
-from flask import Blueprint, request
+from flask import Blueprint, request, current_app
 from models.metric import (DailyTransactionCount, AverageTransactionsPerBlock, TotalStakedAmount,
                            TotalBurnedAmount, AverageTransactionValue, LargeTransactionMonitoring,
                            CrossChainWhaleActivity)
