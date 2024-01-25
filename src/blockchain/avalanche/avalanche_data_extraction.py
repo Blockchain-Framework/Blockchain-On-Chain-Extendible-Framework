@@ -530,6 +530,11 @@ def calculate_p_transaction_value(amounts):
 
 
 if __name__ == "__main__":
-    # extract_p_chain_data("2024-01-19")
-    extract_c_chain_data("2024-01-19")
-    # extract_x_chain_data("2024-01-19")
+    extract_x_chain_data("2024-01-17")
+    print("finished x")
+    
+    extract_c_chain_data("2024-01-17")
+    print("finished c")
+    
+    extract_p_chain_data("2024-01-17")
+    print("finished p")
