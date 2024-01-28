@@ -6,6 +6,14 @@ import json
 import os
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.engine.reflection import Inspector
+from sqlalchemy import create_engine, exc
+from sqlalchemy.inspection import inspect as sqla_inspect
+import psycopg2
+
+def convert_dict_to_json(x):
+    if isinstance(x, dict) or (isinstance(x, list) and all(isinstance(elem, dict) for elem in x)):
+        return json.dumps(x)
+    return x
 
 def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get("DATABASE_CONNECTION")):
     """
@@ -15,7 +23,8 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
     :param df: DataFrame to be appended.
     :param database_connection: Database connection string.
     """
-    df = df.applymap(lambda x: json.dumps(x) if type(x) == dict else x)
+    for col in df.columns:
+        df[col] = df[col].apply(convert_dict_to_json)
     
     try:
         # Create the database engine
@@ -39,7 +48,6 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
-
 def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNECTION")):
     """
     Executes a SQL query and returns the results as a DataFrame.
@@ -58,7 +66,7 @@ def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNEC
 
         return results
 
-    except SQLAlchemyError as e:
+    except exc.SQLAlchemyError as e:
         print(f"Database error: {e}")
         return None
 
@@ -100,8 +108,6 @@ def get_last_transaction_data(db_connection_string, blockchain):
     else:
         return None
 
-import psycopg2
-
 def set_last_transaction_data(db_connection_string, blockchain, timestamp, task=""):
     # Convert numpy.int64 to native Python int
     if isinstance(timestamp, numpy.int64):
@@ -140,7 +146,7 @@ def create_database_and_table(db_connection_string):
     conn = psycopg2.connect(db_connection_string)
     conn.autocommit = True
     cursor = conn.cursor()
-
+    
     # Create table if it does not exist
     # TO DO : work flow meta table (task, blockchain, date)
     cursor.execute("""

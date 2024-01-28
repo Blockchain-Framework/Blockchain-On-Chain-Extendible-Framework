@@ -42,48 +42,81 @@ def get_paginated_data(model, query):
     # Correctly using keyword arguments for paginate
     return query.paginate(page=page, per_page=page_size, error_out=False)
 
+# def handle_metric_route(model):
+#     """
+#     Handle the route logic, including validation, querying, and response formatting.
+#     """
+#     try:
+#         start_date = validate_date(request.args.get('start_date'))
+#         end_date = validate_date(request.args.get('end_date'))
+        
+#         if start_date is None or end_date is None:
+#             raise ValueError("Invalid date format. Use YYYY-MM-DD.")
+
+#         query = model.query
+#         query = filter_by_date(model, query, start_date, end_date)
+#         paginated_query = get_paginated_data(model, query)
+#         items = paginated_query.items
+
+#         response = Response(True, [item.serialize() for item in items], len(items))
+#         return jsonify(response.to_dict()), 200
+#     # try:
+#     #     start_date = validate_date(request.args.get('start_date'))
+#     #     end_date = validate_date(request.args.get('end_date'))
+#     #     chain =  validate_date(request.args.get('chain'))
+        
+#     #     if start_date is None or end_date is None or chain is None:
+#     #         raise ValueError("Invalid date format. Use YYYY-MM-DD.")
+
+#     #     query = model.query
+#     #     query = filter_by_date(model, query, start_date, end_date, chain)
+#     #     paginated_query = get_paginated_data(model, query)
+#     #     items = paginated_query.items
+
+#     #     response = Response(True, [item.serialize() for item in items], len(items))
+#     #     return jsonify(response.to_dict()), 200
+
+#     except ValueError as ve:
+#         return jsonify(Response(False, error=str(ve)).to_dict()), 400
+#     except SQLAlchemyError as e:
+#         # Log the detailed error message for debugging
+#         logging.error(f"Database error: {e}")
+#         return jsonify(Response(False, error="Database error").to_dict()), 500
+#     except Exception as e:
+#         # Generic catch for any other unexpected exceptions
+#         return jsonify(Response(False, error=f"An unexpected error occurred: {str(e)}").to_dict()), 500
 
 def handle_metric_route(model):
     """
-    Handle the route logic, including validation, querying, and response formatting.
+    Handle the route logic for fetching metric data.
+    This function supports filtering by date range and pagination.
     """
     try:
         start_date = validate_date(request.args.get('start_date'))
         end_date = validate_date(request.args.get('end_date'))
-        
-        if start_date is None or end_date is None:
-            raise ValueError("Invalid date format. Use YYYY-MM-DD.")
 
         query = model.query
-        query = filter_by_date(model, query, start_date, end_date)
+
+        # Apply date filtering if start_date and end_date are provided
+        if start_date is not None or end_date is not None:
+            query = filter_by_date(model, query, start_date, end_date)
+
+        # Apply pagination
         paginated_query = get_paginated_data(model, query)
         items = paginated_query.items
 
+        # Serialize and return the response
         response = Response(True, [item.serialize() for item in items], len(items))
         return jsonify(response.to_dict()), 200
-    # try:
-    #     start_date = validate_date(request.args.get('start_date'))
-    #     end_date = validate_date(request.args.get('end_date'))
-    #     chain =  validate_date(request.args.get('chain'))
-        
-    #     if start_date is None or end_date is None or chain is None:
-    #         raise ValueError("Invalid date format. Use YYYY-MM-DD.")
 
-    #     query = model.query
-    #     query = filter_by_date(model, query, start_date, end_date, chain)
-    #     paginated_query = get_paginated_data(model, query)
-    #     items = paginated_query.items
-
-    #     response = Response(True, [item.serialize() for item in items], len(items))
-    #     return jsonify(response.to_dict()), 200
     except ValueError as ve:
         return jsonify(Response(False, error=str(ve)).to_dict()), 400
     except SQLAlchemyError as e:
-        # Log the detailed error message for debugging
+        # Log the error and return a database error response
         logging.error(f"Database error: {e}")
         return jsonify(Response(False, error="Database error").to_dict()), 500
     except Exception as e:
-        # Generic catch for any other unexpected exceptions
+        # Handle any other exceptions
         return jsonify(Response(False, error=f"An unexpected error occurred: {str(e)}").to_dict()), 500
 
 # Define individual routes for each metric

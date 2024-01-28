@@ -6,7 +6,7 @@ import json
 
 import os
 import sys
-sys.path.insert(0, 'E:\\Uni\\Final Year Project\\Workspace\\codebase\\Blockchain-On-Chain-Extendible-Framework')
+sys.path.insert(0, 'D:\\Academics\\FYP\\Repos\\Blockchain-On-Chain-Extendible-Framework')
 
 from src.utils.http_utils import fetch_transactions
 from src.blockchain.avalanche.avalanche_model import Avalanche_X_Model, Avalanche_C_Model, Avalanche_P_Model
@@ -87,6 +87,11 @@ def extract_x_chain_data(last_day):
                 df_emitted_utxos['date'] = current_date
                 df_consumed_utxos = pd.DataFrame(consumed_utxos)
                 df_consumed_utxos['date'] = current_date
+                
+                df_trx['date'] = pd.to_datetime(df_trx['date'])
+                df_emitted_utxos['date'] = pd.to_datetime(df_emitted_utxos['date'])
+                df_consumed_utxos['date'] = pd.to_datetime(df_consumed_utxos['date'])
+                
                 # print(df_trx)
                 append_dataframe_to_sql('x_transactions', df_trx)
                 append_dataframe_to_sql('x_emitted_utxos', df_emitted_utxos)
@@ -248,6 +253,12 @@ def extract_c_chain_data(last_day):
                 df_output_env = pd.DataFrame(output_env)
                 df_output_env['date'] = current_date
                 
+                df_trx['date'] = pd.to_datetime(df_trx['date'])
+                df_emitted_utxos['date'] = pd.to_datetime(df_emitted_utxos['date'])
+                df_consumed_utxos['date'] = pd.to_datetime(df_consumed_utxos['date'])
+                df_input_env['date'] = pd.to_datetime(df_input_env['date'])
+                df_output_env['date'] = pd.to_datetime(df_output_env['date'])
+
                 append_dataframe_to_sql('c_transactions', df_trx)
                 append_dataframe_to_sql('c_emitted_utxos', df_emitted_utxos)
                 append_dataframe_to_sql('c_emitted_utxos', df_consumed_utxos)
@@ -348,7 +359,6 @@ def extract_c_chain_data(last_day):
                 # emmitted UTXOs
                 for e_utxo in tx.get('consumedUtxos', []):
                     
-                    
                     asset =  e_utxo['asset']
                     
                     emit_utxo = AvalancheUTXO(
@@ -368,10 +378,8 @@ def extract_c_chain_data(last_day):
             page_token = res_data.get('nextPageToken')
             
             data.append(avalanche_tx.__dict__)
-    
+
     return current_date
-
-
 
 def extract_p_chain_data(last_day):
     
@@ -395,7 +403,7 @@ def extract_p_chain_data(last_day):
         transactions = res_data.get('transactions', [])
 
         for tx in transactions:
-            timestamp = int(tx.get("timestamp"))
+            timestamp = int(tx.get("blockTimestamp"))
 
             # Check if the transaction is before the current day
             if timestamp < current_day:
@@ -409,6 +417,10 @@ def extract_p_chain_data(last_day):
                 df_emitted_utxos['date'] = current_date
                 df_consumed_utxos = pd.DataFrame(consumed_utxos)
                 df_consumed_utxos['date'] = current_date
+                
+                df_trx['date'] = pd.to_datetime(df_trx['date'])
+                df_emitted_utxos['date'] = pd.to_datetime(df_emitted_utxos['date'])
+                df_consumed_utxos['date'] = pd.to_datetime(df_consumed_utxos['date'])
                 
                 append_dataframe_to_sql('p_transactions', df_trx)
                 append_dataframe_to_sql('p_emitted_utxos', df_emitted_utxos)
@@ -529,6 +541,6 @@ class EVM:
 
 
 if __name__ == "__main__":
-    #extract_c_chain_data("2024-01-19")
+    extract_c_chain_data("2024-01-19")
     extract_x_chain_data("2024-01-19")
-    #extract_p_chain_data("2024-01-19")
+    extract_p_chain_data("2024-01-19")

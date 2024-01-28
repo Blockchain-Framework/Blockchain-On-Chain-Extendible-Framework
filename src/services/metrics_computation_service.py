@@ -2,7 +2,7 @@ import pandas as pd
 import psycopg2
 import numpy as np
 from sqlalchemy import create_engine
-from data_storage_service import get_query_results
+from .data_storage_service import get_query_results
 import sys
 import logging
 
@@ -57,7 +57,6 @@ def trx_per_day(table, date):
     if results is not None and not results.empty:
         return results.iloc[0]['count']
     return None
-
 
 def avg_trx_fee():
     pass
@@ -211,7 +210,6 @@ def avg_trx_value(table, date_range):
         logging.warning(f"No data found for average transaction value in date range {date_range}.")
         return None
 
-
 def median_trx_value(table, date_range):
     """
     Calculate the median transaction value in a given table within a specified date range.
@@ -219,7 +217,7 @@ def median_trx_value(table, date_range):
     if not table or not date_range:
         logging.error("Invalid input parameters for median_trx_value.")
         return None
-
+    
     query = f"SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(value AS NUMERIC)) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
     #print(f"Debug: SQL Query - {query}")
     results = execute_query(query)
@@ -232,10 +230,6 @@ def median_trx_value(table, date_range):
     else:
         logging.warning(f"No data found for median transaction value in date range {date_range}.")
         return None
-
-
-
-
 
 def avg_utxo_value(table, date_range):
     """
@@ -252,7 +246,6 @@ def avg_utxo_value(table, date_range):
     if results is not None and not results.empty:
         return results.iloc[0]['avg']
     return None
-
 
 
 def total_staked_amount(table, date_range):
