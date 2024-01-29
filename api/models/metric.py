@@ -88,7 +88,8 @@ class CrossChainWhaleActivity(db.Model):
     def serialize(self):
         return {
             'date': self.date,
-            'chain_name': self.chain_name,
+            'blockchain': self.chain_name,
+            'sub_chain':self.sub_chain_name,
             'value': self.value
         }
 

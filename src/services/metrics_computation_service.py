@@ -11,7 +11,6 @@ sys.path.insert(0, 'E:\\Uni\\Final Year Project\\Workspace\\codebase\\Blockchain
 # Set up basic logging
 logging.basicConfig(level=logging.INFO)
 
-
 def execute_query(query):
     """
     Execute a database query safely.
@@ -60,7 +59,6 @@ def trx_per_day(table, date):
 
 def avg_trx_fee():
     pass
-    
     
 def avg_trx_per_block(table, date):
     """
@@ -334,55 +332,59 @@ def cross_chain_whale_trx(table, date_range, threshold):
 
 if __name__ == "__main__":
     # Define date ranges and thresholds for calculations
-    date_single_day = '2024-01-21'
-    date_range_full = ('2024-01-01', '2024-01-21')
+    date_single_day = '2024-01-27'
+    date_range_full = ('2024-01-20', '2024-01-27')
     large_trx_threshold = 10000  # Threshold for a large transaction
     whale_trx_threshold = 50000  # Threshold for whale transactions
 
-    # Transactions per second
-    trx_per_sec = trx_per_second('x_transactions', date_single_day)
-    print(f"Transactions per second: {trx_per_sec}")
+    # # Transactions per second
+    # trx_per_sec = trx_per_second('x_transactions', date_single_day)
+    # print(f"Transactions per second: {trx_per_sec}")
 
-    # Transactions per day
-    trx_per_day_val = trx_per_day('x_transactions', date_single_day)
-    print(f"Transactions per day: {trx_per_day_val}")
+    # # Transactions per day
+    # trx_per_day_val = trx_per_day('x_transactions', date_single_day)
+    # print(f"Transactions per day: {trx_per_day_val}")
 
-    # Average transactions per block
-    avg_trx_block = avg_trx_per_block('x_transactions', date_single_day)
-    print(f"Average transactions per block: {avg_trx_block}")
+    # # Average transactions per block
+    # avg_trx_block = avg_trx_per_block('x_transactions', date_single_day)
+    # print(f"Average transactions per block: {avg_trx_block}")
 
-    # Total transactions
-    total_transactions = total_trxs('x_transactions')
-    print(f"Total transactions: {total_transactions}")
+    # # Total transactions
+    # total_transactions = total_trxs('x_transactions')
+    # print(f"Total transactions: {total_transactions}")
 
-    # Total blocks
-    total_blocks_val = total_blocks('x_transactions')
-    print(f"Total blocks: {total_blocks_val}")
+    # # Total blocks
+    # total_blocks_val = total_blocks('x_transactions')
+    # print(f"Total blocks: {total_blocks_val}")
 
-    # Number of transactions in a specific date range
-    trx_count_val = trx_count('x_transactions', date_range_full)
-    print(f"Number of transactions in date range {date_range_full}: {trx_count_val}")
+    # # Number of transactions in a specific date range
+    # trx_count_val = trx_count('x_transactions', date_range_full)
+    # print(f"Number of transactions in date range {date_range_full}: {trx_count_val}")
 
-    # Cumulative number of transactions up to a specified date
-    cumulative_trx_val = cumulative_number_of_trx('x_transactions', date_single_day)
-    print(f"Cumulative number of transactions up to {date_single_day}: {cumulative_trx_val}")
+    # # Cumulative number of transactions up to a specified date
+    # cumulative_trx_val = cumulative_number_of_trx('x_transactions', date_single_day)
+    # print(f"Cumulative number of transactions up to {date_single_day}: {cumulative_trx_val}")
 
-    # Average transaction value in a specific date range
-    avg_trx_value_val = avg_trx_value('x_transactions', date_range_full)
-    print(f"Average transaction value in date range {date_range_full}: {avg_trx_value_val}")
+    # # Average transaction value in a specific date range
+    # avg_trx_value_val = avg_trx_value('x_transactions', date_range_full)
+    # print(f"Average transaction value in date range {date_range_full}: {avg_trx_value_val}")
 
-    # Median transaction value in a specific date range
-    median_trx_value_val = median_trx_value('x_transactions', date_range_full)
-    print(f"Median transaction value in date range {date_range_full}: {median_trx_value_val}")
+    # # Median transaction value in a specific date range
+    # median_trx_value_val = median_trx_value('x_transactions', date_range_full)
+    # print(f"Median transaction value in date range {date_range_full}: {median_trx_value_val}")
 
-    # Average UTXO Value (X-Chain)
-    avg_utxo_val_x = avg_utxo_value('x_emitted_utxos', date_range_full)
-    print(f"Average UTXO value in X-Chain date range {date_range_full}: {avg_utxo_val_x}")
+    # # Average UTXO Value (X-Chain)
+    # avg_utxo_val_x = avg_utxo_value('x_emitted_utxos', date_range_full)
+    # print(f"Average UTXO value in X-Chain date range {date_range_full}: {avg_utxo_val_x}")
 
-    # Large Transactions (X-Chain)
-    large_trx_val_x = large_trx('x_transactions', date_range_full, large_trx_threshold)
-    print(f"Number of large transactions in X-Chain (threshold: {large_trx_threshold}) in date range {date_range_full}: {large_trx_val_x}")
+    # # Large Transactions (X-Chain)
+    # large_trx_val_x = large_trx('x_transactions', date_range_full, large_trx_threshold)
+    # print(f"Number of large transactions in X-Chain (threshold: {large_trx_threshold}) in date range {date_range_full}: {large_trx_val_x}")
 
-    # Whale Address Activity (X-Chain)
-    whale_activity_val_x = whale_address_activity('x_transactions', date_range_full, whale_trx_threshold)
-    print(f"Number of whale transactions in X-Chain (threshold: {whale_trx_threshold}) in date range {date_range_full}: {whale_activity_val_x}")
+    # # Whale Address Activity (X-Chain)
+    # whale_activity_val_x = whale_address_activity('x_transactions', date_range_full, whale_trx_threshold)
+    # print(f"Number of whale transactions in X-Chain (threshold: {whale_trx_threshold}) in date range {date_range_full}: {whale_activity_val_x}")
+    
+    #Total staked amount
+    staked_amount = total_staked_amount('x_emitted_utxos', date_range_full)
+    print(f'Total staked amount in X-Chain (date range {date_range_full}): {staked_amount}')
