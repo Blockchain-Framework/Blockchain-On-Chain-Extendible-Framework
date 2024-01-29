@@ -161,7 +161,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Transactions per second: {trx_per_sec}")
     df_trx_per_sec = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [trx_per_sec]
     })
     df_trx_per_sec['date'] = pd.to_datetime(df_trx_per_sec['date'])
@@ -172,7 +173,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Transactions per day: {trx_per_day_val}")
     df_trx_per_day = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [trx_per_day_val]
     })
     df_trx_per_day['date'] = pd.to_datetime(df_trx_per_day['date'])
@@ -183,7 +185,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Average transactions per block: {avg_trx_block}")
     df_avg_trx_block = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [avg_trx_block]
     })
     df_avg_trx_block['date'] = pd.to_datetime(df_avg_trx_block['date'])
@@ -194,7 +197,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Total transactions: {total_transactions}")
     df_total_transactions = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [total_transactions]
     })
     df_total_transactions['date'] = pd.to_datetime(df_total_transactions['date'])
@@ -205,7 +209,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Total blocks: {total_blocks_val}")
     df_total_blocks = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [total_blocks_val]
     })
     df_total_blocks['date'] = pd.to_datetime(df_total_blocks['date'])
@@ -216,7 +221,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Number of transactions in date range {date_range_full}: {trx_count_val}")
     df_trx_count = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [trx_count_val]
     })
     df_trx_count['date'] = pd.to_datetime(df_trx_count['date'])
@@ -227,7 +233,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Cumulative number of transactions up to {date_single_day}: {cumulative_trx_val}")
     df_cumulative_trx = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [cumulative_trx_val]
     })
     df_cumulative_trx['date'] = pd.to_datetime(df_cumulative_trx['date'])
@@ -238,7 +245,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Average transaction value in date range {date_range_full}: {avg_trx_value_val}")
     df_avg_trx_value = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [avg_trx_value_val]
     })
     df_avg_trx_value['date'] = pd.to_datetime(df_avg_trx_value['date'])
@@ -249,7 +257,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Median transaction value in date range {date_range_full}: {median_trx_value_val}")
     df_median_trx_value = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [median_trx_value_val]
     })
     df_median_trx_value['date'] = pd.to_datetime(df_median_trx_value['date'])
@@ -260,7 +269,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Average UTXO value in X-Chain date range {date_range_full}: {avg_utxo_val_x}")
     df_avg_utxo_value = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [avg_utxo_val_x]
     })
     df_avg_utxo_value['date'] = pd.to_datetime(df_avg_utxo_value['date'])
@@ -271,7 +281,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Number of large transactions in X-Chain (threshold: {large_trx_threshold}) in date range {date_range_full}: {large_trx_val_x}")
     df_large_transactions = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [large_trx_val_x]
     })
     df_large_transactions['date'] = pd.to_datetime(df_large_transactions['date'])
@@ -282,7 +293,8 @@ def caculate_metrics(date_single_day, date_range_full):
     print(f"Number of whale transactions in X-Chain (threshold: {whale_trx_threshold}) in date range {date_range_full}: {whale_activity_val_x}")
     df_whale_activity = pd.DataFrame({
         'date': [date_single_day],
-        'chain_name': ['X chain'],
+        'blockchain': ['Avalanche'],
+        'subchain':['X_chain'],
         'value': [whale_activity_val_x]
     })
     df_whale_activity['date'] = pd.to_datetime(df_whale_activity['date'])
@@ -314,7 +326,7 @@ if __name__ == "__main__":
     #         manager.functions[args.blockchain](start_date)
     #     else:
     #         print(f"Unsupported blockchain type: {args.blockchain}")
-    dates = ["2024-01-17","2024-01-18","2024-01-19","2024-01-20","2024-01-21","2024-01-22","2024-01-23","2024-01-24"]
+    dates = ["2024-01-19","2024-01-20","2024-01-21","2024-01-22","2024-01-23","2024-01-24","2024-01-25","2024-01-26"]
     
     for i in dates:
-        caculate_metrics(i, ('2024-01-01', '2024-01-21'))
+        caculate_metrics(i, ('2024-01-19', '2024-01-26'))
