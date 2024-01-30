@@ -329,6 +329,24 @@ def cross_chain_whale_trx(table, date_range, threshold):
         return results.iloc[0]['count']
     return None
 
+#Realized cap
+def get_avax_price_at_timestamp(timestamp):
+    # This function should return the price of AVAX at the given timestamp.
+    # This data might come from a historical price database or API.
+    pass
+
+def calculate_realized_cap(transactions):
+    realized_cap = 0
+    for tx in transactions:
+        # Example for UTXOs in a transaction, adjust based on actual data structure
+        for utxo in tx.get('emittedUtxos', []):
+            amount_avax = int(utxo['asset']['amount'])  # Assuming amount is in the smallest unit
+            timestamp = utxo['timestamp']
+            price_at_time = get_avax_price_at_timestamp(timestamp)
+            realized_cap += amount_avax * price_at_time
+
+    return realized_cap
+
 #  C chain
 def count_contracts_deployed(transactions):
     contract_deployments = 0
