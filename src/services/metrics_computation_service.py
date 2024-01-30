@@ -127,15 +127,15 @@ def total_addresses():
 def active_senders():
     pass
 
-def active_addresses(table, date_range):
+def active_addresses(table, date):
     """
-    Calculate the number of unique addresses that have been active (either sending or receiving) in a given date range.
+    Calculate the number of unique addresses that have been active (either sending or receiving) on a given date.
     """
-    if not table or not date_range:
+    if not table or not date:
         logging.error("Invalid input parameters for active_addresses.")
         return None
 
-    query = f"SELECT COUNT(DISTINCT addresses) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
+    query = f"SELECT COUNT(DISTINCT addresses) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -187,58 +187,49 @@ def token_transfers():
 def contract_creations():
     pass
 
-def avg_trx_value(table, date_range):
+def avg_trx_value(table, date):
     """
-    Calculate the average transaction value in a given table within a specified date range.
+    Calculate the average transaction value in a given table for a specified date.
     """
-    if not table or not date_range:
+    if not table or not date:
         logging.error("Invalid input parameters for avg_trx_value.")
         return None
 
-    query = f"SELECT AVG(CAST(value AS NUMERIC)) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-    #print(f"Debug: SQL Query - {query}")
+    query = f"SELECT AVG(CAST(value AS NUMERIC)) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        avg_value = results.iloc[0]['avg']
-        #print(f"Debug: Results - {results}")
-        #logging.info(f"Average transaction value in date range {date_range}: {avg_value}")
-        return avg_value
+        return results.iloc[0]['avg']
     else:
-        logging.warning(f"No data found for average transaction value in date range {date_range}.")
+        logging.warning(f"No data found for average transaction value on {date}.")
         return None
 
-def median_trx_value(table, date_range):
+def median_trx_value(table, date):
     """
-    Calculate the median transaction value in a given table within a specified date range.
+    Calculate the median transaction value in a given table for a specified date.
     """
-    if not table or not date_range:
+    if not table or not date:
         logging.error("Invalid input parameters for median_trx_value.")
         return None
     
-    query = f"SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(value AS NUMERIC)) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-    #print(f"Debug: SQL Query - {query}")
+    query = f"SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(value AS NUMERIC)) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        median_value = results.iloc[0]['percentile_cont']
-        #print(f"Debug: Results - {results}")
-        #logging.info(f"Median transaction value in date range {date_range}: {median_value}")
-        return median_value
+        return results.iloc[0]['percentile_cont']
     else:
-        logging.warning(f"No data found for median transaction value in date range {date_range}.")
+        logging.warning(f"No data found for median transaction value on {date}.")
         return None
 
-def avg_utxo_value(table, date_range):
+def avg_utxo_value(table, date):
     """
-    Calculate the average value of UTXOs in a given table within a specified date range.
-    Note: This function assumes the 'value' column is of text type and casts it to a numeric type for the calculation.
+    Calculate the average value of UTXOs in a given table for a specified date.
     """
-    if not table or not date_range:
+    if not table or not date:
         logging.error("Invalid input parameters for avg_utxo_value.")
         return None
 
-    query = f"SELECT AVG(CAST(value AS NUMERIC)) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
+    query = f"SELECT AVG(CAST(value AS NUMERIC)) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -246,15 +237,15 @@ def avg_utxo_value(table, date_range):
     return None
 
 
-def total_staked_amount(table, date_range):
+def total_staked_amount(table, date):
     """
-    Calculate the total amount of tokens staked in a given table within a specified date range.
+    Calculate the total amount of tokens staked in a given table for a specified date.
     """
-    if not table or not date_range:
+    if not table or not date:
         logging.error("Invalid input parameters for total_staked_amount.")
         return None
 
-    query = f"SELECT SUM(amountStaked) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
+    query = f"SELECT SUM(amountStaked) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -262,15 +253,15 @@ def total_staked_amount(table, date_range):
     return None
 
 
-def total_burned_amount(table, date_range):
+def total_burned_amount(table, date):
     """
-    Calculate the total amount of tokens burned in a given table within a specified date range.
+    Calculate the total amount of tokens burned in a given table for a specified date.
     """
-    if not table or not date_range:
+    if not table or not date:
         logging.error("Invalid input parameters for total_burned_amount.")
         return None
 
-    query = f"SELECT SUM(amountBurned) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
+    query = f"SELECT SUM(amountBurned) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -278,16 +269,15 @@ def total_burned_amount(table, date_range):
     return None
 
 
-def large_trx(table, date_range, threshold):
+def large_trx(table, date, threshold):
     """
-    Calculate the number of large transactions exceeding a certain threshold value in a given table within a specified date range.
-    Note: Assumes 'value' is stored as a text type and casts it to numeric for comparison.
+    Calculate the number of large transactions exceeding a certain threshold value in a given table for a specified date.
     """
-    if not table or not date_range or threshold is None:
+    if not table or not date or threshold is None:
         logging.error("Invalid input parameters for large_trx.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}' AND CAST(value AS NUMERIC) > {threshold}"
+    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}' AND CAST(value AS NUMERIC) > {threshold}"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -295,17 +285,16 @@ def large_trx(table, date_range, threshold):
     return None
 
 
-def whale_address_activity(table, date_range, threshold):
+def whale_address_activity(table, date, threshold):
     """
-    Calculate the number of transactions classified as whale activity in a given table within a specified date range.
+    Calculate the number of transactions classified as whale activity in a given table for a specified date.
     Whale transactions are defined as those exceeding a certain threshold value.
-    Note: Assumes 'value' is stored as a text type and casts it to numeric for comparison.
     """
-    if not table or not date_range or threshold is None:
+    if not table or not date or threshold is None:
         logging.error("Invalid input parameters for whale_address_activity.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}' AND CAST(value AS NUMERIC) > {threshold}"
+    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}' AND CAST(value AS NUMERIC) > {threshold}"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -313,16 +302,16 @@ def whale_address_activity(table, date_range, threshold):
     return None
 
 
-def cross_chain_whale_trx(table, date_range, threshold):
+def cross_chain_whale_trx(table, date, threshold):
     """
-    Calculate the number of large cross-chain transactions in a given table within a specified date range.
+    Calculate the number of large cross-chain transactions in a given table for a specified date.
     Cross-chain whale transactions are defined as those exceeding a certain threshold value and occurring across different chains.
     """
-    if not table or not date_range or threshold is None:
+    if not table or not date or threshold is None:
         logging.error("Invalid input parameters for cross_chain_whale_trx.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}' AND CAST(value AS NUMERIC) > {threshold} AND sourceChain != destinationChain"
+    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}' AND CAST(value AS NUMERIC) > {threshold} AND sourceChain != destinationChain"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -469,3 +458,39 @@ if __name__ == "__main__":
     #Total staked amount
     staked_amount = total_staked_amount('x_emitted_utxos', date_range_full)
     print(f'Total staked amount in X-Chain (date range {date_range_full}): {staked_amount}')
+
+
+    print("------------")
+
+    table = "x_transactions"
+    date = "2023-01-01"  # Specify the date for which you want to calculate the metrics
+    large_trx_threshold = 10000  # Threshold for a large transaction
+    whale_trx_threshold = 50000  # Threshold for whale transactions
+
+    # Call each function and print the results
+    avg_trx_value_result = avg_trx_value(table, date)
+    print(f"Average Transaction Value on {date}: {avg_trx_value_result}")
+
+    median_trx_value_result = median_trx_value(table, date)
+    print(f"Median Transaction Value on {date}: {median_trx_value_result}")
+
+    avg_utxo_value_result = avg_utxo_value('x_emitted_utxos', date)
+    print(f"Average UTXO Value on {date}: {avg_utxo_value_result}")
+
+    #total_staked_amount_result = total_staked_amount(table, date)
+    #print(f"Total Staked Amount on {date}: {total_staked_amount_result}")
+
+    #total_burned_amount_result = total_burned_amount(table, date)
+    #print(f"Total Burned Amount on {date}: {total_burned_amount_result}")
+
+    large_trx_result = large_trx(table, date, large_trx_threshold)
+    print(f"Large Transactions on {date}: {large_trx_result}")
+
+    whale_address_activity_result = whale_address_activity(table, date, whale_trx_threshold)
+    print(f"Whale Address Activity on {date}: {whale_address_activity_result}")
+
+    #cross_chain_whale_trx_result = cross_chain_whale_trx(table, date, threshold)
+    #print(f"Cross-Chain Whale Transactions on {date}: {cross_chain_whale_trx_result}")
+
+    active_addresses_result = active_addresses(table, date)
+    print(f"Active Addresses on {date}: {active_addresses_result}")
