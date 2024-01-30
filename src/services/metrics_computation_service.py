@@ -280,9 +280,6 @@ def median_consumed_utxo_amount(table, date):
         return None
 
 
-
-
-
 def total_staked_amount(table, date):
     """
     Calculate the total amount of tokens staked in a given table for a specified date.
@@ -291,7 +288,7 @@ def total_staked_amount(table, date):
         logging.error("Invalid input parameters for total_staked_amount.")
         return None
 
-    query = f"SELECT SUM(amountStaked) FROM {table} WHERE date = '{date}'"
+    query = f"SELECT SUM(CAST(\"amountStaked\" AS NUMERIC)) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -306,7 +303,7 @@ def total_burned_amount(table, date):
         logging.error("Invalid input parameters for total_burned_amount.")
         return None
 
-    query = f"SELECT SUM(amountBurned) FROM {table} WHERE date = '{date}'"
+    query = f"SELECT SUM(CAST(\"amountBurned\" AS NUMERIC)) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -314,54 +311,99 @@ def total_burned_amount(table, date):
     return None
 
 
-def large_trx(table, date, threshold):
+def large_trx(emitted_table, consumed_table, date, threshold):
     """
-    Calculate the number of large transactions exceeding a certain threshold value in a given table for a specified date.
+    Calculate the number of large transactions where either the emitted or consumed amount exceeds a certain threshold value
+    for specified emitted and consumed tables on a given date.
     """
-    if not table or not date or threshold is None:
+    if not emitted_table or not consumed_table or not date or threshold is None:
         logging.error("Invalid input parameters for large_trx.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}' AND CAST(value AS NUMERIC) > {threshold}"
+    query = f"""
+    WITH emitted AS (
+        SELECT \"txHash\", SUM(CAST(amount AS NUMERIC)) as total_emitted
+        FROM {emitted_table}
+        WHERE date = '{date}'
+        GROUP BY \"txHash\"
+        HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
+    ),
+    consumed AS (
+        SELECT \"txHash\", SUM(CAST(amount AS NUMERIC)) as total_consumed
+        FROM {consumed_table}
+        WHERE date = '{date}'
+        GROUP BY \"txHash\"
+        HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
+    )
+    SELECT COUNT(DISTINCT \"txHash\") as large_transactions_count
+    FROM (
+        SELECT \"txHash\" FROM emitted
+        UNION
+        SELECT \"txHash\" FROM consumed
+    ) as combined
+    """
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        return results.iloc[0]['count']
+        return results.iloc[0]['large_transactions_count']
     return None
 
 
-def whale_address_activity(table, date, threshold):
+
+def whale_address_activity(emitted_table, consumed_table, date, threshold):
     """
-    Calculate the number of transactions classified as whale activity in a given table for a specified date.
-    Whale transactions are defined as those exceeding a certain threshold value.
+    Calculate the number of whale transactions where either the emitted or consumed amount exceeds a certain threshold value
+    for specified emitted and consumed tables on a given date.
     """
-    if not table or not date or threshold is None:
+    if not emitted_table or not consumed_table or not date or threshold is None:
         logging.error("Invalid input parameters for whale_address_activity.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}' AND CAST(value AS NUMERIC) > {threshold}"
+    query = f"""
+    WITH whale_emitted AS (
+        SELECT \"txHash\"
+        FROM {emitted_table}
+        WHERE date = '{date}'
+        GROUP BY \"txHash\"
+        HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
+    ),
+    whale_consumed AS (
+        SELECT \"txHash\"
+        FROM {consumed_table}
+        WHERE date = '{date}'
+        GROUP BY \"txHash\"
+        HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
+    )
+    SELECT COUNT(DISTINCT \"txHash\") as whale_transactions_count
+    FROM (
+        SELECT \"txHash\" FROM whale_emitted
+        UNION
+        SELECT \"txHash\" FROM whale_consumed
+    ) as combined_whale_transactions
+    """
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        return results.iloc[0]['count']
+        return results.iloc[0]['whale_transactions_count']
     return None
 
 
-def cross_chain_whale_trx(table, date, threshold):
-    """
-    Calculate the number of large cross-chain transactions in a given table for a specified date.
-    Cross-chain whale transactions are defined as those exceeding a certain threshold value and occurring across different chains.
-    """
-    if not table or not date or threshold is None:
-        logging.error("Invalid input parameters for cross_chain_whale_trx.")
-        return None
 
-    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}' AND CAST(value AS NUMERIC) > {threshold} AND sourceChain != destinationChain"
-    results = execute_query(query)
+# def cross_chain_whale_trx(table, date, threshold):
+#     """
+#     Calculate the number of large cross-chain transactions in a given table for a specified date.
+#     Cross-chain whale transactions are defined as those exceeding a certain threshold value and occurring across different chains.
+#     """
+#     if not table or not date or threshold is None:
+#         logging.error("Invalid input parameters for cross_chain_whale_trx.")
+#         return None
+
+#     query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}' AND CAST(value AS NUMERIC) > {threshold} AND sourceChain != destinationChain"
+#     results = execute_query(query)
     
-    if results is not None and not results.empty:
-        return results.iloc[0]['count']
-    return None
+#     if results is not None and not results.empty:
+#         return results.iloc[0]['count']
+#     return None
 
 #Realized cap
 def get_avax_price_at_timestamp(timestamp):
@@ -447,10 +489,10 @@ def count_contract_creations(transactions):
 
 if __name__ == "__main__":
     # Define date ranges and thresholds for calculations
-    date_single_day = '2024-01-27'
+    date_single_day = '2024-01-20'
     date_range_full = ('2024-01-20', '2024-01-27')
     large_trx_threshold = 10000  # Threshold for a large transaction
-    whale_trx_threshold = 50000  # Threshold for whale transactions
+    whale_trx_threshold = 8000000000000  # Threshold for whale transactions
 
     # Transactions per second
     trx_per_sec_x = trx_per_second('x_transactions', date_single_day)
@@ -555,6 +597,32 @@ if __name__ == "__main__":
     print(f"C-Chain - Median Consumed UTXO Value: {median_consumed_utxo_amount_c}")
     median_consumed_utxo_amount_p = median_consumed_utxo_amount('p_consumed_utxos', date_single_day)
     print(f"P-Chain - Median Consumed UTXO Value: {median_consumed_utxo_amount_p}")
+
+
+    #Total Staked Amount - P Chain
+    total_staked_p = total_staked_amount('p_transactions', date_single_day)
+    print(f"P-Chain - Total Staked Amount: {total_staked_p}")
+
+    #Total Burned Amount - P Chain
+    total_burned_p = total_burned_amount('p_transactions', date_single_day)
+    print(f"P-Chain - Total Burned Amount: {total_burned_p}")
+
+    # Large Transactions
+    large_transactions_x = large_trx('x_emitted_utxos', 'x_consumed_utxos', date_single_day, large_trx_threshold)
+    print(f"X-Chain - Large Transactions: {large_transactions_x}")
+    large_transactions_c = large_trx('c_emitted_utxos', 'c_consumed_utxos', date_single_day, large_trx_threshold)
+    print(f"C-Chain - Large Transactions: {large_transactions_c}")
+    large_transactions_p = large_trx('p_emitted_utxos', 'p_consumed_utxos', date_single_day, large_trx_threshold)
+    print(f"P-Chain - Large Transactions: {large_transactions_p}")
+
+
+    # Whale Transactions
+    whale_transactions_x = whale_address_activity('x_emitted_utxos', 'x_consumed_utxos', date_single_day, whale_trx_threshold)
+    print(f"X-Chain - Whale Transactions: {whale_transactions_x}")
+    whale_transactions_c = whale_address_activity('c_emitted_utxos', 'c_consumed_utxos', date_single_day, whale_trx_threshold)
+    print(f"C-Chain - Whale Transactions: {whale_transactions_c}")
+    whale_transactions_p = whale_address_activity('p_emitted_utxos', 'p_consumed_utxos', date_single_day, whale_trx_threshold)
+    print(f"P-Chain - Whale Transactions: {whale_transactions_p}")
 
     print("---")
 
