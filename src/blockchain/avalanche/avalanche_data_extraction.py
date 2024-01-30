@@ -259,11 +259,12 @@ def extract_c_chain_data(last_day):
                 df_input_env['date'] = pd.to_datetime(df_input_env['date'])
                 df_output_env['date'] = pd.to_datetime(df_output_env['date'])
 
-                append_dataframe_to_sql('c_transactions', df_trx)
-                append_dataframe_to_sql('c_emitted_utxos', df_emitted_utxos)
-                append_dataframe_to_sql('c_emitted_utxos', df_consumed_utxos)
-                append_dataframe_to_sql('c_consumed_utxos', df_input_env)
-                append_dataframe_to_sql('c_consumed_utxos', df_output_env)
+                # append_dataframe_to_sql('c_transactions', df_trx)
+                # append_dataframe_to_sql('c_emitted_utxos', df_emitted_utxos)
+                # append_dataframe_to_sql('c_emitted_utxos', df_consumed_utxos)
+                # append_dataframe_to_sql('c_consumed_utxos', df_input_env)
+                # append_dataframe_to_sql('c_consumed_utxos', df_output_env)
+                
                 # Move to the previous day
                 current_day -= 86400
                 data = []
@@ -375,9 +376,13 @@ def extract_c_chain_data(last_day):
                             amount = asset.get('amount',0)
                         )
                     consumed_utxos.append(emit_utxo.__dict__)
+            else:
+                print(txType)
+                print(tx)
+            data.append(avalanche_tx.__dict__)
             page_token = res_data.get('nextPageToken')
             
-            data.append(avalanche_tx.__dict__)
+        
 
     return current_date
 
@@ -542,5 +547,5 @@ class EVM:
 
 if __name__ == "__main__":
     extract_c_chain_data("2024-01-19")
-    extract_x_chain_data("2024-01-19")
-    extract_p_chain_data("2024-01-19")
+    # extract_x_chain_data("2024-01-19")
+    # extract_p_chain_data("2024-01-19")

@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from database import db
 
-
 class MetricBase(db.Model):
     __abstract__ = True  # This makes MetricBase an abstract class
     date = db.Column(db.DateTime, primary_key=True)

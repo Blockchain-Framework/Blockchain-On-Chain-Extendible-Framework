@@ -143,20 +143,20 @@ def active_addresses(table, date_range):
     return None
 
 
-def trx_count(table, date_range):
-    """
-    Calculate the number of transactions in a given table within a specified date range.
-    """
-    if not table or not date_range:
-        logging.error("Invalid input parameters for trx_count.")
-        return None
+# def trx_count(table, date_range):
+#     """
+#     Calculate the number of transactions in a given table within a specified date range.
+#     """
+#     if not table or not date_range:
+#         logging.error("Invalid input parameters for trx_count.")
+#         return None
 
-    query = f"SELECT COUNT(*) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-    results = execute_query(query)
+#     query = f"SELECT COUNT(*) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
+#     results = execute_query(query)
     
-    if results is not None and not results.empty:
-        return results.iloc[0]['count']
-    return None
+#     if results is not None and not results.empty:
+#         return results.iloc[0]['count']
+#     return None
 
 
 def cumulative_number_of_trx(table, end_date):
@@ -328,6 +328,69 @@ def cross_chain_whale_trx(table, date_range, threshold):
     if results is not None and not results.empty:
         return results.iloc[0]['count']
     return None
+
+#  C chain
+def count_contracts_deployed(transactions):
+    contract_deployments = 0
+    for tx in transactions:
+        # Assuming transaction type or other indicators can specify contract deployment
+        if is_contract_deployment(tx):
+            contract_deployments += 1
+    return contract_deployments
+
+def count_contract_calls(transactions):
+    contract_calls = 0
+    for tx in transactions:
+        # Assuming transaction type or other indicators can specify a contract call
+        if is_contract_call(tx):
+            contract_calls += 1
+    return contract_calls
+
+def count_token_transfers(transactions):
+    token_transfers = 0
+    for tx in transactions:
+        # Check for transfer events in the transaction
+        if has_token_transfer_event(tx):
+            token_transfers += 1
+    return token_transfers
+
+def count_contract_creations(transactions):
+    contract_creations = 0
+    for tx in transactions:
+        # Assuming transaction type or other indicators can specify contract creation
+        if is_contract_creation(tx):
+            contract_creations += 1
+    return contract_creations
+
+def is_contract_deployment(tx):
+    # This is a simplification; the exact logic might depend on Avalanche's transaction structure
+    return tx.get('toAddress') is None
+
+def count_contracts_deployed(transactions):
+    return sum(1 for tx in transactions if is_contract_deployment(tx))
+
+def is_contract_call(tx):
+    # Check if the transaction is to a non-null address and has non-empty input
+    return tx.get('toAddress') is not None and tx.get('input') not in [None, '0x', '']
+
+def count_contract_calls(transactions):
+    return sum(1 for tx in transactions if is_contract_call(tx))
+
+def has_token_transfer_event(tx):
+    # Check for a Transfer event in the transaction logs or relevant fields
+    # This is a placeholder; the actual implementation depends on how these events are represented in Avalanche transactions
+    return 'Transfer' in str(tx)
+
+def count_token_transfers(transactions):
+    return sum(1 for tx in transactions if has_token_transfer_event(tx))
+
+def is_contract_creation(tx):
+    # This might involve more complex logic, possibly analyzing the transaction's input data
+    # or events/logs that indicate a new contract address is being created
+    return 'ContractCreation' in str(tx)  # Placeholder condition
+
+def count_contract_creations(transactions):
+    return sum(1 for tx in transactions if is_contract_creation(tx))
 
 
 if __name__ == "__main__":
