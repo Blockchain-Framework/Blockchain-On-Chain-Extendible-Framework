@@ -7,6 +7,9 @@ import argparse
 from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 import pandas as pd
+import pytz
+from sqlalchemy import create_engine
+import importlib.util
 
 load_dotenv()
 
@@ -27,76 +30,16 @@ from src.services.metrics_computation_service import (
 )
 
 
-class MetricCalculationWorkflowManager:
-    
-    def __init__(self):
-        self.logger = logging.getLogger(__name__)
-        self.file_path = "file_store"
-        self.db_connection_string = os.environ.get("DATABASE_CONNECTION")
-        self.functions = {"X": self.run_avalanche_x_data_workflow,
-                          "C": self.run_avalanche_c_data_workflow,
-                          "P": self.run_avalanche_p_data_workflow,
-                          "Bitcoin": self.run_bitcoin_data_workflow}
+# def load_module_from_path(path):
+#     spec = importlib.util.spec_from_file_location("util", path)
+#     module = importlib.util.module_from_spec(spec)
+#     spec.loader.exec_module(module)
+#     return module
 
-    def run_avalanche_x_metric_workflow(self, date):
-        try:
-            # Compute metrics
-            self.logger.info("Computing metrics...")
-            metrics = []
-            calculate_metrics(date, chain, metrics)
-            self.logger.info("Workflow completed successfully.")
-            
-        except Exception as e:
-            self.logger.error(f"An error occurred during the workflow: {e}")
-            
-    def run_avalanche_c_metric_workflow(self, date):
-        try:
-            # Compute metrics
-            self.logger.info("Computing metrics...")
-            
-            self.logger.info("Workflow completed successfully.")
-            
-        except Exception as e:
-            self.logger.error(f"An error occurred during the workflow: {e}")
+# # Path to metrics_module.py
+# module_path = '/path/to/metrics_module.py'
+# metrics_module = load_module_from_path(module_path)
 
-    def run_avalanche_p_metric_workflow(self, date):
-        try:
-            # Compute metrics
-            self.logger.info("Computing metrics...")
-            
-            self.logger.info("Workflow completed successfully.")
-            
-        except Exception as e:
-            self.logger.error(f"An error occurred during the workflow: {e}")
-            
-    def run_bitcoin_metric_workflow(self, date):
-        pass
-    
-    def run_data_workflow(self):
-        # Execute function for all blockchains for 7 days
-        current_date = datetime.now()
-
-        # Calculate the date 7 days ago
-        date_7_days_ago = current_date - timedelta(days=7)
-
-        # Format the date as a string in "yyyy-mm-dd" format
-        start_date = date_7_days_ago.strftime("%Y-%m-%d")
-        
-        #TODO:  fetch last updatede date from database
-        for blockchain in self.functions:
-            self.run_data_workflow(start_date, blockchain)
-            
-    def run_data_workflow(self, start_date, blockchain):
-        # Execute function depending on blockchain
-        if blockchain in self.functions:
-            self.functions[blockchain](start_date)
-        else:
-            self.logger.error("Unsupported blockchain type")
-
-    def run_data_workflow(self, start_date):
-        # Execute workflows for all blockchains
-        for blockchain in self.functions:
-            self.run_data_workflow(start_date, blockchain)
 
 def calculate_metrics(date_single_day, blockchain, subchain, metrics):
     # Define date ranges and thresholds for calculations
@@ -110,13 +53,22 @@ def calculate_metrics(date_single_day, blockchain, subchain, metrics):
         'P': 'p_transactions'
         # Add other chains and their corresponding tables here
     }
-
+    input_utxo ={
+        'X': 'x_utxo',
+        'C': 'c_utxo',
+        'P': 'p_utxo'
+    }
+    
+    output_utxo = {
+        
+    }
+    
     # Check if the chain is valid
-    if chain not in chain_tables:
-        print(f"Invalid chain type: {chain}")
+    if subchain not in chain_tables:
+        print(f"Invalid chain type: {subchain}")
         return
 
-    transaction_table = chain_tables[chain]
+    transaction_table = chain_tables[subchain]
 
     # Map of metric names to their functions
     metric_functions = {
@@ -143,7 +95,7 @@ def calculate_metrics(date_single_day, blockchain, subchain, metrics):
             result_row = pd.DataFrame({
                 'date': [date_single_day],
                 'blockchain': [blockchain],
-                'subchain': [f'{chain}_chain'],
+                'subchain': [subchain],
                 'metric': [metric],
                 'value': [result]
             })
@@ -159,36 +111,155 @@ def calculate_metrics(date_single_day, blockchain, subchain, metrics):
     else:
         print("No metrics calculated.")
 
-def parse_arguments():
-    parser = argparse.ArgumentParser(description='Run blockchain data workflow.')
 
-    # Optional argument for start date, defaults to 7 days ago
-    parser.add_argument('-d', '--date', type=str, help='Start date in yyyy-mm-dd format', default=(datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d"))
+# class MetricCalculationWorkflowManager:
 
-    # Required argument for the blockchain type
-    parser.add_argument('blockchain', choices=['X', 'C', 'P', 'Bitcoin', 'All'], help='Blockchain type to process (X, C, P, Bitcoin, All)')
+#     def __init__(self):
+#         self.logger = logging.getLogger(__name__)
+#         self.file_path = "file_store"
+#         self.db_connection_string = os.environ.get("DATABASE_CONNECTION")
 
-    return parser.parse_args()
+#     def metric_workflow(self, date, blockchain, subchain):
+#         try:
+#             # Compute metrics
+#             self.logger.info(f"Computing metrics for subchain {subchain}...")
+#             metrics = ['trx_per_second', 'trx_per_day', 'avg_trx_per_block', 'total_trxs', 'total_blocks']
+
+#             calculate_metrics(date, blockchain, subchain, metrics)
+#             self.logger.info("Workflow completed successfully.")
+
+#         except Exception as e:
+#             self.logger.error(f"An error occurred during the workflow for subchain {subchain}: {e}")
+
+#     def run_workflow(self, date=None, blockchain = None, subchains=None):
+        
+#         if subchains is None:
+#             subchains = [blockchain]
+
+#         # Define valid subchains
+#         valid_subchains = ["X", "C", "P"]
+
+#         if subchains:
+#             for subchain in subchains:
+#                 if subchain in valid_subchains:
+#                     self.metric_workflow(date, blockchain, subchain)
+#                 else:
+#                     self.logger.error(f"Unsupported subchain type: {subchain}")
+#         else:
+#             # Run workflow for all valid subchains
+#             for subchain in valid_subchains:
+#                 self.metric_workflow(date, blockchain, subchain)
+
+
+
+class MetricCalculationWorkflowManager:
+
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+        self.db_connection_string = os.environ.get("DATABASE_CONNECTION")
+
+    def load_metrics_module(self, module_path):
+        spec = importlib.util.spec_from_file_location("metrics_module", module_path)
+        metrics_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(metrics_module)
+        return metrics_module
+
+    def map_functions(self, module_path):
+        metrics_module = self.load_metrics_module(module_path)
+        function_map = {}
+        for attr_name in dir(metrics_module):
+            attr = getattr(metrics_module, attr_name)
+            if callable(attr) and hasattr(attr, '_key'):
+                function_map[attr._key] = attr
+        return function_map
+    
+    def get_blockchains(self):
+        query = "SELECT DISTINCT blockchain FROM blockchain_table;"
+        return get_query_results(query, self.db_connection_string)
+
+    def get_subchains(self, blockchain):
+        query = f"SELECT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}';"
+        return get_query_results(query, self.db_connection_string)
+
+    def get_metrics(self, blockchain, subchain):
+        query = f"""
+        SELECT m.metric_name 
+        FROM metric_table m 
+        JOIN chain_metric cm ON m.metric_name = cm.metric_name 
+        JOIN blockchain_table b ON cm.blockchain_id = b.id 
+        WHERE b.blockchain = '{blockchain}' AND b.sub_chain = '{subchain}';
+        """
+        return get_query_results(query, self.db_connection_string)
+
+    def metric_workflow(self, date, blockchain, subchain, metrics):
+        try:
+            self.logger.info(f"Computing metrics for {blockchain} subchain {subchain}...")
+            module_path = 'src\scripts\metric_calculation_workflow_manager.py'
+            function_map = self.map_functions(module_path)
+            
+            for metric in metrics:
+                if metric in function_map:
+                    metric_value = function_map[metric](blockchain, subchain, date)
+                    self.logger.info(f"Calculated {metric} for {blockchain} subchain {subchain}: {metric_value}")
+                else:
+                    self.logger.warning(f"No function mapped for metric: {metric}")
+            
+            self.logger.info("Workflow completed successfully.")
+        except Exception as e:
+            self.logger.error(f"An error occurred during the workflow for {blockchain} subchain {subchain}: {e}")
+            #TODO : trow error
+
+    def run_workflow(self, date=None):
+        blockchains = self.get_blockchains()
+        if blockchains is not None:
+            for blockchain in blockchains['blockchain']:
+                subchains = self.get_subchains(blockchain)
+                if subchains is not None:
+                    for subchain in subchains['sub_chain']:
+                        metrics = self.get_metrics(blockchain, subchain)
+                        if metrics is not None:
+                            # TODO : Add inser query for workflow meta table = values(chain,subchain, status=start, task=metric, error=none)
+                            try:
+                                self.metric_workflow(date, blockchain, subchain, metrics['metric_name'].tolist())
+                            except Exception as e:
+                                # TODO : Add inser query for workflow meta table = values(chain,subchain, status=fail, task=metric, error=e)
+                                pass
+                            finally:
+                                # TODO : Add inser query for workflow meta table = values(chain,subchain, status=completed, task=metric, error=none)
+                                pass
+                            
+
+def get_query_results(query, database_connection):
+    """
+    Executes a SQL query and returns the results as a DataFrame.
+
+    :param query: SQL query to be executed.
+    :param database_connection: Database connection string.
+    :return: DataFrame containing the query results.
+    """
+    try:
+        # Create the database engine
+        engine = create_engine(database_connection)
+
+        # Execute the query and fetch the results
+        with engine.connect() as connection:
+            results = pd.read_sql_query(query, connection)
+
+        return results
+
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+        return None
+    
 
 if __name__ == "__main__":
-    # logging.basicConfig(level=logging.INFO)
-    # args = parse_arguments()
+    # dates = ["2024-01-19", "2024-01-20", "2024-01-21", "2024-01-22", "2024-01-23", "2024-01-24", "2024-01-25", "2024-01-26"]
+    date = "2024-01-21"
+    manager = MetricCalculationWorkflowManager()
 
-    # manager = WorkflowManager()
-    # start_date = args.date
-
-    # if args.blockchain == 'All':
-    #     manager.run_data_workflow_for_all(start_date)
-    # else:
-    #     if args.blockchain in manager.functions:
-    #         manager.functions[args.blockchain](start_date)
-    #     else:
-    #         print(f"Unsupported blockchain type: {args.blockchain}")
+    # for date in dates:
+    #     print(date)
+    #     # manager.run_workflow(date, "Avalanche", ["X"])
+    #     manager.run_workflow(date)
     
-    dates = ["2024-01-19","2024-01-20","2024-01-21","2024-01-22","2024-01-23","2024-01-24","2024-01-25","2024-01-26"]
-    chain = 'X'  # Example for X chain
-    metrics_to_calculate = ['trx_per_second','trx_per_day', 'avg_trx_per_block', 'total_trxs', 'total_blocks', 'large_trx', 'whale_address_activity']
-
-    for i in dates:
-        print(i)
-        calculate_metrics(i, ('2024-01-19', '2024-01-26'), chain, metrics_to_calculate)
+    manager.run_workflow(date)

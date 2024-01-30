@@ -5,6 +5,7 @@ from sqlalchemy import create_engine
 from .data_storage_service import get_query_results
 import sys
 import logging
+from src.services.data_storage_service import append_dataframe_to_sql
 
 sys.path.insert(0, 'E:\\Uni\\Final Year Project\\Workspace\\codebase\\Blockchain-On-Chain-Extendible-Framework')
 
@@ -22,54 +23,81 @@ def execute_query(query):
         logging.error(f"Database error: {error}")
         return None
 
-def trx_per_second(table, date):
+def key_mapper(key):
+    def decorator(func):
+        func._key = key
+        return func
+    return decorator
+
+
+def add_data_to_database(table, date, blockchain, subChain, value):
+    result_df = pd.DataFrame({
+        'date': [date],
+        'blockchain': [blockchain],
+        'subchain':[subChain],
+        'value': [value]
+    })
+
+    # Insert result into database
+    append_dataframe_to_sql('metrics_table', result_df)
+    
+    
+@key_mapper("trx_per_second")
+def trx_per_second(blockchain, subchain, date):
     """
     Calculate transactions per second for a given table and date.
     """
-    if not table or not date:
+    if not subchain or not date:
         logging.error("Invalid input parameters for trx_per_second.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}'"
+    query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
         count = results.iloc[0]['count']
         if count > 0:
-            return count / 86400
+            add_data_to_database('trx_per_day', date, blockchain, subchain, count / 86400)
+            # return count / 86400
         else:
             logging.info("No transactions found for the given date.")
-            return 0
+            add_data_to_database('trx_per_day', date, blockchain, subchain, 0)
+
+            # return 0
     return None
 
-def trx_per_day(table, date):
+@key_mapper("trx_per_day")
+def trx_per_day(blockchain, subchain, date):
     """
     Calculate transactions per day for a given table and date.
     """
-    if not table or not date:
+    if not subchain or not date:
         logging.error("Invalid input parameters for trx_per_day.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}'"
+    query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        return results.iloc[0]['count']
-    return None
+        add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
+        # return results.iloc[0]['count']
+    add_data_to_database('trx_per_day', date, blockchain, subchain, None)
+    # return None
 
 def avg_trx_fee():
     pass
-    
-def avg_trx_per_block(table, date):
+
+@key_mapper("avg_trx_per_block")
+def avg_trx_per_block(blockchain, subchain, date):
     """
     Calculate average transactions per block for a given table and date.
     """
-    if not table or not date:
+    if not subchain or not date:
         logging.error("Invalid input parameters for avg_trx_per_block.")
         return None
 
-    block_count_query = f"SELECT COUNT(DISTINCT \"blockHeight\") FROM {table} WHERE date = '{date}'"
-    trx_count_query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}'"
+    block_count_query = f"SELECT COUNT(DISTINCT \"blockHeight\") FROM {subchain}_transactions WHERE date = '{date}'"
+    trx_count_query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
     
     results_block_count = execute_query(block_count_query)
     results_trx_count = execute_query(trx_count_query)
@@ -80,45 +108,53 @@ def avg_trx_per_block(table, date):
         count_trxs = results_trx_count.iloc[0]['count']
 
         if count_trxs > 0:
-            return count_blocks / count_trxs
+            add_data_to_database('trx_per_day', date, blockchain, subchain, count_blocks / count_trxs)
+            # return count_blocks / count_trxs
         else:
             logging.info("No transactions found for the given date.")
-            return 0
+            add_data_to_database('trx_per_day', date, blockchain, subchain, 0)
+            return
+    add_data_to_database('trx_per_day', date, blockchain, subchain, None)
     return None
 
 def avg_trx_size():
     pass
 
-def total_trxs(table):
+@key_mapper("total_trxs")
+def total_trxs(blockchain, subchain, date):
     """
     Calculate the total number of transactions in a given table.
     """
-    if not table:
+    if not subchain:
         logging.error("Invalid input parameter for total_trxs.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {table}"
+    query = f"SELECT COUNT(*) FROM {subchain}_transactions"
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        return results.iloc[0]['count']
-    return None
+        add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
+        return
+    add_data_to_database('trx_per_day', date, blockchain, subchain, None)
+    return
 
-
-def total_blocks(table):
+@key_mapper("total_blocks")
+def total_blocks(blockchain, subchain, date):
     """
     Calculate the total number of blocks in a given table.
     """
-    if not table:
+    if not subchain:
         logging.error("Invalid input parameter for total_blocks.")
         return None
 
-    query = f"SELECT COUNT(DISTINCT \"blockHash\") FROM {table}"
+    query = f"SELECT COUNT(DISTINCT \"blockHash\") FROM {subchain}_transactions"
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        return results.iloc[0]['count']
-    return None
+        add_data_to_database('trx_per_day', date, blockchain, subchain,  results.iloc[0]['count'])
+        return
+    add_data_to_database('trx_per_day', date, blockchain, subchain, None)
+    return 
 
 
 def total_addresses():
@@ -140,6 +176,7 @@ def active_addresses(table, date_range):
     
     if results is not None and not results.empty:
         return results.iloc[0]['count']
+    
     return None
 
 
