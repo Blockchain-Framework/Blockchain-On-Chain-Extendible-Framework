@@ -2,7 +2,7 @@ import pandas as pd
 import psycopg2
 import numpy as np
 from sqlalchemy import create_engine
-from .data_storage_service import get_query_results
+from data_storage_service import get_query_results
 import sys
 import logging
 
@@ -127,36 +127,26 @@ def total_addresses():
 def active_senders():
     pass
 
-def active_addresses(table, date):
+def active_addresses(emitted_table, consumed_table, date):
     """
     Calculate the number of unique addresses that have been active (either sending or receiving) on a given date.
     """
-    if not table or not date:
+    if not emitted_table or not consumed_table or not date:
         logging.error("Invalid input parameters for active_addresses.")
         return None
 
-    query = f"SELECT COUNT(DISTINCT addresses) FROM {table} WHERE date = '{date}'"
+    query = f"""
+    SELECT COUNT(DISTINCT addresses) FROM (
+        SELECT addresses FROM {emitted_table} WHERE date = '{date}'
+        UNION
+        SELECT addresses FROM {consumed_table} WHERE date = '{date}'
+    ) AS active_addresses
+    """
     results = execute_query(query)
     
     if results is not None and not results.empty:
         return results.iloc[0]['count']
     return None
-
-
-# def trx_count(table, date_range):
-#     """
-#     Calculate the number of transactions in a given table within a specified date range.
-#     """
-#     if not table or not date_range:
-#         logging.error("Invalid input parameters for trx_count.")
-#         return None
-
-#     query = f"SELECT COUNT(*) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-#     results = execute_query(query)
-    
-#     if results is not None and not results.empty:
-#         return results.iloc[0]['count']
-#     return None
 
 
 def cumulative_number_of_trx(table, end_date):
@@ -187,7 +177,24 @@ def token_transfers():
 def contract_creations():
     pass
 
-def avg_trx_value(table, date):
+def sum_emitted_utxo_amount(table, date):
+    """
+    Calculate the sum of emitted UTXO amounts in a given table for a specified date.
+    """
+    if not table or not date:
+        logging.error("Invalid input parameters for sum_emitted_utxo_amount.")
+        return None
+
+    query = f"SELECT SUM(CAST(amount AS NUMERIC)) FROM {table} WHERE date = '{date}'"
+    results = execute_query(query)
+    
+    if results is not None and not results.empty:
+        return results.iloc[0]['sum']
+    else:
+        logging.warning(f"No data found for sum of emitted UTXO amounts on {date}.")
+        return None 
+
+def avg_emmited_utxo_amount(table, date):
     """
     Calculate the average transaction value in a given table for a specified date.
     """
@@ -195,7 +202,7 @@ def avg_trx_value(table, date):
         logging.error("Invalid input parameters for avg_trx_value.")
         return None
 
-    query = f"SELECT AVG(CAST(value AS NUMERIC)) FROM {table} WHERE date = '{date}'"
+    query = f"SELECT AVG(CAST(amount AS NUMERIC)) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -204,7 +211,7 @@ def avg_trx_value(table, date):
         logging.warning(f"No data found for average transaction value on {date}.")
         return None
 
-def median_trx_value(table, date):
+def median_emmited_utxo_amount(table, date):
     """
     Calculate the median transaction value in a given table for a specified date.
     """
@@ -212,7 +219,7 @@ def median_trx_value(table, date):
         logging.error("Invalid input parameters for median_trx_value.")
         return None
     
-    query = f"SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(value AS NUMERIC)) FROM {table} WHERE date = '{date}'"
+    query = f"SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(amount AS NUMERIC)) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
@@ -221,20 +228,59 @@ def median_trx_value(table, date):
         logging.warning(f"No data found for median transaction value on {date}.")
         return None
 
-def avg_utxo_value(table, date):
+def sum_consumed_utxo_amount(table, date):
     """
-    Calculate the average value of UTXOs in a given table for a specified date.
+    Calculate the sum of consumed UTXO amounts in a given table for a specified date.
     """
     if not table or not date:
-        logging.error("Invalid input parameters for avg_utxo_value.")
+        logging.error("Invalid input parameters for sum_consumed_utxo_amount.")
         return None
 
-    query = f"SELECT AVG(CAST(value AS NUMERIC)) FROM {table} WHERE date = '{date}'"
+    query = f"SELECT SUM(CAST(amount AS NUMERIC)) FROM {table} WHERE date = '{date}'"
+    results = execute_query(query)
+    
+    if results is not None and not results.empty:
+        return results.iloc[0]['sum']
+    else:
+        logging.warning(f"No data found for sum of consumed UTXO amounts on {date}.")
+        return None
+
+def avg_consumed_utxo_amount(table, date):
+    """
+    Calculate the average consumed UTXO value in a given table for a specified date.
+    """
+    if not table or not date:
+        logging.error("Invalid input parameters for avg_consumed_utxo_amount.")
+        return None
+
+    query = f"SELECT AVG(CAST(amount AS NUMERIC)) FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
         return results.iloc[0]['avg']
-    return None
+    else:
+        logging.warning(f"No data found for average consumed UTXO value on {date}.")
+        return None
+
+def median_consumed_utxo_amount(table, date):
+    """
+    Calculate the median consumed UTXO value in a given table for a specified date.
+    """
+    if not table or not date:
+        logging.error("Invalid input parameters for median_consumed_utxo_amount.")
+        return None
+    
+    query = f"SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(amount AS NUMERIC)) FROM {table} WHERE date = '{date}'"
+    results = execute_query(query)
+    
+    if results is not None and not results.empty:
+        return results.iloc[0]['percentile_cont']
+    else:
+        logging.warning(f"No data found for median consumed UTXO value on {date}.")
+        return None
+
+
+
 
 
 def total_staked_amount(table, date):
@@ -251,7 +297,6 @@ def total_staked_amount(table, date):
     if results is not None and not results.empty:
         return results.iloc[0]['sum']
     return None
-
 
 def total_burned_amount(table, date):
     """
@@ -407,25 +452,111 @@ if __name__ == "__main__":
     large_trx_threshold = 10000  # Threshold for a large transaction
     whale_trx_threshold = 50000  # Threshold for whale transactions
 
-    # # Transactions per second
-    # trx_per_sec = trx_per_second('x_transactions', date_single_day)
-    # print(f"Transactions per second: {trx_per_sec}")
+    # Transactions per second
+    trx_per_sec_x = trx_per_second('x_transactions', date_single_day)
+    print(f"X-Chain - Transactions per second: {trx_per_sec_x}")
+    trx_per_sec_c = trx_per_second('c_transactions', date_single_day)
+    print(f"C-Chain - Transactions per second: {trx_per_sec_c}")
+    trx_per_sec_p = trx_per_second('p_transactions', date_single_day)
+    print(f"P-Chain - Transactions per second: {trx_per_sec_p}")
 
-    # # Transactions per day
-    # trx_per_day_val = trx_per_day('x_transactions', date_single_day)
-    # print(f"Transactions per day: {trx_per_day_val}")
+    # Transactions per day
+    trx_per_day_val_x = trx_per_day('x_transactions', date_single_day)
+    print(f"X-Chain - Transactions per day: {trx_per_day_val_x}")
+    trx_per_day_val_c = trx_per_day('c_transactions', date_single_day)
+    print(f"C-Chain - Transactions per day: {trx_per_day_val_c}")
+    trx_per_day_val_p = trx_per_day('p_transactions', date_single_day)
+    print(f"P-Chain - Transactions per day: {trx_per_day_val_p}")
 
-    # # Average transactions per block
-    # avg_trx_block = avg_trx_per_block('x_transactions', date_single_day)
-    # print(f"Average transactions per block: {avg_trx_block}")
+    # Average transactions per block
+    avg_trx_block_x = avg_trx_per_block('x_transactions', date_single_day)
+    print(f"X-Chain - Average transactions per block: {avg_trx_block_x}")
+    avg_trx_block_c = avg_trx_per_block('c_transactions', date_single_day)
+    print(f"C-Chain - Average transactions per block: {avg_trx_block_c}")
+    #avg_trx_block_p = avg_trx_per_block('p_transactions', date_single_day)
+    #print(f"P-Chain - Average transactions per block: {avg_trx_block_p}")
 
-    # # Total transactions
-    # total_transactions = total_trxs('x_transactions')
-    # print(f"Total transactions: {total_transactions}")
+    # Total transactions
+    total_transactions_x = total_trxs('x_transactions')
+    print(f"X-Chain - Total transactions: {total_transactions_x}")
+    total_transactions_c = total_trxs('c_transactions')
+    print(f"C-Chain - Total transactions: {total_transactions_c}")
+    total_transactions_p = total_trxs('p_transactions')
+    print(f"P-Chain - Total transactions: {total_transactions_p}")
 
-    # # Total blocks
-    # total_blocks_val = total_blocks('x_transactions')
-    # print(f"Total blocks: {total_blocks_val}")
+    # Total blocks
+    total_blocks_val_x = total_blocks('x_transactions')
+    print(f"X-Chain - Total blocks: {total_blocks_val_x}")
+    total_blocks_val_c = total_blocks('c_transactions')
+    print(f"C-Chain - Total blocks: {total_blocks_val_c}")
+    total_blocks_val_p = total_blocks('p_transactions')
+    print(f"P-Chain - Total blocks: {total_blocks_val_p}")
+
+    #Active Adresses
+    active_addresses_x = active_addresses('x_emitted_utxos', 'x_consumed_utxos', date_single_day)
+    print(f"X-Chain - Active Addresses: {active_addresses_x}")
+    active_addresses_c = active_addresses('c_emitted_utxos', 'c_consumed_utxos', date_single_day)
+    print(f"C-Chain - Active Addresses: {active_addresses_c}")
+    active_addresses_p = active_addresses('p_emitted_utxos', 'p_consumed_utxos', date_single_day)
+    print(f"P-Chain - Active Addresses: {active_addresses_p}")
+
+    # Cumulative number of transactions
+    cum_trx_x = cumulative_number_of_trx('x_transactions', date_single_day)
+    print(f"X-Chain - Cumulative transactions: {cum_trx_x}")
+    cum_trx_c = cumulative_number_of_trx('c_transactions', date_single_day)
+    print(f"C-Chain - Cumulative transactions: {cum_trx_c}")
+    cum_trx_p = cumulative_number_of_trx('p_transactions', date_single_day)
+    print(f"P-Chain - Cumulative transactions: {cum_trx_p}")
+
+    # Sum of Emitted UTXO Amounts
+    sum_emitted_utxo_amount_x = sum_emitted_utxo_amount('x_emitted_utxos', date_single_day)
+    print(f"X-Chain - Sum of Emitted UTXO Amounts: {sum_emitted_utxo_amount_x}")
+    sum_emitted_utxo_amount_c = sum_emitted_utxo_amount('c_emitted_utxos', date_single_day)
+    print(f"C-Chain - Sum of Emitted UTXO Amounts: {sum_emitted_utxo_amount_c}")
+    sum_emitted_utxo_amount_p = sum_emitted_utxo_amount('p_emitted_utxos', date_single_day)
+    print(f"P-Chain - Sum of Emitted UTXO Amounts: {sum_emitted_utxo_amount_p}")
+
+    #Average Emmited UTXO Amount
+    avg_emmited_utxo_amount_x = avg_emmited_utxo_amount('x_emitted_utxos', date_single_day)
+    print(f"X-Chain - Average Transaction Value: {avg_emmited_utxo_amount_x}")
+    avg_emmited_utxo_amount_c = avg_emmited_utxo_amount('c_emitted_utxos', date_single_day)
+    print(f"C-Chain - Average Transaction Value: {avg_emmited_utxo_amount_c}")
+    avg_emmited_utxo_amount_p = avg_emmited_utxo_amount('p_emitted_utxos', date_single_day)
+    print(f"P-Chain - Average Transaction Value: {avg_emmited_utxo_amount_p}")
+
+    #Median Emmited UTXO Amount
+    median_emmited_utxo_amount_x = median_emmited_utxo_amount('x_emitted_utxos', date_single_day)
+    print(f"X-Chain - Median Transaction Value: {median_emmited_utxo_amount_x}")
+    median_emmited_utxo_amount_c = median_emmited_utxo_amount('c_emitted_utxos', date_single_day)
+    print(f"C-Chain - Median Transaction Value: {median_emmited_utxo_amount_c}")
+    median_emmited_utxo_amount_p = median_emmited_utxo_amount('p_emitted_utxos', date_single_day)
+    print(f"P-Chain - Median Transaction Value: {median_emmited_utxo_amount_p}")
+
+    # Sum of Consumed UTXO Amounts
+    sum_consumed_utxo_amount_x = sum_consumed_utxo_amount('x_consumed_utxos', date_single_day)
+    print(f"X-Chain - Sum of Consumed UTXO Amounts: {sum_consumed_utxo_amount_x}")
+    sum_consumed_utxo_amount_c = sum_consumed_utxo_amount('c_consumed_utxos', date_single_day)
+    print(f"C-Chain - Sum of Consumed UTXO Amounts: {sum_consumed_utxo_amount_c}")
+    sum_consumed_utxo_amount_p = sum_consumed_utxo_amount('p_consumed_utxos', date_single_day)
+    print(f"P-Chain - Sum of Consumed UTXO Amounts: {sum_consumed_utxo_amount_p}")
+
+    # Average Consumed UTXO Amount
+    avg_consumed_utxo_amount_x = avg_consumed_utxo_amount('x_consumed_utxos', date_single_day)
+    print(f"X-Chain - Average Consumed UTXO Value: {avg_consumed_utxo_amount_x}")
+    avg_consumed_utxo_amount_c = avg_consumed_utxo_amount('c_consumed_utxos', date_single_day)
+    print(f"C-Chain - Average Consumed UTXO Value: {avg_consumed_utxo_amount_c}")
+    avg_consumed_utxo_amount_p = avg_consumed_utxo_amount('p_consumed_utxos', date_single_day)
+    print(f"P-Chain - Average Consumed UTXO Value: {avg_consumed_utxo_amount_p}")
+
+    # Median Consumed UTXO Amount
+    median_consumed_utxo_amount_x = median_consumed_utxo_amount('x_consumed_utxos', date_single_day)
+    print(f"X-Chain - Median Consumed UTXO Value: {median_consumed_utxo_amount_x}")
+    median_consumed_utxo_amount_c = median_consumed_utxo_amount('c_consumed_utxos', date_single_day)
+    print(f"C-Chain - Median Consumed UTXO Value: {median_consumed_utxo_amount_c}")
+    median_consumed_utxo_amount_p = median_consumed_utxo_amount('p_consumed_utxos', date_single_day)
+    print(f"P-Chain - Median Consumed UTXO Value: {median_consumed_utxo_amount_p}")
+
+    print("---")
 
     # # Number of transactions in a specific date range
     # trx_count_val = trx_count('x_transactions', date_range_full)
@@ -456,41 +587,41 @@ if __name__ == "__main__":
     # print(f"Number of whale transactions in X-Chain (threshold: {whale_trx_threshold}) in date range {date_range_full}: {whale_activity_val_x}")
     
     #Total staked amount
-    staked_amount = total_staked_amount('x_emitted_utxos', date_range_full)
-    print(f'Total staked amount in X-Chain (date range {date_range_full}): {staked_amount}')
+    # staked_amount = total_staked_amount('x_emitted_utxos', date_range_full)
+    # print(f'Total staked amount in X-Chain (date range {date_range_full}): {staked_amount}')
 
 
-    print("------------")
+    # print("------------")
 
-    table = "x_transactions"
-    date = "2023-01-01"  # Specify the date for which you want to calculate the metrics
-    large_trx_threshold = 10000  # Threshold for a large transaction
-    whale_trx_threshold = 50000  # Threshold for whale transactions
+    # table = "x_transactions"
+    # date = "2023-01-01"  # Specify the date for which you want to calculate the metrics
+    # large_trx_threshold = 10000  # Threshold for a large transaction
+    # whale_trx_threshold = 50000  # Threshold for whale transactions
 
-    # Call each function and print the results
-    avg_trx_value_result = avg_trx_value(table, date)
-    print(f"Average Transaction Value on {date}: {avg_trx_value_result}")
+    # # Call each function and print the results
+    # avg_trx_value_result = avg_trx_value(table, date)
+    # print(f"Average Transaction Value on {date}: {avg_trx_value_result}")
 
-    median_trx_value_result = median_trx_value(table, date)
-    print(f"Median Transaction Value on {date}: {median_trx_value_result}")
+    # median_trx_value_result = median_trx_value(table, date)
+    # print(f"Median Transaction Value on {date}: {median_trx_value_result}")
 
-    avg_utxo_value_result = avg_utxo_value('x_emitted_utxos', date)
-    print(f"Average UTXO Value on {date}: {avg_utxo_value_result}")
+    # avg_utxo_value_result = avg_utxo_value('x_emitted_utxos', date)
+    # print(f"Average UTXO Value on {date}: {avg_utxo_value_result}")
 
-    #total_staked_amount_result = total_staked_amount(table, date)
-    #print(f"Total Staked Amount on {date}: {total_staked_amount_result}")
+    # #total_staked_amount_result = total_staked_amount(table, date)
+    # #print(f"Total Staked Amount on {date}: {total_staked_amount_result}")
 
-    #total_burned_amount_result = total_burned_amount(table, date)
-    #print(f"Total Burned Amount on {date}: {total_burned_amount_result}")
+    # #total_burned_amount_result = total_burned_amount(table, date)
+    # #print(f"Total Burned Amount on {date}: {total_burned_amount_result}")
 
-    large_trx_result = large_trx(table, date, large_trx_threshold)
-    print(f"Large Transactions on {date}: {large_trx_result}")
+    # large_trx_result = large_trx(table, date, large_trx_threshold)
+    # print(f"Large Transactions on {date}: {large_trx_result}")
 
-    whale_address_activity_result = whale_address_activity(table, date, whale_trx_threshold)
-    print(f"Whale Address Activity on {date}: {whale_address_activity_result}")
+    # whale_address_activity_result = whale_address_activity(table, date, whale_trx_threshold)
+    # print(f"Whale Address Activity on {date}: {whale_address_activity_result}")
 
-    #cross_chain_whale_trx_result = cross_chain_whale_trx(table, date, threshold)
-    #print(f"Cross-Chain Whale Transactions on {date}: {cross_chain_whale_trx_result}")
+    # #cross_chain_whale_trx_result = cross_chain_whale_trx(table, date, threshold)
+    # #print(f"Cross-Chain Whale Transactions on {date}: {cross_chain_whale_trx_result}")
 
-    active_addresses_result = active_addresses(table, date)
-    print(f"Active Addresses on {date}: {active_addresses_result}")
+    # active_addresses_result = active_addresses(table, date)
+    # print(f"Active Addresses on {date}: {active_addresses_result}")

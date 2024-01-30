@@ -6,7 +6,7 @@ import json
 
 import os
 import sys
-sys.path.insert(0, 'D:\\Academics\\FYP\\Repos\\Blockchain-On-Chain-Extendible-Framework')
+sys.path.insert(0, 'E:\\Uni\\Final Year Project\\Workspace\\codebase\\Blockchain-On-Chain-Extendible-Framework')
 
 from src.utils.http_utils import fetch_transactions
 from src.blockchain.avalanche.avalanche_model import Avalanche_X_Model, Avalanche_C_Model, Avalanche_P_Model
@@ -259,11 +259,11 @@ def extract_c_chain_data(last_day):
                 df_input_env['date'] = pd.to_datetime(df_input_env['date'])
                 df_output_env['date'] = pd.to_datetime(df_output_env['date'])
 
-                # append_dataframe_to_sql('c_transactions', df_trx)
-                # append_dataframe_to_sql('c_emitted_utxos', df_emitted_utxos)
-                # append_dataframe_to_sql('c_emitted_utxos', df_consumed_utxos)
-                # append_dataframe_to_sql('c_consumed_utxos', df_input_env)
-                # append_dataframe_to_sql('c_consumed_utxos', df_output_env)
+                append_dataframe_to_sql('c_transactions', df_trx)
+                append_dataframe_to_sql('c_emitted_utxos', df_emitted_utxos)
+                append_dataframe_to_sql('c_emitted_utxos', df_consumed_utxos)
+                append_dataframe_to_sql('c_consumed_utxos', df_input_env)
+                append_dataframe_to_sql('c_consumed_utxos', df_output_env)
                 
                 # Move to the previous day
                 current_day -= 86400
@@ -547,5 +547,5 @@ class EVM:
 
 if __name__ == "__main__":
     extract_c_chain_data("2024-01-19")
-    # extract_x_chain_data("2024-01-19")
-    # extract_p_chain_data("2024-01-19")
+    extract_x_chain_data("2024-01-19")
+    extract_p_chain_data("2024-01-19")
