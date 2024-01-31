@@ -29,7 +29,6 @@ def key_mapper(key):
         return func
     return decorator
 
-
 def add_data_to_database(table, date, blockchain, subChain, value):
     result_df = pd.DataFrame({
         'date': [date],
@@ -41,7 +40,9 @@ def add_data_to_database(table, date, blockchain, subChain, value):
     # Insert result into database
     append_dataframe_to_sql('metrics_table', result_df)
     
-    
+
+#ALL CHAINS SPECIFIC
+        
 @key_mapper("trx_per_second")
 def trx_per_second(blockchain, subchain, date):
     """
@@ -211,17 +212,17 @@ def total_blocks(blockchain, subchain, date):
     add_data_to_database('trx_per_day', date, blockchain, subchain, None)
     return None
 
-@key_mapper("average_tx_per_block")
-def average_tx_per_block(blockchain, subchain, date):
+@key_mapper("avg_tx_per_block")
+def avg_tx_per_block(blockchain, subchain, date):
     """
     Calculate the average number of transactions per block in a given blockchain subchain for a specified date.
     """
     if not subchain or not date:
-        logging.error("Invalid input parameters for average_tx_per_block.")
+        logging.error("Invalid input parameters for avg_tx_per_block.")
         return None
 
     query = f"""
-    SELECT AVG(tx_count) as average_tx_per_block
+    SELECT AVG(tx_count) as avg_tx_per_block
     FROM (
         SELECT \"blockHash\", COUNT(*) as tx_count
         FROM {subchain}_transactions
@@ -232,17 +233,17 @@ def average_tx_per_block(blockchain, subchain, date):
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        avg_tx_block = results.iloc[0]['average_tx_per_block']
+        avg_tx_block = results.iloc[0]['avg_tx_per_block']
 
         # Insert result into database
-        add_data_to_database('average_tx_per_block', date, blockchain, subchain, avg_tx_block)
+        add_data_to_database('avg_tx_per_block', date, blockchain, subchain, avg_tx_block)
 
         return avg_tx_block
     else:
         logging.info("No transactions found for the given date.")
 
         # Insert zero transactions for the date into the database
-        add_data_to_database('average_tx_per_block', date, blockchain, subchain, None)
+        add_data_to_database('avg_tx_per_block', date, blockchain, subchain, None)
 
         return None
 
@@ -711,68 +712,6 @@ def calculate_realized_cap(transactions):
 
     return realized_cap
 
-#  C chain
-def count_contracts_deployed(transactions):
-    contract_deployments = 0
-    for tx in transactions:
-        # Assuming transaction type or other indicators can specify contract deployment
-        if is_contract_deployment(tx):
-            contract_deployments += 1
-    return contract_deployments
-
-def count_contract_calls(transactions):
-    contract_calls = 0
-    for tx in transactions:
-        # Assuming transaction type or other indicators can specify a contract call
-        if is_contract_call(tx):
-            contract_calls += 1
-    return contract_calls
-
-def count_token_transfers(transactions):
-    token_transfers = 0
-    for tx in transactions:
-        # Check for transfer events in the transaction
-        if has_token_transfer_event(tx):
-            token_transfers += 1
-    return token_transfers
-
-def count_contract_creations(transactions):
-    contract_creations = 0
-    for tx in transactions:
-        # Assuming transaction type or other indicators can specify contract creation
-        if is_contract_creation(tx):
-            contract_creations += 1
-    return contract_creations
-
-def is_contract_deployment(tx):
-    # This is a simplification; the exact logic might depend on Avalanche's transaction structure
-    return tx.get('toAddress') is None
-
-def count_contracts_deployed(transactions):
-    return sum(1 for tx in transactions if is_contract_deployment(tx))
-
-def is_contract_call(tx):
-    # Check if the transaction is to a non-null address and has non-empty input
-    return tx.get('toAddress') is not None and tx.get('input') not in [None, '0x', '']
-
-def count_contract_calls(transactions):
-    return sum(1 for tx in transactions if is_contract_call(tx))
-
-def has_token_transfer_event(tx):
-    # Check for a Transfer event in the transaction logs or relevant fields
-    # This is a placeholder; the actual implementation depends on how these events are represented in Avalanche transactions
-    return 'Transfer' in str(tx)
-
-def count_token_transfers(transactions):
-    return sum(1 for tx in transactions if has_token_transfer_event(tx))
-
-def is_contract_creation(tx):
-    # This might involve more complex logic, possibly analyzing the transaction's input data
-    # or events/logs that indicate a new contract address is being created
-    return 'ContractCreation' in str(tx)  # Placeholder condition
-
-def count_contract_creations(transactions):
-    return sum(1 for tx in transactions if is_contract_creation(tx))
 
 
 if __name__ == "__main__":
