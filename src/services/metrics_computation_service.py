@@ -58,74 +58,107 @@ def trx_per_day(table, date):
     return None
 
 def avg_trx_fee():
-    pass
-    
-def avg_trx_per_block(table, date):
+    pass  
+
+def total_trxs(table, date):
     """
-    Calculate average transactions per block for a given table and date.
+    Calculate the total number of transactions in a given table for a specified date.
     """
     if not table or not date:
-        logging.error("Invalid input parameters for avg_trx_per_block.")
+        logging.error("Invalid input parameters for total_trxs.")
         return None
 
-    block_count_query = f"SELECT COUNT(DISTINCT \"blockHeight\") FROM {table} WHERE date = '{date}'"
-    trx_count_query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}'"
+    query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}'"
+    results = execute_query(query)
     
-    results_block_count = execute_query(block_count_query)
-    results_trx_count = execute_query(trx_count_query)
+    if results is not None and not results.empty:
+        return results.iloc[0]['count']
+    return None
 
-    if results_block_count is not None and not results_block_count.empty and \
-       results_trx_count is not None and not results_trx_count.empty:
-        count_blocks = results_block_count.iloc[0]['count']
-        count_trxs = results_trx_count.iloc[0]['count']
+def avg_trx_amount(consumed_table, date):
+    """
+    Calculate the average transaction amount in a given consumed table for a specified date.
+    """
+    if not consumed_table or not date:
+        logging.error("Invalid input parameters for avg_trx_amount.")
+        return None
 
-        if count_trxs > 0:
-            return count_blocks / count_trxs
+    # Query for the sum of transaction amounts and count of transactions
+    query = f"""
+    SELECT SUM(CAST(amount AS NUMERIC)) as total_amount, COUNT(*) as trx_count
+    FROM {consumed_table}
+    WHERE date = '{date}'
+    """
+    results = execute_query(query)
+
+    if results is not None and not results.empty:
+        total_amount = results.iloc[0]['total_amount']
+        trx_count = results.iloc[0]['trx_count']
+
+        if trx_count > 0:
+            return total_amount / trx_count
         else:
             logging.info("No transactions found for the given date.")
             return 0
     return None
 
-def avg_trx_size():
-    pass
-
-def total_trxs(table):
+def avg_trxs_per_hour(table, date):
     """
-    Calculate the total number of transactions in a given table.
+    Calculate the average number of transactions per hour for a given table and date.
     """
-    if not table:
-        logging.error("Invalid input parameter for total_trxs.")
+    if not table or not date:
+        logging.error("Invalid input parameters for avg_trxs_per_hour.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {table}"
+    # Query for total number of transactions
+    trx_count_query = f"SELECT COUNT(*) FROM {table} WHERE date = '{date}'"
+    trx_results = execute_query(trx_count_query)
+
+    if trx_results is not None and not trx_results.empty:
+        count_trxs = trx_results.iloc[0]['count']
+        hours_in_day = 24
+        return count_trxs / hours_in_day
+    else:
+        logging.info("No transactions found for the given date.")
+        return 0
+
+def total_blocks(table, date):
+    """
+    Calculate the total number of blocks in a given table for a specified date.
+    """
+    if not table or not date:
+        logging.error("Invalid input parameters for total_blocks.")
+        return None
+
+    query = f"SELECT COUNT(DISTINCT \"blockHash\") FROM {table} WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
         return results.iloc[0]['count']
     return None
 
-
-def total_blocks(table):
+def average_tx_per_block(table, date):
     """
-    Calculate the total number of blocks in a given table.
+    Calculate the average number of transactions per block in a given table for a specified date.
     """
-    if not table:
-        logging.error("Invalid input parameter for total_blocks.")
+    if not table or not date:
+        logging.error("Invalid input parameters for average_tx_in_a_block.")
         return None
 
-    query = f"SELECT COUNT(DISTINCT \"blockHash\") FROM {table}"
+    query = f"""
+    SELECT AVG(tx_count) as average_tx_per_block
+    FROM (
+        SELECT \"blockHash\", COUNT(*) as tx_count
+        FROM {table}
+        WHERE date = '{date}'
+        GROUP BY \"blockHash\"
+    ) as block_transactions
+    """
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        return results.iloc[0]['count']
+        return results.iloc[0]['average_tx_per_block']
     return None
-
-
-def total_addresses():
-    pass
-
-def active_senders():
-    pass
 
 def active_addresses(emitted_table, consumed_table, date):
     """
@@ -148,6 +181,25 @@ def active_addresses(emitted_table, consumed_table, date):
         return results.iloc[0]['count']
     return None
 
+def active_senders(consumed_table, date):
+    """
+    Calculate the number of unique active senders (addresses) on a given date using the consumed table.
+    Active senders are defined as addresses that have sent (consumed) on the specified date.
+    """
+    if not consumed_table or not date:
+        logging.error("Invalid input parameters for active_senders.")
+        return None
+
+    query = f"""
+    SELECT COUNT(DISTINCT addresses) as active_senders_count
+    FROM {consumed_table}
+    WHERE date = '{date}'
+    """
+    results = execute_query(query)
+    
+    if results is not None and not results.empty:
+        return results.iloc[0]['active_senders_count']
+    return None
 
 def cumulative_number_of_trx(table, end_date):
     """
@@ -163,7 +215,6 @@ def cumulative_number_of_trx(table, end_date):
     if results is not None and not results.empty:
         return results.iloc[0]['count']
     return None
-
 
 def cummilative_number_of_contract_deployed():
     pass
@@ -279,7 +330,6 @@ def median_consumed_utxo_amount(table, date):
         logging.warning(f"No data found for median consumed UTXO value on {date}.")
         return None
 
-
 def total_staked_amount(table, date):
     """
     Calculate the total amount of tokens staked in a given table for a specified date.
@@ -309,7 +359,6 @@ def total_burned_amount(table, date):
     if results is not None and not results.empty:
         return results.iloc[0]['sum']
     return None
-
 
 def large_trx(emitted_table, consumed_table, date, threshold):
     """
@@ -348,8 +397,6 @@ def large_trx(emitted_table, consumed_table, date, threshold):
         return results.iloc[0]['large_transactions_count']
     return None
 
-
-
 def whale_address_activity(emitted_table, consumed_table, date, threshold):
     """
     Calculate the number of whale transactions where either the emitted or consumed amount exceeds a certain threshold value
@@ -386,8 +433,6 @@ def whale_address_activity(emitted_table, consumed_table, date, threshold):
     if results is not None and not results.empty:
         return results.iloc[0]['whale_transactions_count']
     return None
-
-
 
 # def cross_chain_whale_trx(table, date, threshold):
 #     """
@@ -510,29 +555,45 @@ if __name__ == "__main__":
     trx_per_day_val_p = trx_per_day('p_transactions', date_single_day)
     print(f"P-Chain - Transactions per day: {trx_per_day_val_p}")
 
-    # Average transactions per block
-    avg_trx_block_x = avg_trx_per_block('x_transactions', date_single_day)
-    print(f"X-Chain - Average transactions per block: {avg_trx_block_x}")
-    avg_trx_block_c = avg_trx_per_block('c_transactions', date_single_day)
-    print(f"C-Chain - Average transactions per block: {avg_trx_block_c}")
-    #avg_trx_block_p = avg_trx_per_block('p_transactions', date_single_day)
-    #print(f"P-Chain - Average transactions per block: {avg_trx_block_p}")
-
     # Total transactions
-    total_transactions_x = total_trxs('x_transactions')
+    total_transactions_x = total_trxs('x_transactions', date_single_day)
     print(f"X-Chain - Total transactions: {total_transactions_x}")
-    total_transactions_c = total_trxs('c_transactions')
+    total_transactions_c = total_trxs('c_transactions', date_single_day)
     print(f"C-Chain - Total transactions: {total_transactions_c}")
-    total_transactions_p = total_trxs('p_transactions')
+    total_transactions_p = total_trxs('p_transactions', date_single_day)
     print(f"P-Chain - Total transactions: {total_transactions_p}")
 
+    # Average Transaction Amount
+    avg_transaction_amount_x = avg_trx_amount('x_consumed_utxos', date_single_day)
+    print(f"X-Chain - Average Transaction Amount: {avg_transaction_amount_x}")
+    avg_transaction_amount_c = avg_trx_amount('c_consumed_utxos', date_single_day)
+    print(f"X-Chain - Average Transaction Amount: {avg_transaction_amount_c}")
+    avg_transaction_amount_p = avg_trx_amount('p_consumed_utxos', date_single_day)
+    print(f"X-Chain - Average Transaction Amount: {avg_transaction_amount_p}")
+
     # Total blocks
-    total_blocks_val_x = total_blocks('x_transactions')
+    total_blocks_val_x = total_blocks('x_transactions', date_single_day)
     print(f"X-Chain - Total blocks: {total_blocks_val_x}")
-    total_blocks_val_c = total_blocks('c_transactions')
+    total_blocks_val_c = total_blocks('c_transactions', date_single_day)
     print(f"C-Chain - Total blocks: {total_blocks_val_c}")
-    total_blocks_val_p = total_blocks('p_transactions')
+    total_blocks_val_p = total_blocks('p_transactions', date_single_day)
     print(f"P-Chain - Total blocks: {total_blocks_val_p}")
+
+    # Average Transactions in a Block on X-Chain
+    average_transactions_x = average_tx_per_block('x_transactions', date_single_day)
+    print(f"X-Chain - Average Transactions in a Block: {average_transactions_x}")
+    average_transactions_c = average_tx_per_block('c_transactions', date_single_day)
+    print(f"C-Chain - Average Transactions in a Block: {average_transactions_c}")
+    average_transactions_p = average_tx_per_block('p_transactions', date_single_day)
+    print(f"P-Chain - Average Transactions in a Block: {average_transactions_p}")
+    
+    # Average Transactions Per Hour on X-Chain
+    avg_transactions_per_hour_x = avg_trxs_per_hour('x_transactions', date_single_day)
+    print(f"X-Chain - Average Transactions Per Hour: {avg_transactions_per_hour_x}")
+    avg_transactions_per_hour_c = avg_trxs_per_hour('c_transactions', date_single_day)
+    print(f"X-Chain - Average Transactions Per Hour: {avg_transactions_per_hour_c}")
+    avg_transactions_per_hour_p = avg_trxs_per_hour('p_transactions', date_single_day)
+    print(f"X-Chain - Average Transactions Per Hour: {avg_transactions_per_hour_p}")
 
     #Active Adresses
     active_addresses_x = active_addresses('x_emitted_utxos', 'x_consumed_utxos', date_single_day)
@@ -541,6 +602,14 @@ if __name__ == "__main__":
     print(f"C-Chain - Active Addresses: {active_addresses_c}")
     active_addresses_p = active_addresses('p_emitted_utxos', 'p_consumed_utxos', date_single_day)
     print(f"P-Chain - Active Addresses: {active_addresses_p}")
+
+    # Active Senders
+    active_senders_x = active_senders('x_consumed_utxos', date_single_day)
+    print(f"X-Chain - Active Senders: {active_senders_x}")
+    active_senders_c = active_senders('c_consumed_utxos', date_single_day)
+    print(f"C-Chain - Active Senders: {active_senders_c}")
+    active_senders_p = active_senders('p_consumed_utxos', date_single_day)
+    print(f"P-Chain - Active Senders: {active_senders_p}")
 
     # Cumulative number of transactions
     cum_trx_x = cumulative_number_of_trx('x_transactions', date_single_day)
@@ -614,7 +683,6 @@ if __name__ == "__main__":
     print(f"C-Chain - Large Transactions: {large_transactions_c}")
     large_transactions_p = large_trx('p_emitted_utxos', 'p_consumed_utxos', date_single_day, large_trx_threshold)
     print(f"P-Chain - Large Transactions: {large_transactions_p}")
-
 
     # Whale Transactions
     whale_transactions_x = whale_address_activity('x_emitted_utxos', 'x_consumed_utxos', date_single_day, whale_trx_threshold)
