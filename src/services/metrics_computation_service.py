@@ -87,8 +87,57 @@ def trx_per_day(blockchain, subchain, date):
 def avg_trx_fee():
     pass
 
-@key_mapper("avg_trx_per_block")
-def avg_trx_per_block(blockchain, subchain, date):
+@key_mapper("total_trxs")
+def total_trxs(blockchain, subchain, date):
+    """
+    Calculate the total number of transactions in a given table.
+    """
+    if not subchain:
+        logging.error("Invalid input parameter for total_trxs.")
+        return None
+
+    query = f"SELECT COUNT(*) FROM {subchain}_transactions"
+    results = execute_query(query)
+    
+    if results is not None and not results.empty:
+        add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
+        return results.iloc[0]['count']
+    add_data_to_database('trx_per_day', date, blockchain, subchain, None)
+    return
+
+@key_mapper("avg_trx_amount")
+def avg_trx_amount(blockchain, subchain, date):
+    """
+    Calculate the average transaction amount in a given blockchain subchain for a specified date.
+    """
+    if not subchain or not date:
+        logging.error("Invalid input parameters for avg_trx_amount.")
+        return None
+
+    # Query for the sum of transaction amounts and count of transactions
+    query = f"""
+    SELECT SUM(CAST(amount AS NUMERIC)) as total_amount, COUNT(*) as trx_count
+    FROM {subchain}_consumed_utxos
+    WHERE date = '{date}'
+    """
+    results = execute_query(query)
+
+    if results is not None and not results.empty:
+        total_amount = results.iloc[0]['total_amount']
+        trx_count = results.iloc[0]['trx_count']
+
+        if trx_count > 0:
+            avg_amount = total_amount / trx_count
+            add_data_to_database('avg_trx_amount', date, blockchain, subchain, avg_amount)
+            return avg_amount
+        else:
+            logging.info("No transactions found for the given date.")
+            add_data_to_database('avg_trx_amount', date, blockchain, subchain, 0)
+            return 0
+    add_data_to_database('avg_trx_amount', date, blockchain, subchain, None)
+    return None
+
+
     """
     Calculate average transactions per block for a given table and date.
     """
@@ -117,26 +166,35 @@ def avg_trx_per_block(blockchain, subchain, date):
     add_data_to_database('trx_per_day', date, blockchain, subchain, None)
     return None
 
-def avg_trx_size():
-    pass
-
-@key_mapper("total_trxs")
-def total_trxs(blockchain, subchain, date):
+@key_mapper("avg_trxs_per_hour")
+def avg_trxs_per_hour(blockchain, subchain, date):
     """
-    Calculate the total number of transactions in a given table.
+    Calculate the average number of transactions per hour for a given blockchain subchain and date.
     """
-    if not subchain:
-        logging.error("Invalid input parameter for total_trxs.")
+    if not subchain or not date:
+        logging.error("Invalid input parameters for avg_trxs_per_hour.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {subchain}_transactions"
-    results = execute_query(query)
-    
-    if results is not None and not results.empty:
-        add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
-        return results.iloc[0]['count']
-    add_data_to_database('trx_per_day', date, blockchain, subchain, None)
-    return
+    # Query for total number of transactions
+    trx_count_query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
+    trx_results = execute_query(trx_count_query)
+
+    if trx_results is not None and not trx_results.empty:
+        count_trxs = trx_results.iloc[0]['count']
+        hours_in_day = 24
+        avg_trxs_hour = count_trxs / hours_in_day
+
+        # Insert result into database
+        add_data_to_database('avg_trxs_per_hour', date, blockchain, subchain, avg_trxs_hour)
+
+        return avg_trxs_hour
+    else:
+        logging.info("No transactions found for the given date.")
+        
+        # Insert zero transactions for the date into the database
+        add_data_to_database('avg_trxs_per_hour', date, blockchain, subchain, 0)
+
+        return 0
 
 @key_mapper("total_blocks")
 def total_blocks(blockchain, subchain, date):
@@ -156,60 +214,135 @@ def total_blocks(blockchain, subchain, date):
     add_data_to_database('trx_per_day', date, blockchain, subchain, None)
     return None
 
-
-def total_addresses():
-    pass
-
-def active_senders():
-    pass
-
-def active_addresses(table, date_range):
+@key_mapper("average_tx_per_block")
+def average_tx_per_block(blockchain, subchain, date):
     """
-    Calculate the number of unique addresses that have been active (either sending or receiving) in a given date range.
+    Calculate the average number of transactions per block in a given blockchain subchain for a specified date.
     """
-    if not table or not date_range:
+    if not subchain or not date:
+        logging.error("Invalid input parameters for average_tx_per_block.")
+        return None
+
+    query = f"""
+    SELECT AVG(tx_count) as average_tx_per_block
+    FROM (
+        SELECT \"blockHash\", COUNT(*) as tx_count
+        FROM {subchain}_transactions
+        WHERE date = '{date}'
+        GROUP BY \"blockHash\"
+    ) as block_transactions
+    """
+    results = execute_query(query)
+    
+    if results is not None and not results.empty:
+        avg_tx_block = results.iloc[0]['average_tx_per_block']
+
+        # Insert result into database
+        add_data_to_database('average_tx_per_block', date, blockchain, subchain, avg_tx_block)
+
+        return avg_tx_block
+    else:
+        logging.info("No transactions found for the given date.")
+
+        # Insert zero transactions for the date into the database
+        add_data_to_database('average_tx_per_block', date, blockchain, subchain, None)
+
+        return None
+
+
+@key_mapper("active_addresses")
+def active_addresses(blockchain, subchain, date):
+    """
+    Calculate the number of unique addresses that have been active (either sending or receiving) in a given blockchain subchain on a specified date.
+    """
+    if not subchain or not date:
         logging.error("Invalid input parameters for active_addresses.")
         return None
 
-    query = f"SELECT COUNT(DISTINCT addresses) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
+    # Assuming that emitted_table and consumed_table are both part of the same subchain transactions
+    query = f"""
+    SELECT COUNT(DISTINCT addresses) FROM (
+        SELECT addresses FROM {subchain}_emitted_utxos WHERE date = '{date}'
+        UNION
+        SELECT addresses FROM {subchain}_emitted_utxos WHERE date = '{date}'
+    ) AS active_addresses
+    """
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        return results.iloc[0]['count']
-    
-    return None
+        active_addrs_count = results.iloc[0]['count']
 
+        # Insert result into database
+        add_data_to_database('active_addresses', date, blockchain, subchain, active_addrs_count)
 
-# def trx_count(table, date_range):
-#     """
-#     Calculate the number of transactions in a given table within a specified date range.
-#     """
-#     if not table or not date_range:
-#         logging.error("Invalid input parameters for trx_count.")
-#         return None
+        return active_addrs_count
+    else:
+        logging.info("No active addresses found for the given date.")
 
-#     query = f"SELECT COUNT(*) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-#     results = execute_query(query)
-    
-#     if results is not None and not results.empty:
-#         return results.iloc[0]['count']
-#     return None
+        # Insert zero active addresses for the date into the database
+        add_data_to_database('active_addresses', date, blockchain, subchain, 0)
 
+        return 0
 
-def cumulative_number_of_trx(table, end_date):
+@key_mapper("active_senders")
+def active_senders(blockchain, subchain, date):
     """
-    Calculate the cumulative number of transactions in a given table up to a specified date.
+    Calculate the number of unique active senders (addresses) on a given date in a specified blockchain subchain.
+    Active senders are defined as addresses that have sent (consumed) on the specified date.
     """
-    if not table or not end_date:
-        logging.error("Invalid input parameters for cummilative_number_of_trx.")
+    if not subchain or not date:
+        logging.error("Invalid input parameters for active_senders.")
         return None
 
-    query = f"SELECT COUNT(*) FROM {table} WHERE date <= '{end_date}'"
+    # Assuming 'consumed_table' translates to a sender-focused part of the subchain transactions
+    query = f"""
+    SELECT COUNT(DISTINCT addresses) as active_senders_count
+    FROM {subchain}_consumed_utxos
+    WHERE date = '{date}'
+    """
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        return results.iloc[0]['count']
-    return None
+        active_senders_count = results.iloc[0]['active_senders_count']
+
+        # Insert result into database
+        add_data_to_database('active_senders', date, blockchain, subchain, active_senders_count)
+
+        return active_senders_count
+    else:
+        logging.info("No active senders found for the given date.")
+
+        # Insert zero active senders for the date into the database
+        add_data_to_database('active_senders', date, blockchain, subchain, 0)
+
+        return 0
+
+@key_mapper("cumulative_number_of_trx")
+def cumulative_number_of_trx(blockchain, subchain, end_date):
+    """
+    Calculate the cumulative number of transactions in a given blockchain subchain up to a specified date.
+    """
+    if not subchain or not end_date:
+        logging.error("Invalid input parameters for cumulative_number_of_trx.")
+        return None
+
+    query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date <= '{end_date}'"
+    results = execute_query(query)
+    
+    if results is not None and not results.empty:
+        cumulative_trx_count = results.iloc[0]['count']
+
+        # Insert result into database
+        add_data_to_database('cumulative_number_of_trx', end_date, blockchain, subchain, cumulative_trx_count)
+
+        return cumulative_trx_count
+    else:
+        logging.info("No transactions found up to the given date.")
+
+        # Insert zero transactions for the date range into the database
+        add_data_to_database('cumulative_number_of_trx', end_date, blockchain, subchain, 0)
+
+        return 0
 
 
 def cummilative_number_of_contract_deployed():
@@ -224,133 +357,33 @@ def token_transfers():
 def contract_creations():
     pass
 
-def avg_trx_value(table, date_range):
+@key_mapper("sum_emitted_utxo_amount")
+def sum_emitted_utxo_amount(blockchain, subchain, date):
     """
-    Calculate the average transaction value in a given table within a specified date range.
+    Calculate the sum of emitted UTXO amounts in a given blockchain subchain for a specified date.
     """
-    if not table or not date_range:
-        logging.error("Invalid input parameters for avg_trx_value.")
+    if not subchain or not date:
+        logging.error("Invalid input parameters for sum_emitted_utxo_amount.")
         return None
 
-    query = f"SELECT AVG(CAST(value AS NUMERIC)) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-    #print(f"Debug: SQL Query - {query}")
+    query = f"SELECT SUM(CAST(amount AS NUMERIC)) FROM {subchain}_emitted_utxos' WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        avg_value = results.iloc[0]['avg']
-        #print(f"Debug: Results - {results}")
-        #logging.info(f"Average transaction value in date range {date_range}: {avg_value}")
-        return avg_value
+        emitted_utxo_sum = results.iloc[0]['sum']
+
+        # Insert result into database
+        add_data_to_database('sum_emitted_utxo_amount', date, blockchain, subchain, emitted_utxo_sum)
+
+        return emitted_utxo_sum
     else:
-        logging.warning(f"No data found for average transaction value in date range {date_range}.")
+        logging.warning(f"No data found for sum of emitted UTXO amounts on {date} in {subchain}.")
+        
+        # Insert null value for the date into the database
+        add_data_to_database('sum_emitted_utxo_amount', date, blockchain, subchain, None)
+
         return None
 
-def median_trx_value(table, date_range):
-    """
-    Calculate the median transaction value in a given table within a specified date range.
-    """
-    if not table or not date_range:
-        logging.error("Invalid input parameters for median_trx_value.")
-        return None
-    
-    query = f"SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(value AS NUMERIC)) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-    #print(f"Debug: SQL Query - {query}")
-    results = execute_query(query)
-    
-    if results is not None and not results.empty:
-        median_value = results.iloc[0]['percentile_cont']
-        #print(f"Debug: Results - {results}")
-        #logging.info(f"Median transaction value in date range {date_range}: {median_value}")
-        return median_value
-    else:
-        logging.warning(f"No data found for median transaction value in date range {date_range}.")
-        return None
-
-def avg_utxo_value(table, date_range):
-    """
-    Calculate the average value of UTXOs in a given table within a specified date range.
-    Note: This function assumes the 'value' column is of text type and casts it to a numeric type for the calculation.
-    """
-    if not table or not date_range:
-        logging.error("Invalid input parameters for avg_utxo_value.")
-        return None
-
-    query = f"SELECT AVG(CAST(value AS NUMERIC)) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-    results = execute_query(query)
-    
-    if results is not None and not results.empty:
-        return results.iloc[0]['avg']
-    return None
-
-
-def total_staked_amount(table, date_range):
-    """
-    Calculate the total amount of tokens staked in a given table within a specified date range.
-    """
-    if not table or not date_range:
-        logging.error("Invalid input parameters for total_staked_amount.")
-        return None
-
-    query = f"SELECT SUM(amountStaked) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-    results = execute_query(query)
-    
-    if results is not None and not results.empty:
-        return results.iloc[0]['sum']
-    return None
-
-
-def total_burned_amount(table, date_range):
-    """
-    Calculate the total amount of tokens burned in a given table within a specified date range.
-    """
-    if not table or not date_range:
-        logging.error("Invalid input parameters for total_burned_amount.")
-        return None
-
-    query = f"SELECT SUM(amountBurned) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}'"
-    results = execute_query(query)
-    
-    if results is not None and not results.empty:
-        return results.iloc[0]['sum']
-    return None
-
-
-def large_trx(table, date_range, threshold):
-    """
-    Calculate the number of large transactions exceeding a certain threshold value in a given table within a specified date range.
-    Note: Assumes 'value' is stored as a text type and casts it to numeric for comparison.
-    """
-    if not table or not date_range or threshold is None:
-        logging.error("Invalid input parameters for large_trx.")
-        return None
-
-    query = f"SELECT COUNT(*) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}' AND CAST(value AS NUMERIC) > {threshold}"
-    results = execute_query(query)
-    
-    if results is not None and not results.empty:
-        return results.iloc[0]['count']
-    return None
-
-
-def whale_address_activity(table, date_range, threshold):
-    """
-    Calculate the number of transactions classified as whale activity in a given table within a specified date range.
-    Whale transactions are defined as those exceeding a certain threshold value.
-    Note: Assumes 'value' is stored as a text type and casts it to numeric for comparison.
-    """
-    if not table or not date_range or threshold is None:
-        logging.error("Invalid input parameters for whale_address_activity.")
-        return None
-
-    query = f"SELECT COUNT(*) FROM {table} WHERE date BETWEEN '{date_range[0]}' AND '{date_range[1]}' AND CAST(value AS NUMERIC) > {threshold}"
-    results = execute_query(query)
-    
-    if results is not None and not results.empty:
-        return results.iloc[0]['count']
-    return None
-
-
-def cross_chain_whale_trx(table, date_range, threshold):
     """
     Calculate the number of large cross-chain transactions in a given table within a specified date range.
     Cross-chain whale transactions are defined as those exceeding a certain threshold value and occurring across different chains.
@@ -365,6 +398,8 @@ def cross_chain_whale_trx(table, date_range, threshold):
     if results is not None and not results.empty:
         return results.iloc[0]['count']
     return None
+
+#######START WITH avg_emmited_utxo_amount
 
 #Realized cap
 def get_avax_price_at_timestamp(timestamp):
