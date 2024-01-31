@@ -12,6 +12,7 @@ def convert_dict_to_json(x):
     return x
 
 def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get("DATABASE_CONNECTION")):
+    
     """
     Appends a DataFrame to a SQL table, creating the table if it doesn't exist.
     

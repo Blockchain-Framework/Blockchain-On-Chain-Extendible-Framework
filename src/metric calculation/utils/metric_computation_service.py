@@ -2,8 +2,10 @@ import pandas as pd
 import psycopg2
 import sys
 import logging
+import os
+# sys.path.insert(0, 'D:\\Academics\\FYP\\Repos\\Blockchain-On-Chain-Extendible-Framework')
 
-from database_service import get_query_results, append_dataframe_to_sql
+from utils.database_service import get_query_results, append_dataframe_to_sql
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO)
@@ -37,7 +39,7 @@ def add_data_to_database(table, date, blockchain, subChain, value):
     # Insert result into database
     append_dataframe_to_sql('metrics_table', result_df)
     
-    
+  
 @key_mapper("trx_per_second")
 def trx_per_second(blockchain, subchain, date):
     """
@@ -54,13 +56,13 @@ def trx_per_second(blockchain, subchain, date):
         count = results.iloc[0]['count']
         if count > 0:
             add_data_to_database('trx_per_day', date, blockchain, subchain, count / 86400)
-            return
+            return count / 86400
         else:
             logging.info("No transactions found for the given date.")
             add_data_to_database('trx_per_day', date, blockchain, subchain, 0)
-            return
-    add_data_to_database('trx_per_day', date, blockchain, subchain, None)
-    return
+
+            return 0
+    return None
 
 @key_mapper("trx_per_day")
 def trx_per_day(blockchain, subchain, date):
@@ -76,9 +78,9 @@ def trx_per_day(blockchain, subchain, date):
     
     if results is not None and not results.empty:
         add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
-        # return results.iloc[0]['count']
+        return results.iloc[0]['count']
     add_data_to_database('trx_per_day', date, blockchain, subchain, None)
-    return
+    return None
 
 def avg_trx_fee():
     pass
@@ -105,13 +107,13 @@ def avg_trx_per_block(blockchain, subchain, date):
 
         if count_trxs > 0:
             add_data_to_database('trx_per_day', date, blockchain, subchain, count_blocks / count_trxs)
-            # return count_blocks / count_trxs
+            return count_blocks / count_trxs
         else:
             logging.info("No transactions found for the given date.")
             add_data_to_database('trx_per_day', date, blockchain, subchain, 0)
-            return
+            return 0
     add_data_to_database('trx_per_day', date, blockchain, subchain, None)
-    return
+    return None
 
 def avg_trx_size():
     pass
@@ -130,7 +132,7 @@ def total_trxs(blockchain, subchain, date):
     
     if results is not None and not results.empty:
         add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
-        return
+        return results.iloc[0]['count']
     add_data_to_database('trx_per_day', date, blockchain, subchain, None)
     return
 
@@ -148,9 +150,7 @@ def total_blocks(blockchain, subchain, date):
     
     if results is not None and not results.empty:
         add_data_to_database('trx_per_day', date, blockchain, subchain,  results.iloc[0]['count'])
-        return
+        return results.iloc[0]['count']
     add_data_to_database('trx_per_day', date, blockchain, subchain, None)
-    return 
-
-
+    return None
 

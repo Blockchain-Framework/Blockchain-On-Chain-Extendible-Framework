@@ -113,7 +113,7 @@ def avg_trx_per_block(blockchain, subchain, date):
         else:
             logging.info("No transactions found for the given date.")
             add_data_to_database('trx_per_day', date, blockchain, subchain, 0)
-            return
+            return 0
     add_data_to_database('trx_per_day', date, blockchain, subchain, None)
     return None
 
@@ -134,7 +134,7 @@ def total_trxs(blockchain, subchain, date):
     
     if results is not None and not results.empty:
         add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
-        return
+        return results.iloc[0]['count']
     add_data_to_database('trx_per_day', date, blockchain, subchain, None)
     return
 
@@ -152,9 +152,9 @@ def total_blocks(blockchain, subchain, date):
     
     if results is not None and not results.empty:
         add_data_to_database('trx_per_day', date, blockchain, subchain,  results.iloc[0]['count'])
-        return
+        return results.iloc[0]['count']
     add_data_to_database('trx_per_day', date, blockchain, subchain, None)
-    return 
+    return None
 
 
 def total_addresses():

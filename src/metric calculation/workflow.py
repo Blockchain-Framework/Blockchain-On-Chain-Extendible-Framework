@@ -6,11 +6,15 @@ import logging
 from dotenv import load_dotenv
 import pandas as pd
 import importlib.util
+
+
 from utils.database_service import get_query_results
+from utils.utils import log_workflow_status
+
 load_dotenv()
 
 # Ensure the correct paths are included for imports
-# sys.path.insert(0, 'D:\\Academics\\FYP\\Repos\\Blockchain-On-Chain-Extendible-Framework')
+# sys.path.insert(0, os.environ.get("ROOT_DIRECTORY_LOCAL_PATH"))
 
 class MetricCalculationWorkflowManager:
 
@@ -54,7 +58,7 @@ class MetricCalculationWorkflowManager:
     def metric_workflow(self, date, blockchain, subchain, metrics):
         try:
             self.logger.info(f"Computing metrics for {blockchain} subchain {subchain}...")
-            module_path = 'src\scripts\metric_calculation_workflow_manager.py'
+            module_path = r"src/metric calculation/utils/metric_computation_service.py"
             function_map = self.map_functions(module_path)
             
             for metric in metrics:
@@ -67,27 +71,26 @@ class MetricCalculationWorkflowManager:
             self.logger.info("Workflow completed successfully.")
         except Exception as e:
             self.logger.error(f"An error occurred during the workflow for {blockchain} subchain {subchain}: {e}")
-            #TODO : trow error
+            raise
 
     def run_workflow(self, date=None):
         blockchains = self.get_blockchains()
+        print("bolockchain",blockchains)
         if blockchains is not None:
+            
             for blockchain in blockchains['blockchain']:
                 subchains = self.get_subchains(blockchain)
                 if subchains is not None:
                     for subchain in subchains['sub_chain']:
                         metrics = self.get_metrics(blockchain, subchain)
                         if metrics is not None:
-                            # TODO : Add inser query for workflow meta table = values(chain,subchain, status=start, task=metric, error=none)
+                            log_workflow_status(blockchain, subchain, 'start', 'metric', None)
                             try:
                                 self.metric_workflow(date, blockchain, subchain, metrics['metric_name'].tolist())
                             except Exception as e:
-                                # TODO : Add inser query for workflow meta table = values(chain,subchain, status=fail, task=metric, error=e)
-                                pass
+                                log_workflow_status(blockchain, subchain, 'fail', 'metric', str(e))
                             finally:
-                                # TODO : Add inser query for workflow meta table = values(chain,subchain, status=completed, task=metric, error=none)
-                                pass
-                            
+                                log_workflow_status(blockchain, subchain, 'completed', 'metric', None)
 
 if __name__ == "__main__":
     date = "2024-01-21"
