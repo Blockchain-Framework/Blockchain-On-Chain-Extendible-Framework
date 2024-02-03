@@ -8,7 +8,7 @@ import pandas as pd
 import importlib.util
 
 
-from utils.database.database_service import get_query_results
+from utils.database.database_service import get_query_results, append_dataframe_to_sql
 from utils.scripts.utils import log_workflow_status
 
 load_dotenv()
@@ -61,14 +61,32 @@ class MetricCalculationWorkflowManager:
             module_path = r"src/metric calculation/utils/scripts/metric_computation_service.py"
             function_map = self.map_functions(module_path)
             
+            metric_results = []
             for metric in metrics:
                 if metric in function_map:
                     metric_value = function_map[metric](blockchain, subchain, date)
                     self.logger.info(f"Calculated {metric} for {blockchain} subchain {subchain}: {metric_value}")
+                    # Collect each metric result
+                    metric_results.append({
+                        'date': date,
+                        'blockchain': blockchain,
+                        'subchain': subchain,
+                        'metric': metric,
+                        'value': metric_value
+                    })
                 else:
                     self.logger.warning(f"No function mapped for metric: {metric}")
+                    
+            # Convert collected metric results into a DataFrame
+            metrics_df = pd.DataFrame(metric_results)
+            # Insert each metric result into its respective table
+            if not metrics_df.empty:
+                dfs_to_insert = insert_metric_results(metrics_df)
+                batch_insert_dataframes(dfs_to_insert)
+                self.logger.info("Metric values successfully inserted into their respective tables in a single transaction.")
             
             self.logger.info("Workflow completed successfully.")
+            
         except Exception as e:
             self.logger.error(f"An error occurred during the workflow for {blockchain} subchain {subchain}: {e}")
             raise
@@ -77,7 +95,6 @@ class MetricCalculationWorkflowManager:
         blockchains = self.get_blockchains()
         print("bolockchain",blockchains)
         if blockchains is not None:
-            
             for blockchain in blockchains['blockchain']:
                 subchains = self.get_subchains(blockchain)
                 if subchains is not None:
@@ -91,6 +108,23 @@ class MetricCalculationWorkflowManager:
                                 log_workflow_status(blockchain, subchain, 'fail', 'metric', str(e))
                             finally:
                                 log_workflow_status(blockchain, subchain, 'completed', 'metric', None)
+
+
+def insert_metric_results(metrics_df):
+    # Initialize a list to collect DataFrames for each metric
+    dfs_to_insert = []
+
+    for index, row in metrics_df.iterrows():
+        # Determine the table name dynamically from the metric name
+        table_name = row['metric']
+        # Create a DataFrame for the single row to insert
+        row_df = pd.DataFrame([row]).drop(columns=['metric'])
+        # Add table name as an attribute for later reference
+        row_df._table_name = table_name
+        # Collect the DataFrame
+        dfs_to_insert.append(row_df)
+
+    return dfs_to_insert
 
 if __name__ == "__main__":
     dates = ["2024-01-20","2024-01-22","2024-01-23","2024-01-24","2024-01-25","2024-01-26"]

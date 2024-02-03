@@ -6,8 +6,9 @@ from utils.scripts.avalanche.avalanche_model import Avalanche_X_Model, Avalanche
 from utils.scripts.avalanche.avalanche_UTXO_model import AvalancheUTXO
 from utils.database.database_service import append_dataframe_to_sql, get_query_results
 from utils.scripts.utils.time_utils import convert_to_gmt_timestamp, get_today_start_gmt_timestamp
-from utils.scripts.new_.helper import calculate_amount_unlocked, calculate_amount_created
+from utils.scripts.new_.helper import calculate_amount_unlocked, calculate_amount_created, getAssetId, getAssetName, getSymbol, getDenomination, getAsset_type, getAmount
 from datetime import datetime
+import pandas as pd
 
 def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_mapping, emitted_utxos_keys, consumed_utxos_keys, chain, url, last_day):
     print(f"{chain} start....")
@@ -15,12 +16,10 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
     current_day = get_today_start_gmt_timestamp()
 
     page_token = None
-
+    
     params = {
         "pageSize": 100
     }
-
-    url = "https://glacier-api.avax.network/v1/networks/mainnet/blockchains/x-chain/transactions"
     
     trxs = []
     emitted_utxos = []
@@ -46,7 +45,34 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
         if timestamp < current_day:
             # Save data to the database for the day that just completed
             current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
-        
+            current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
+                
+            df_trx = pd.DataFrame(data)
+            df_trx['date'] = current_date
+            df_emitted_utxos = pd.DataFrame(emitted_utxos)
+            df_emitted_utxos['date'] = current_date
+            df_consumed_utxos = pd.DataFrame(consumed_utxos)
+            df_consumed_utxos['date'] = current_date
+            
+            df_trx['date'] = pd.to_datetime(df_trx['date'])
+            df_emitted_utxos['date'] = pd.to_datetime(df_emitted_utxos['date'])
+            df_consumed_utxos['date'] = pd.to_datetime(df_consumed_utxos['date'])
+            
+            # print(df_trx)
+            append_dataframe_to_sql(f'{chain}_transactions', df_trx)
+            append_dataframe_to_sql(f'{chain}_emitted_utxos', df_emitted_utxos)
+            append_dataframe_to_sql(f'{chain}_consumed_utxos', df_consumed_utxos)
+            # print("x transaction",current_date)
+            
+            # Move to the previous day
+            current_day -= 86400
+            data = []
+            emitted_utxos = []
+            consumed_utxos = []
+
+        if timestamp <= last_timestamp:
+            run = False
+            break
         # Map the transaction itself (existing logic)
         mapped_transaction = map_transaction(transaction_feature_mapping, tx)
         trxs.append(mapped_transaction.__dict__)
@@ -100,11 +126,19 @@ def map_transaction(blockchain_feature_mapping,tx):
     
     GeneralTransactionModel(**transformed_data)
 
-
 # Mapping of function names to actual functions for dynamic invocation
 transformation_functions = {
     "calculate_amount_unlocked": calculate_amount_unlocked,
     "calculate_amount_created": calculate_amount_created,
+}
+
+utxo_functions = {
+    "getAssetId": getAssetId,
+    "getAssetName":getAssetName,
+    "getSymbol":getSymbol,
+    "getDenomination":getDenomination,
+    "getAsset_type":getAsset_type,
+    "getAmount":getAmount
 }
 
 if __name__ == "__main__":
@@ -118,32 +152,32 @@ if __name__ == "__main__":
             'memo':('memo',"feature"),
             'chainFormat':('chainFormat',"feature"),
             'txType':('txType',"feature"),
-            'amountUnlocked': ('amount_unlocked',"function","function name"),
-            'amountCreated': ('amount_created',"function", "function name")
+            'amountUnlocked': ('amount_unlocked',"function","calculate_amount_unlocked"),
+            'amountCreated': ('amount_created',"function", "calculate_amount_created")
         }
     
     x_emit_utxo_mapping = {
         'txType': ('txType',"feature"),
         'addresses': ('addresses',"feature"),
         'value': ('value',"feature"),
-        'assetId': ('assetId',"feature"),
-        'asset_name': ('asset_name',"feature"),
-        'symbol': ('symbol',"feature"),
-        'denomination': ('denomination',"feature"),
-        'asset_type': ('asset_type',"feature"),
-        'amount': ('amount',"feature")
+        'assetId': ('assetId',"function", 'getAssetId'),
+        'asset_name': ('asset_name',"function", 'getAssetName'),
+        'symbol': ('symbol',"function", 'getSymbol'),
+        'denomination': ('denomination',"function", 'getDenomination'),
+        'asset_type': ('asset_type',"function", 'getAsset_type'),
+        'amount': ('amount',"function", 'getAmount')
     }
     
     x_consume_utxo_mapping = {
         'txType': ('txType',"feature"),
         'addresses': ('addresses',"feature"),
         'value': ('value',"feature"),
-        'assetId': ('assetId',"feature"),
-        'asset_name': ('asset_name',"feature"),
-        'symbol': ('symbol',"feature"),
-        'denomination': ('denomination',"feature"),
-        'asset_type': ('asset_type',"feature"),
-        'amount': ('amount',"feature")
+        'assetId': ('assetId',"function", 'getAssetId'),
+        'asset_name': ('asset_name',"function", 'getAssetName'),
+        'symbol': ('symbol',"function", 'getSymbol'),
+        'denomination': ('denomination',"function", 'getDenomination'),
+        'asset_type': ('asset_type',"function", 'getAsset_type'),
+        'amount': ('amount',"function", 'getAmount')
     }
     
     emitted_utxos_key = ['emittedUtxos',"envInputs"]

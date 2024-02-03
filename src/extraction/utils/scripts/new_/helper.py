@@ -1,7 +1,3 @@
-
-
-
-
 def calculate_amount_unlocked(transaction):
     amountUnlocked = transaction.get('amountUnlocked', [])
     
@@ -37,3 +33,27 @@ def calculate_amount_created(transaction):
             amount_created[amount['name']] = created_value
 
     return amount_created
+
+def getAssetId(utxo):
+    asset =  utxo['asset']
+    return asset.get('assetId')
+
+def getAssetName(utxo):
+    asset =  utxo['asset']
+    return asset.get('name', '')
+
+def getSymbol(utxo):
+    asset =  utxo['asset']
+    return asset.get('symbol', '')
+
+def getDenomination(utxo):
+    asset =  utxo['asset']
+    return asset.get('denomination',0)
+
+def getAsset_type(utxo):
+    asset =  utxo['asset']
+    return asset.get('type','')
+
+def getAmount(utxo):
+    asset =  utxo['asset']
+    return asset.get('amount',0)

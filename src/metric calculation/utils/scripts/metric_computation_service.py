@@ -56,11 +56,11 @@ def trx_per_second(blockchain, subchain, date):
     if results is not None and not results.empty:
         count = results.iloc[0]['count']
         if count > 0:
-            add_data_to_database('trx_per_day', date, blockchain, subchain, count / 86400)
+            # add_data_to_database('trx_per_second', date, blockchain, subchain, count / 86400)
             return count / 86400
         else:
             logging.info("No transactions found for the given date.")
-            add_data_to_database('trx_per_day', date, blockchain, subchain, 0)
+            # add_data_to_database('trx_per_second', date, blockchain, subchain, 0)
 
             return 0
     return None
@@ -78,9 +78,9 @@ def trx_per_day(blockchain, subchain, date):
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
+        # add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
         return results.iloc[0]['count']
-    add_data_to_database('trx_per_day', date, blockchain, subchain, None)
+    # add_data_to_database('trx_per_day', date, blockchain, subchain, None)
     return None
 
 @key_mapper("total_trxs")
@@ -96,9 +96,9 @@ def total_trxs(blockchain, subchain, date):
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
+        # add_data_to_database('total_trxs', date, blockchain, subchain, results.iloc[0]['count'])
         return results.iloc[0]['count']
-    add_data_to_database('trx_per_day', date, blockchain, subchain, None)
+    # add_data_to_database('total_trxs', date, blockchain, subchain, None)
     return None
 
 @key_mapper("avg_trx_amount")
@@ -124,13 +124,13 @@ def avg_trx_amount(blockchain, subchain, date):
 
         if trx_count > 0:
             avg_amount = total_amount / trx_count
-            add_data_to_database('avg_trx_amount', date, blockchain, subchain, avg_amount)
+            # add_data_to_database('avg_trx_amount', date, blockchain, subchain, avg_amount)
             return avg_amount
         else:
             logging.info("No transactions found for the given date.")
-            add_data_to_database('avg_trx_amount', date, blockchain, subchain, 0)
+            # add_data_to_database('avg_trx_amount', date, blockchain, subchain, 0)
             return 0
-    add_data_to_database('avg_trx_amount', date, blockchain, subchain, None)
+    # add_data_to_database('avg_trx_amount', date, blockchain, subchain, None)
     return None
 
 @key_mapper("avg_trxs_per_hour")
@@ -152,14 +152,14 @@ def avg_trxs_per_hour(blockchain, subchain, date):
         avg_trxs_hour = count_trxs / hours_in_day
 
         # Insert result into database
-        add_data_to_database('avg_trxs_per_hour', date, blockchain, subchain, avg_trxs_hour)
+        # add_data_to_database('avg_trxs_per_hour', date, blockchain, subchain, avg_trxs_hour)
 
         return avg_trxs_hour
     else:
         logging.info("No transactions found for the given date.")
         
         # Insert zero transactions for the date into the database
-        add_data_to_database('avg_trxs_per_hour', date, blockchain, subchain, 0)
+        # add_data_to_database('avg_trxs_per_hour', date, blockchain, subchain, 0)
 
         return 0
 
@@ -176,9 +176,9 @@ def total_blocks(blockchain, subchain, date):
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        add_data_to_database('trx_per_day', date, blockchain, subchain,  results.iloc[0]['count'])
+        # add_data_to_database('trx_per_day', date, blockchain, subchain,  results.iloc[0]['count'])
         return results.iloc[0]['count']
-    add_data_to_database('trx_per_day', date, blockchain, subchain, None)
+    # add_data_to_database('trx_per_day', date, blockchain, subchain, None)
     return None
 
 @key_mapper("avg_tx_per_block")
@@ -205,14 +205,14 @@ def avg_tx_per_block(blockchain, subchain, date):
         avg_tx_block = results.iloc[0]['avg_tx_per_block']
 
         # Insert result into database
-        add_data_to_database('avg_tx_per_block', date, blockchain, subchain, avg_tx_block)
+        # add_data_to_database('avg_tx_per_block', date, blockchain, subchain, avg_tx_block)
 
         return avg_tx_block
     else:
         logging.info("No transactions found for the given date.")
 
         # Insert zero transactions for the date into the database
-        add_data_to_database('avg_tx_per_block', date, blockchain, subchain, None)
+        # add_data_to_database('avg_tx_per_block', date, blockchain, subchain, None)
 
         return None
 
@@ -239,14 +239,14 @@ def active_addresses(blockchain, subchain, date):
         active_addrs_count = results.iloc[0]['count']
 
         # Insert result into database
-        add_data_to_database('active_addresses', date, blockchain, subchain, active_addrs_count)
+        # add_data_to_database('active_addresses', date, blockchain, subchain, active_addrs_count)
 
         return active_addrs_count
     else:
         logging.info("No active addresses found for the given date.")
 
         # Insert zero active addresses for the date into the database
-        add_data_to_database('active_addresses', date, blockchain, subchain, 0)
+        # add_data_to_database('active_addresses', date, blockchain, subchain, 0)
 
         return 0
 
@@ -272,14 +272,14 @@ def active_senders(blockchain, subchain, date):
         active_senders_count = results.iloc[0]['active_senders_count']
 
         # Insert result into database
-        add_data_to_database('active_senders', date, blockchain, subchain, active_senders_count)
+        # add_data_to_database('active_senders', date, blockchain, subchain, active_senders_count)
 
         return active_senders_count
     else:
         logging.info("No active senders found for the given date.")
 
         # Insert zero active senders for the date into the database
-        add_data_to_database('active_senders', date, blockchain, subchain, 0)
+        # add_data_to_database('active_senders', date, blockchain, subchain, 0)
 
         return 0
 
@@ -299,14 +299,14 @@ def cumulative_number_of_trx(blockchain, subchain, end_date):
         cumulative_trx_count = results.iloc[0]['count']
 
         # Insert result into database
-        add_data_to_database('cumulative_number_of_trx', end_date, blockchain, subchain, cumulative_trx_count)
+        # add_data_to_database('cumulative_number_of_trx', end_date, blockchain, subchain, cumulative_trx_count)
 
         return cumulative_trx_count
     else:
         logging.info("No transactions found up to the given date.")
 
         # Insert zero transactions for the date range into the database
-        add_data_to_database('cumulative_number_of_trx', end_date, blockchain, subchain, 0)
+        # add_data_to_database('cumulative_number_of_trx', end_date, blockchain, subchain, 0)
 
         return 0
 
@@ -326,14 +326,14 @@ def sum_emitted_utxo_amount(blockchain, subchain, date):
         emitted_utxo_sum = results.iloc[0]['sum']
 
         # Insert result into database
-        add_data_to_database('sum_emitted_utxo_amount', date, blockchain, subchain, emitted_utxo_sum)
+        # add_data_to_database('sum_emitted_utxo_amount', date, blockchain, subchain, emitted_utxo_sum)
 
         return emitted_utxo_sum
     else:
         logging.warning(f"No data found for sum of emitted UTXO amounts on {date} in {subchain}.")
         
         # Insert null value for the date into the database
-        add_data_to_database('sum_emitted_utxo_amount', date, blockchain, subchain, None)
+        # add_data_to_database('sum_emitted_utxo_amount', date, blockchain, subchain, None)
 
         return None
 
@@ -353,14 +353,14 @@ def avg_emmited_utxo_amount(blockchain, subchain, date):
         avg_utxo_amount = results.iloc[0]['avg']
 
         # Insert result into database
-        add_data_to_database('avg_emmited_utxo_amount', date, blockchain, subchain, avg_utxo_amount)
+        # add_data_to_database('avg_emmited_utxo_amount', date, blockchain, subchain, avg_utxo_amount)
 
         return avg_utxo_amount
     else:
         logging.warning(f"No data found for average transaction value on {date} in {subchain}.")
 
         # Insert null value for the date into the database
-        add_data_to_database('avg_emmited_utxo_amount', date, blockchain, subchain, None)
+        # add_data_to_database('avg_emmited_utxo_amount', date, blockchain, subchain, None)
 
         return None
 
@@ -384,14 +384,14 @@ def median_emmited_utxo_amount(blockchain, subchain, date):
         median_utxo_amount = results.iloc[0]['percentile_cont']
 
         # Insert result into database
-        add_data_to_database('median_emmited_utxo_amount', date, blockchain, subchain, median_utxo_amount)
+        # add_data_to_database('median_emmited_utxo_amount', date, blockchain, subchain, median_utxo_amount)
 
         return median_utxo_amount
     else:
         logging.warning(f"No data found for median transaction value on {date} in {subchain}.")
 
         # Insert null value for the date into the database
-        add_data_to_database('median_emmited_utxo_amount', date, blockchain, subchain, None)
+        # add_data_to_database('median_emmited_utxo_amount', date, blockchain, subchain, None)
 
         return None
 
@@ -412,14 +412,14 @@ def sum_consumed_utxo_amount(blockchain, subchain, date):
         consumed_utxo_sum = results.iloc[0]['sum']
 
         # Insert result into database
-        add_data_to_database('sum_consumed_utxo_amount', date, blockchain, subchain, consumed_utxo_sum)
+        # add_data_to_database('sum_consumed_utxo_amount', date, blockchain, subchain, consumed_utxo_sum)
 
         return consumed_utxo_sum
     else:
         logging.warning(f"No data found for sum of consumed UTXO amounts on {date} in {subchain}.")
 
         # Insert null value for the date into the database
-        add_data_to_database('sum_consumed_utxo_amount', date, blockchain, subchain, None)
+        # add_data_to_database('sum_consumed_utxo_amount', date, blockchain, subchain, None)
 
         return None
 
@@ -440,14 +440,14 @@ def avg_consumed_utxo_amount(blockchain, subchain, date):
         avg_consumed_utxo = results.iloc[0]['avg']
 
         # Insert result into database
-        add_data_to_database('avg_consumed_utxo_amount', date, blockchain, subchain, avg_consumed_utxo)
+        # add_data_to_database('avg_consumed_utxo_amount', date, blockchain, subchain, avg_consumed_utxo)
 
         return avg_consumed_utxo
     else:
         logging.warning(f"No data found for average consumed UTXO value on {date} in {subchain}.")
 
         # Insert null value for the date into the database
-        add_data_to_database('avg_consumed_utxo_amount', date, blockchain, subchain, None)
+        # add_data_to_database('avg_consumed_utxo_amount', date, blockchain, subchain, None)
 
         return None
 
@@ -472,14 +472,14 @@ def median_consumed_utxo_amount(blockchain, subchain, date):
         median_consumed_utxo = results.iloc[0]['percentile_cont']
 
         # Insert result into database
-        add_data_to_database('median_consumed_utxo_amount', date, blockchain, subchain, median_consumed_utxo)
+        # add_data_to_database('median_consumed_utxo_amount', date, blockchain, subchain, median_consumed_utxo)
 
         return median_consumed_utxo
     else:
         logging.warning(f"No data found for median consumed UTXO value on {date} in {subchain}.")
 
         # Insert null value for the date into the database
-        add_data_to_database('median_consumed_utxo_amount', date, blockchain, subchain, None)
+        # add_data_to_database('median_consumed_utxo_amount', date, blockchain, subchain, None)
 
         return None
 
@@ -524,14 +524,14 @@ def large_trx(blockchain, subchain, date):
         large_trx_count = results.iloc[0]['large_transactions_count']
 
         # Insert result into database
-        add_data_to_database('large_trx', date, blockchain, subchain, large_trx_count)
+        # add_data_to_database('large_trx', date, blockchain, subchain, large_trx_count)
 
         return large_trx_count
     else:
         logging.warning(f"No large transactions found on {date} in {subchain} with threshold {threshold}.")
 
         # Insert null value for the count into the database
-        add_data_to_database('large_trx', date, blockchain, subchain, None)
+        # add_data_to_database('large_trx', date, blockchain, subchain, None)
 
         return None
 
@@ -577,14 +577,14 @@ def whale_address_activity(blockchain, subchain, date):
         whale_trx_count = results.iloc[0]['whale_transactions_count']
 
         # Insert result into database
-        add_data_to_database('whale_address_activity', date, blockchain, subchain, whale_trx_count)
+        # add_data_to_database('whale_address_activity', date, blockchain, subchain, whale_trx_count)
 
         return whale_trx_count
     else:
         logging.warning(f"No whale transactions found on {date} in {subchain} with threshold {threshold}.")
 
         # Insert null value for the count into the database
-        add_data_to_database('whale_address_activity', date, blockchain, subchain, None)
+        # add_data_to_database('whale_address_activity', date, blockchain, subchain, None)
 
         return None
 
@@ -610,14 +610,14 @@ def total_staked_amount(blockchain, subchain, date):
         total_staked = results.iloc[0]['sum']
 
         # Insert result into database
-        add_data_to_database('total_staked_amount', date, blockchain, subchain, total_staked)
+        # add_data_to_database('total_staked_amount', date, blockchain, subchain, total_staked)
 
         return total_staked
     else:
         logging.warning(f"No data found for total staked amount on {date} in {subchain}.")
 
         # Insert null value for the date into the database
-        add_data_to_database('total_staked_amount', date, blockchain, subchain, None)
+        # add_data_to_database('total_staked_amount', date, blockchain, subchain, None)
 
         return None
 
@@ -638,14 +638,14 @@ def total_burned_amount(blockchain, subchain, date):
         total_burned = results.iloc[0]['sum']
 
         # Insert result into database
-        add_data_to_database('total_burned_amount', date, blockchain, subchain, total_burned)
+        # add_data_to_database('total_burned_amount', date, blockchain, subchain, total_burned)
 
         return total_burned
     else:
         logging.warning(f"No data found for total burned amount on {date} in {subchain}.")
 
         # Insert null value for the date into the database
-        add_data_to_database('total_burned_amount', date, blockchain, subchain, None)
+        # add_data_to_database('total_burned_amount', date, blockchain, subchain, None)
 
         return None
 
