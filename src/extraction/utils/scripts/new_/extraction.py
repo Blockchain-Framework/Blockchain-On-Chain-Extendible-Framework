@@ -5,12 +5,11 @@ from utils.scripts.utils.http_utils import fetch_transactions
 from utils.scripts.avalanche.avalanche_model import Avalanche_X_Model, Avalanche_C_Model, Avalanche_P_Model
 from utils.scripts.avalanche.avalanche_UTXO_model import AvalancheUTXO
 from utils.database.database_service import append_dataframe_to_sql, get_query_results
-
+from utils.scripts.utils.time_utils import convert_to_gmt_timestamp, get_today_start_gmt_timestamp
+from utils.scripts.new_.helper import calculate_amount_unlocked, calculate_amount_created
 from datetime import datetime
-import pytz
-import requests
 
-def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_mapping, emitted_utxos_key, consumed_utxos_key, chain, url):
+def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_mapping, emitted_utxos_keys, consumed_utxos_keys, chain, url):
     print("x start....")
     last_timestamp = convert_to_gmt_timestamp(last_day)
     current_day = get_today_start_gmt_timestamp()
@@ -52,15 +51,20 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
         mapped_transaction = map_transaction(transaction_feature_mapping, tx)
         trxs.append(mapped_transaction.__dict__)
 
-        # Map emitted UTXOs
-        emitted_utxos.extend([
-            map_utxo(emit_utxo_mapping, e_utxo, txHash, txType, blockHash).__dict__ for e_utxo in tx.get(emit_utxo_mapping, [])
-        ])
+        for key in emitted_utxos_keys:
+            if key in tx:
+                emitted_utxos.extend([
+                    map_utxo(emit_utxo_mapping, e_utxo, txHash, txType, blockHash).__dict__ for e_utxo in tx.get(key, [])
+                ])
+                break  # Stop after finding the first matching key
 
         # Map consumed UTXOs
-        consumed_utxos.extend([
-            map_utxo(consume_utxo_mapping, c_utxo, txHash, txType, blockHash).__dict__ for c_utxo in tx.get(consume_utxo_mapping, [])
-        ])
+        for key in consumed_utxos_keys:
+            if key in tx:
+                consumed_utxos.extend([
+                    map_utxo(consume_utxo_mapping, c_utxo, txHash, txType, blockHash).__dict__ for c_utxo in tx.get(key, [])
+                ])
+                break  # Stop after finding the first matching key
 
     return transformed_data_list
 
@@ -98,42 +102,6 @@ def map_transaction(blockchain_feature_mapping,tx):
     
 
 
-def calculate_amount_unlocked(transaction):
-    amountUnlocked = transaction.get('amountUnlocked', [])
-    
-    amount_unlocked = {}
-    
-    for amount in amountUnlocked:
-        if int(amount['denomination']) != 0:
-            unlocked_value = int(amount['amount']) / int(amount['denomination'])
-        else:
-            unlocked_value = int(amount['amount'])
-
-        if amount['name'] in amount_unlocked:
-            amount_unlocked[amount['name']] += unlocked_value
-        else:
-            amount_unlocked[amount['name']] = unlocked_value
-
-    return amount_unlocked
-
-def calculate_amount_created(transaction):
-    amountCreated = transaction.get('amountCreated', [])
-
-    amount_created = {}
-    
-    for amount in amountCreated:
-        if int(amount['denomination']) != 0:
-            created_value = int(amount['amount']) / int(amount['denomination'])
-        else:
-            created_value = int(amount['amount'])
-
-        if amount['name'] in amount_created:
-            amount_created[amount['name']] += created_value
-        else:
-            amount_created[amount['name']] = created_value
-
-    return amount_created
-
 # Mapping of function names to actual functions for dynamic invocation
 transformation_functions = {
     "calculate_amount_unlocked": calculate_amount_unlocked,
@@ -142,7 +110,7 @@ transformation_functions = {
 
 if __name__ == "__main__":
     
-    c_feature_mapping =  {
+    x_feature_mapping =  {
             'txHash' : ('transactionId',"feature"),
             'blockHash' : ('time',"feature"),
             'blockHash':('blockHash',"feature"),
@@ -155,6 +123,32 @@ if __name__ == "__main__":
             'amountCreated': ('amount_created',"function", "function name")
         }
     
-    url = "https://glacier-api.avax.network/v1/networks/mainnet/blockchains/c-chain/transactions"
+    x_emit_utxo_mapping = {
+        'txType': ('txType',"feature"),
+        'addresses': ('addresses',"feature"),
+        'value': ('value',"feature"),
+        'assetId': ('assetId',"feature"),
+        'asset_name': ('asset_name',"feature"),
+        'symbol': ('symbol',"feature"),
+        'denomination': ('denomination',"feature"),
+        'asset_type': ('asset_type',"feature"),
+        'amount': ('amount',"feature")
+    }
     
-    extract_data(c_feature_mapping, 'c', url)
+    x_consume_utxo_mapping = {
+        'txType': ('txType',"feature"),
+        'addresses': ('addresses',"feature"),
+        'value': ('value',"feature"),
+        'assetId': ('assetId',"feature"),
+        'asset_name': ('asset_name',"feature"),
+        'symbol': ('symbol',"feature"),
+        'denomination': ('denomination',"feature"),
+        'asset_type': ('asset_type',"feature"),
+        'amount': ('amount',"feature")
+    }
+    emitted_utxos_key = ['emittedUtxos',"envInputs"]
+    consumed_utxos_key = ['envOutputs','consumedUtxos']
+
+    x_url = "https://glacier-api.avax.network/v1/networks/mainnet/blockchains/c-chain/transactions"
+    
+    extract_data(x_feature_mapping, x_emit_utxo_mapping, x_consume_utxo_mapping, emitted_utxos_key, consumed_utxos_key, 'x', x_url)
