@@ -9,8 +9,8 @@ from utils.scripts.utils.time_utils import convert_to_gmt_timestamp, get_today_s
 from utils.scripts.new_.helper import calculate_amount_unlocked, calculate_amount_created
 from datetime import datetime
 
-def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_mapping, emitted_utxos_keys, consumed_utxos_keys, chain, url):
-    print("x start....")
+def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_mapping, emitted_utxos_keys, consumed_utxos_keys, chain, url, last_day):
+    print(f"{chain} start....")
     last_timestamp = convert_to_gmt_timestamp(last_day)
     current_day = get_today_start_gmt_timestamp()
 
@@ -99,7 +99,6 @@ def map_transaction(blockchain_feature_mapping,tx):
                 transformed_data[general_attr] = transformation_functions[function_name](tx)
     
     GeneralTransactionModel(**transformed_data)
-    
 
 
 # Mapping of function names to actual functions for dynamic invocation
@@ -146,9 +145,10 @@ if __name__ == "__main__":
         'asset_type': ('asset_type',"feature"),
         'amount': ('amount',"feature")
     }
+    
     emitted_utxos_key = ['emittedUtxos',"envInputs"]
     consumed_utxos_key = ['envOutputs','consumedUtxos']
 
     x_url = "https://glacier-api.avax.network/v1/networks/mainnet/blockchains/c-chain/transactions"
-    
-    extract_data(x_feature_mapping, x_emit_utxo_mapping, x_consume_utxo_mapping, emitted_utxos_key, consumed_utxos_key, 'x', x_url)
+    last_day = "2024-02-01"
+    extract_data(x_feature_mapping, x_emit_utxo_mapping, x_consume_utxo_mapping, emitted_utxos_key, consumed_utxos_key, 'x', x_url, last_day)
