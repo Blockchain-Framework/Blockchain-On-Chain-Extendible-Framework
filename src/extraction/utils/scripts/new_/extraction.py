@@ -34,32 +34,14 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
         
     for tx in transactions:
         timestamp = int(tx.get(transaction_feature_mapping['timestamp'][0]),0)
-        txHash = tx.get(transaction_feature_mapping['txHash'][0],'')
-        blockHash = tx.get(transaction_feature_mapping['blockHash'][0],'')
-        txType= tx.get(transaction_feature_mapping['txType'][0],'')
         
         # Check if the transaction is before the current day
         if timestamp < current_day:
             # Save data to the database for the day that just completed
             current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
             
-            df_trx = pd.DataFrame(trxs)
-            df_trx['date'] = current_date
+            store_data(chain, current_date, trxs, emitted_utxos, consumed_utxos)
             
-            df_emitted_utxos = pd.DataFrame(emitted_utxos)
-            df_emitted_utxos['date'] = current_date
-            
-            df_consumed_utxos = pd.DataFrame(consumed_utxos)
-            df_consumed_utxos['date'] = current_date
-            
-            df_trx['date'] = pd.to_datetime(df_trx['date'])
-            df_emitted_utxos['date'] = pd.to_datetime(df_emitted_utxos['date'])
-            df_consumed_utxos['date'] = pd.to_datetime(df_consumed_utxos['date'])
-            
-            # print(df_trx)
-            append_dataframe_to_sql(f'{chain}_transactions', df_trx)
-            append_dataframe_to_sql(f'{chain}_emitted_utxos', df_emitted_utxos)
-            append_dataframe_to_sql(f'{chain}_consumed_utxos', df_consumed_utxos)
             # print("x transaction",current_date)
             
             # Move to the previous day
@@ -73,25 +55,34 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
             break
         
         # Map the transaction itself (existing logic)
-        mapped_transaction = map_transaction(transaction_feature_mapping, tx)
-        trxs.append(mapped_transaction.__dict__)
-
-        for key in emitted_utxos_keys:
-            if key in tx:
-                emitted_utxos.extend([
-                    map_utxo(emit_utxo_mapping, e_utxo, txHash, txType, blockHash).__dict__ for e_utxo in tx.get(key, [])
-                ])
-                break  # Stop after finding the first matching key
-        
-        # Map consumed UTXOs
-        for key in consumed_utxos_keys:
-            if key in tx:
-                consumed_utxos.extend([
-                    map_utxo(consume_utxo_mapping, c_utxo, txHash, txType, blockHash).__dict__ for c_utxo in tx.get(key, [])
-                ])
-                break  # Stop after finding the first matching key
+        trxs, emitted_utxos, consumed_utxos = data_mapper(tx, trxs, emitted_utxos, consumed_utxos, transaction_feature_mapping, emit_utxo_mapping, consume_utxo_mapping, emitted_utxos_keys, consumed_utxos_keys)
 
     return current_date
+def data_mapper(tx, trxs, emitted_utxos, consumed_utxos, transaction_feature_mapping, emit_utxo_mapping, consume_utxo_mapping, emitted_utxos_keys, consumed_utxos_keys):
+    txHash = tx.get(transaction_feature_mapping['txHash'][0],'')
+    blockHash = tx.get(transaction_feature_mapping['blockHash'][0],'')
+    txType= tx.get(transaction_feature_mapping['txType'][0],'')
+    
+    mapped_transaction = map_transaction(transaction_feature_mapping, tx)
+    trxs.append(mapped_transaction.__dict__)
+    trxs, emitted_utxos, consumed_utxos = data_mapper()
+    for key in emitted_utxos_keys:
+        if key in tx:
+            emitted_utxos.extend([
+                map_utxo(emit_utxo_mapping, e_utxo, txHash, txType, blockHash).__dict__ for e_utxo in tx.get(key, [])
+            ])
+            break  # Stop after finding the first matching key
+    
+    # Map consumed UTXOs
+    for key in consumed_utxos_keys:
+        if key in tx:
+            consumed_utxos.extend([
+                map_utxo(consume_utxo_mapping, c_utxo, txHash, txType, blockHash).__dict__ for c_utxo in tx.get(key, [])
+            ])
+            break  # Stop after finding the first matching key
+    
+    return trxs, emitted_utxos, consumed_utxos
+
 
 def store_data(chain, current_date, trxs, emitted_utxos, consumed_utxos):
     if trxs:
