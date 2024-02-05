@@ -8,7 +8,7 @@ import pandas as pd
 import importlib.util
 
 
-from utils.database.database_service import get_query_results, append_dataframe_to_sql
+from utils.database.database_service import get_query_results, append_dataframe_to_sql, batch_insert_dataframes
 from utils.scripts.utils import log_workflow_status
 
 load_dotenv()
@@ -17,7 +17,7 @@ load_dotenv()
 # sys.path.insert(0, os.environ.get("ROOT_DIRECTORY_LOCAL_PATH"))
 
 class MetricCalculationWorkflowManager:
-
+    
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.db_connection_string = os.environ.get("DATABASE_CONNECTION")
@@ -58,6 +58,7 @@ class MetricCalculationWorkflowManager:
     def metric_workflow(self, date, blockchain, subchain, metrics):
         try:
             self.logger.info(f"Computing metrics for {blockchain} subchain {subchain}...")
+            #TODO : pathe need to add env
             module_path = r"src/metric calculation/utils/scripts/metric_computation_service.py"
             function_map = self.map_functions(module_path)
             
@@ -127,6 +128,9 @@ def insert_metric_results(metrics_df):
     return dfs_to_insert
 
 if __name__ == "__main__":
+    #TODO: need to check all metric tables exits
+    get_metrics(self, blockchain, subchain)
+    
     dates = ["2024-01-20","2024-01-22","2024-01-23","2024-01-24","2024-01-25","2024-01-26"]
     # date = "2024-01-21"
     manager = MetricCalculationWorkflowManager()

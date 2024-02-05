@@ -1,12 +1,11 @@
 # Example of a mapping configuration for a hypothetical blockchain
-from utils.scripts.new_.model import GeneralTransactionModel
-from utils.scripts.new_.model import GeneralUTXOModel
+
 from utils.scripts.utils.http_utils import fetch_transactions
 from utils.scripts.avalanche.avalanche_model import Avalanche_X_Model, Avalanche_C_Model, Avalanche_P_Model
 from utils.scripts.avalanche.avalanche_UTXO_model import AvalancheUTXO
 from utils.database.database_service import append_dataframe_to_sql, get_query_results
 from utils.scripts.utils.time_utils import convert_to_gmt_timestamp, get_today_start_gmt_timestamp
-from utils.scripts.new_.helper import calculate_amount_unlocked, calculate_amount_created, getAssetId, getAssetName, getSymbol, getDenomination, getAsset_type, getAmount
+from utils.scripts.new_.mappers import map_transaction, map_utxo
 from datetime import datetime
 import pandas as pd
 
@@ -32,9 +31,7 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
         
         res_data = fetch_transactions(url, params)
         transactions = res_data.get('transactions', [])
-    
-    transformed_data_list = []
-    
+        
     for tx in transactions:
         timestamp = int(tx.get(transaction_feature_mapping['timestamp'][0]),0)
         txHash = tx.get(transaction_feature_mapping['txHash'][0],'')
@@ -45,12 +42,13 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
         if timestamp < current_day:
             # Save data to the database for the day that just completed
             current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
-            current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
-                
-            df_trx = pd.DataFrame(data)
+            
+            df_trx = pd.DataFrame(trxs)
             df_trx['date'] = current_date
+            
             df_emitted_utxos = pd.DataFrame(emitted_utxos)
             df_emitted_utxos['date'] = current_date
+            
             df_consumed_utxos = pd.DataFrame(consumed_utxos)
             df_consumed_utxos['date'] = current_date
             
@@ -66,13 +64,14 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
             
             # Move to the previous day
             current_day -= 86400
-            data = []
+            trxs = []
             emitted_utxos = []
             consumed_utxos = []
-
+        
         if timestamp <= last_timestamp:
             run = False
             break
+        
         # Map the transaction itself (existing logic)
         mapped_transaction = map_transaction(transaction_feature_mapping, tx)
         trxs.append(mapped_transaction.__dict__)
@@ -83,7 +82,7 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
                     map_utxo(emit_utxo_mapping, e_utxo, txHash, txType, blockHash).__dict__ for e_utxo in tx.get(key, [])
                 ])
                 break  # Stop after finding the first matching key
-
+        
         # Map consumed UTXOs
         for key in consumed_utxos_keys:
             if key in tx:
@@ -92,54 +91,24 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
                 ])
                 break  # Stop after finding the first matching key
 
-    return transformed_data_list
+    return current_date
 
-def map_utxo(feature_mapping, utxo, txHash, txType, blockHash):
-    transformed_data = {
-        'txHash': txHash,
-        'txType': txType,
-        'blockHash': blockHash
-    }
-    
-    for general_attr, details in feature_mapping.items():
-        api_attr, attr_type = details[:2]
-        if attr_type == "feature":
-            transformed_data[general_attr] = utxo.get(api_attr)
-        elif attr_type == "function":
-            function_name = details[2]
-            if function_name in transformation_functions:
-                transformed_data[general_attr] = transformation_functions[function_name](utxo)
-    
-    GeneralUTXOModel(**transformed_data)
-    
-def map_transaction(blockchain_feature_mapping,tx):
-    transformed_data = {}
-    for general_attr, details in blockchain_feature_mapping.items():
-        api_attr, attr_type = details[:2]
-        
-        if attr_type == "feature":
-            transformed_data[general_attr] = tx.get(api_attr)
-        elif attr_type == "function":
-            function_name = details[2]
-            if function_name in transformation_functions:
-                transformed_data[general_attr] = transformation_functions[function_name](tx)
-    
-    GeneralTransactionModel(**transformed_data)
+def store_data(chain, current_date, trxs, emitted_utxos, consumed_utxos):
+    if trxs:
+        df_trx = pd.DataFrame(trxs)
+        df_trx['date'] = pd.to_datetime(current_date)
+        append_dataframe_to_sql(f'{chain}_transactions', df_trx)
 
-# Mapping of function names to actual functions for dynamic invocation
-transformation_functions = {
-    "calculate_amount_unlocked": calculate_amount_unlocked,
-    "calculate_amount_created": calculate_amount_created,
-}
+    if emitted_utxos:
+        df_emitted_utxos = pd.DataFrame(emitted_utxos)
+        df_emitted_utxos['date'] = pd.to_datetime(current_date)
+        append_dataframe_to_sql(f'{chain}_emitted_utxos', df_emitted_utxos)
 
-utxo_functions = {
-    "getAssetId": getAssetId,
-    "getAssetName":getAssetName,
-    "getSymbol":getSymbol,
-    "getDenomination":getDenomination,
-    "getAsset_type":getAsset_type,
-    "getAmount":getAmount
-}
+    if consumed_utxos:
+        df_consumed_utxos = pd.DataFrame(consumed_utxos)
+        df_consumed_utxos['date'] = pd.to_datetime(current_date)
+        append_dataframe_to_sql(f'{chain}_consumed_utxos', df_consumed_utxos)
+
 
 if __name__ == "__main__":
     
