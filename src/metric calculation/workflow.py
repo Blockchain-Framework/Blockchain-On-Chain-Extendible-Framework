@@ -91,7 +91,7 @@ class MetricCalculationWorkflowManager:
         except Exception as e:
             self.logger.error(f"An error occurred during the workflow for {blockchain} subchain {subchain}: {e}")
             raise
-
+            
     def run_workflow(self, date=None):
         blockchains = self.get_blockchains()
         print("bolockchain",blockchains)
@@ -109,7 +109,6 @@ class MetricCalculationWorkflowManager:
                                 log_workflow_status(blockchain, subchain, 'fail', 'metric', str(e))
                             finally:
                                 log_workflow_status(blockchain, subchain, 'completed', 'metric', None)
-
 
 def insert_metric_results(metrics_df):
     # Initialize a list to collect DataFrames for each metric

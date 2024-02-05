@@ -1,19 +1,24 @@
 # Example of a mapping configuration for a hypothetical blockchain
+import os
+import sys
+sys.path.insert(0, r"D:\Academics\FYP\Repos new\Blockchain-On-Chain-Extendible-Framework\src\extraction")
 
 from utils.scripts.utils.http_utils import fetch_transactions
 from utils.scripts.avalanche.avalanche_model import Avalanche_X_Model, Avalanche_C_Model, Avalanche_P_Model
 from utils.scripts.avalanche.avalanche_UTXO_model import AvalancheUTXO
-from utils.database.database_service import append_dataframe_to_sql, get_query_results
+from utils.database.database_service import append_dataframe_to_sql, get_query_results, batch_insert_dataframes
 from utils.scripts.utils.time_utils import convert_to_gmt_timestamp, get_today_start_gmt_timestamp
-from utils.scripts.new_.mappers import map_transaction, map_utxo
+from utils.scripts.new_.mappers import map_transaction, map_utxo, data_mapper_for_trx_a_day
 from datetime import datetime
 import pandas as pd
 
-def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_mapping, emitted_utxos_keys, consumed_utxos_keys, chain, url, last_day):
-    print(f"{chain} start....")
-    last_timestamp = convert_to_gmt_timestamp(last_day)
-    current_day = get_today_start_gmt_timestamp()
 
+def extract_avalanche_data(date):
+    start_timestamp = convert_to_gmt_timestamp(date)
+    end_timestamp = start_timestamp + 86400
+    url = "https://glacier-api.avax.network/v1/networks/mainnet/blockchains/x-chain/transactions"
+    
+    print(start_timestamp, end_timestamp)
     page_token = None
     
     params = {
@@ -21,85 +26,50 @@ def extract_data(transaction_feature_mapping, emit_utxo_mapping, consume_utxo_ma
     }
     
     trxs = []
-    emitted_utxos = []
-    consumed_utxos = []
     run = True
-
+    
     while run:
         if page_token:
           params["pageToken"] = page_token
         
         res_data = fetch_transactions(url, params)
         transactions = res_data.get('transactions', [])
-        
-    for tx in transactions:
-        timestamp = int(tx.get(transaction_feature_mapping['timestamp'][0]),0)
-        
-        # Check if the transaction is before the current day
-        if timestamp < current_day:
-            # Save data to the database for the day that just completed
-            current_date = datetime.fromtimestamp(current_day).strftime("%Y-%m-%d")
-            
-            store_data(chain, current_date, trxs, emitted_utxos, consumed_utxos)
-            
-            # print("x transaction",current_date)
-            
-            # Move to the previous day
-            current_day -= 86400
-            trxs = []
-            emitted_utxos = []
-            consumed_utxos = []
-        
-        if timestamp <= last_timestamp:
+          
+        for tx in transactions:
+            timestamp = int(tx.get("timestamp"))
+            if timestamp < start_timestamp:
+                run = False
+                break
+            if timestamp < end_timestamp:
+                trxs.append(tx)
+        if 'nextPageToken' in res_data:
+            page_token = res_data['nextPageToken']
+        else:
             run = False
-            break
-        
-        # Map the transaction itself (existing logic)
-        trxs, emitted_utxos, consumed_utxos = data_mapper(tx, trxs, emitted_utxos, consumed_utxos, transaction_feature_mapping, emit_utxo_mapping, consume_utxo_mapping, emitted_utxos_keys, consumed_utxos_keys)
-
-    return current_date
-def data_mapper(tx, trxs, emitted_utxos, consumed_utxos, transaction_feature_mapping, emit_utxo_mapping, consume_utxo_mapping, emitted_utxos_keys, consumed_utxos_keys):
-    txHash = tx.get(transaction_feature_mapping['txHash'][0],'')
-    blockHash = tx.get(transaction_feature_mapping['blockHash'][0],'')
-    txType= tx.get(transaction_feature_mapping['txType'][0],'')
-    
-    mapped_transaction = map_transaction(transaction_feature_mapping, tx)
-    trxs.append(mapped_transaction.__dict__)
-    trxs, emitted_utxos, consumed_utxos = data_mapper()
-    for key in emitted_utxos_keys:
-        if key in tx:
-            emitted_utxos.extend([
-                map_utxo(emit_utxo_mapping, e_utxo, txHash, txType, blockHash).__dict__ for e_utxo in tx.get(key, [])
-            ])
-            break  # Stop after finding the first matching key
-    
-    # Map consumed UTXOs
-    for key in consumed_utxos_keys:
-        if key in tx:
-            consumed_utxos.extend([
-                map_utxo(consume_utxo_mapping, c_utxo, txHash, txType, blockHash).__dict__ for c_utxo in tx.get(key, [])
-            ])
-            break  # Stop after finding the first matching key
-    
-    return trxs, emitted_utxos, consumed_utxos
-
+    return  trxs
 
 def store_data(chain, current_date, trxs, emitted_utxos, consumed_utxos):
+    # TODO: Store the data in the database as a batch transaction
     if trxs:
         df_trx = pd.DataFrame(trxs)
         df_trx['date'] = pd.to_datetime(current_date)
-        append_dataframe_to_sql(f'{chain}_transactions', df_trx)
+        df_trx['_table_name'] = f'{chain}_transactions'
+        # append_dataframe_to_sql(f'{chain}_transactions', df_trx)
 
     if emitted_utxos:
         df_emitted_utxos = pd.DataFrame(emitted_utxos)
         df_emitted_utxos['date'] = pd.to_datetime(current_date)
-        append_dataframe_to_sql(f'{chain}_emitted_utxos', df_emitted_utxos)
+        df_emitted_utxos['_table_name'] = f'{chain}_emitted_utxos'
+        # append_dataframe_to_sql(f'{chain}_emitted_utxos', df_emitted_utxos)
 
     if consumed_utxos:
         df_consumed_utxos = pd.DataFrame(consumed_utxos)
         df_consumed_utxos['date'] = pd.to_datetime(current_date)
-        append_dataframe_to_sql(f'{chain}_consumed_utxos', df_consumed_utxos)
+        df_consumed_utxos['_table_name'] = f'{chain}_consumed_utxos'
+        # append_dataframe_to_sql(f'{chain}_consumed_utxos', df_consumed_utxos)
 
+   
+    batch_insert_dataframes([df_trx,df_emitted_utxos,df_consumed_utxos])
 
 if __name__ == "__main__":
     
@@ -144,5 +114,11 @@ if __name__ == "__main__":
     consumed_utxos_key = ['envOutputs','consumedUtxos']
 
     x_url = "https://glacier-api.avax.network/v1/networks/mainnet/blockchains/c-chain/transactions"
-    last_day = "2024-02-01"
-    extract_data(x_feature_mapping, x_emit_utxo_mapping, x_consume_utxo_mapping, emitted_utxos_key, consumed_utxos_key, 'x', x_url, last_day)
+    
+    day = "2024-02-01"
+
+    data = extract_avalanche_data(day)
+
+    trxs, emitted_utxos, consumed_utxos = data_mapper_for_trx_a_day(config, data)
+    
+    store_data('x', "2024-02-04", trxs, emitted_utxos, consumed_utxos)
