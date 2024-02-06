@@ -21,19 +21,19 @@ class GeneralTransactionModel:
         self.value = kwargs.get('value')
         self.amountStaked = kwargs.get('amountStaked')
         self.amountBurned = kwargs.get('amountBurned')
-    
 
 class GeneralUTXOModel():
-    def __init__(self, utxoId, txHash, blockHash, txType, addresses, value, assetId, asset_name, symbol, denomination, asset_type, amount):
-        self.utxoId = utxoId
-        self.txHash = txHash
-        self.txType = txType
-        self.addresses = addresses 
-        self.value = value
-        self.blockHash = blockHash
-        self.assetId = assetId
-        self.asset_name = asset_name
-        self.asset_symbol = symbol
-        self.denomination = denomination
-        self.asset_type = asset_type
-        self.amount = amount
+    def __init__(self, **kwargs):
+        self.utxoId = kwargs.get('utxoId')
+        self.txHash = kwargs.get('txHash')
+        self.txType = kwargs.get('txType')
+        self.addresses = kwargs.get('addresses') 
+        self.value = kwargs.get('value')
+        self.blockHash = kwargs.get('blockHash')
+        self.assetId = kwargs.get('assetId')
+        self.asset_name = kwargs.get('asset_name')
+        self.asset_symbol = kwargs.get('symbol')
+        self.denomination = kwargs.get('denomination')
+        self.asset_type = kwargs.get('asset_type')
+        self.amount = kwargs.get('amount')
+    

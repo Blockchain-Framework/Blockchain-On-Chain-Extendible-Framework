@@ -34,7 +34,7 @@ def data_mapper_for_trx(tx, trxs, emitted_utxos, consumed_utxos, transaction_fea
     
     mapped_transaction = map_transaction(transaction_feature_mapping, tx)
     trxs.append(mapped_transaction.__dict__)
-    trxs, emitted_utxos, consumed_utxos = data_mapper()
+   
     for key in emitted_utxos_keys:
         if key in tx:
             emitted_utxos.extend([
@@ -53,6 +53,8 @@ def data_mapper_for_trx(tx, trxs, emitted_utxos, consumed_utxos, transaction_fea
     return trxs, emitted_utxos, consumed_utxos
 
 def map_utxo(feature_mapping, utxo, txHash, txType, blockHash):
+    print(utxo)
+    print()
     transformed_data = {
         'txHash': txHash,
         'txType': txType,
@@ -65,10 +67,10 @@ def map_utxo(feature_mapping, utxo, txHash, txType, blockHash):
             transformed_data[general_attr] = utxo.get(api_attr)
         elif attr_type == "function":
             function_name = details[2]
-            if function_name in transformation_functions:
-                transformed_data[general_attr] = transformation_functions[function_name](utxo)
+            if function_name in utxo_functions:
+                transformed_data[general_attr] = utxo_functions[function_name](utxo)
     
-    GeneralUTXOModel(**transformed_data)
+    return GeneralUTXOModel(**transformed_data)
     
 def map_transaction(blockchain_feature_mapping,tx):
     transformed_data = {}
@@ -82,4 +84,4 @@ def map_transaction(blockchain_feature_mapping,tx):
             if function_name in transformation_functions:
                 transformed_data[general_attr] = transformation_functions[function_name](tx)
     
-    GeneralTransactionModel(**transformed_data)
+    return GeneralTransactionModel(**transformed_data)

@@ -46,7 +46,6 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
         print(f"An unexpected error occurred: {e}")
 
 def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNECTION")):
-    
     """
     Executes a SQL query and returns the results as a DataFrame.
 
@@ -69,15 +68,22 @@ def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNEC
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         return None
-    
+   
 def batch_insert_dataframes(dfs_to_insert, database_connection=os.environ.get("DATABASE_CONNECTION")):
-    engine = create_engine(database_connection)
+    print(os.environ.get("DATABASE_CONNECTION"))
+    engine = create_engine("postgresql://postgres:12345@localhost:5432/onchain")
     
     # Start a single transaction
     with engine.begin() as connection:
         for df in dfs_to_insert:
             try:
                 table_name = df._table_name
+            
+                for col in df.columns:
+                    df[col] = df[col].apply(convert_dict_to_json)
+            
+                print(f"Inserting into table: {table_name}")  # Debug print
+                assert isinstance(table_name, str), "table_name must be a string"
                 df.to_sql(table_name, connection, if_exists='append', index=False, chunksize=1000)
             except SQLAlchemyError as e:
                 # Log the error and rollback the transaction
@@ -87,4 +93,3 @@ def batch_insert_dataframes(dfs_to_insert, database_connection=os.environ.get("D
                 print(f"An unexpected error occurred during batch insertion into {table_name}: {e}")
                 raise  # Raising an error to trigger the transaction rollback
 
-        
