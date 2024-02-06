@@ -50,7 +50,9 @@ INSERT INTO metric_table (metric_name, description) VALUES
 ('large_trx', 'Number of transactions exceeding a defined large amount'),
 ('whale_address_activity', 'Activity level of addresses holding large amounts of currency'),
 ('total_staked_amount', 'Total amount of currency staked in the network'),
-('total_burned_amount', 'Total amount of currency that has been burned or removed from circulation');
+('total_burned_amount', 'Total amount of currency that has been burned or removed from circulation'),
+('network_economic_efficiency', 'Evaluates the economic efficiency of transactions over the network'),
+('interchain_transactional_coherence', 'Measures the volume and value coherence between different chains or subnets');
 
 INSERT INTO chain_metric (blockchain_id, metric_name, category) VALUES
 (1, 'trx_per_second', 'Chain Throughput and Efficiency'),
@@ -108,4 +110,7 @@ INSERT INTO chain_metric (blockchain_id, metric_name, category) VALUES
 (3, 'large_trx', 'Whale Watching'),
 (3, 'whale_address_activity', 'Whale Watching'),
 (3, 'total_staked_amount', 'Economic Indicators'),
-(3, 'total_burned_amount', 'Economic Indicators');
+(3, 'total_burned_amount', 'Economic Indicators'),
+(1, 'network_economic_efficiency', 'Economic Indicators'),
+(2, 'network_economic_efficiency', 'Economic Indicators'),
+(2, 'interchain_transactional_coherence', 'Chain Throughput and Efficiency');

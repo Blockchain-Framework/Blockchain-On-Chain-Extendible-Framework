@@ -3,6 +3,7 @@ import psycopg2
 import sys
 import logging
 import os
+import json
 
 from utils.database.database_service import get_query_results, append_dataframe_to_sql
 
@@ -663,6 +664,133 @@ def token_transfers():
 
 def contract_creations():
     pass
+
+@key_mapper("interchain_transactional_coherence")
+def calculate_itc(blockchain, subchain, date):
+    """
+    Calculate the Interchain Transactional Coherence (ITC) for the Avalanche network on a specified date,
+    focusing on c and p chains for cross-chain transactions.
+    """
+    if not blockchain or not date:
+        logging.error("Invalid input parameters for calculate_itc.")
+        return None
+
+    # # Query to get the total value of cross-chain transactions from c and p chains
+    # query_cross_chain = f"""
+    # SELECT SUM((amountCreated::jsonb ->> 'Avalanche')::numeric) as total_cross_chain_value
+    # FROM (
+    #     SELECT amountCreated FROM c_transactions WHERE date = '{date}' AND sourceChain IS NOT NULL AND destinationChain IS NOT NULL
+    #     UNION ALL
+    #     SELECT amountCreated FROM p_transactions WHERE date = '{date}' AND sourceChain IS NOT NULL AND destinationChain IS NOT NULL
+    # ) AS cross_chain_transactions
+    # """
+
+    # Query to get the total value of cross-chain transactions
+    query_cross_chain = f"""
+    SELECT SUM((\"amountCreated\"::jsonb ->> 'Avalanche')::numeric) as total_cross_chain_value
+    FROM {subchain}_transactions
+    WHERE date = '{date}' AND \"sourceChain\" IS NOT NULL AND \"destinationChain\" IS NOT NULL
+    """
+
+    # Query to get the total transaction value from all chains (x, c, p)
+    query_total_value = f"""
+    SELECT SUM((\"amountCreated\"::jsonb ->> 'Avalanche')::numeric) as total_transaction_value
+    FROM (
+        SELECT \"amountCreated\" FROM x_transactions WHERE date = '{date}'
+        UNION ALL
+        SELECT \"amountCreated\" FROM c_transactions WHERE date = '{date}'
+    ) AS all_transactions
+    """
+
+    result_cross_chain = execute_query(query_cross_chain)
+    result_total_value = execute_query(query_total_value)
+    
+    if result_cross_chain is not None and not result_cross_chain.empty and result_total_value is not None and not result_total_value.empty:
+        total_cross_chain_value = result_cross_chain.iloc[0]['total_cross_chain_value'] if result_cross_chain.iloc[0]['total_cross_chain_value'] else 0
+        total_transaction_value = result_total_value.iloc[0]['total_transaction_value'] if result_total_value.iloc[0]['total_transaction_value'] else 0
+        
+        if total_transaction_value == 0:
+            logging.error("Total transaction value is zero, cannot calculate ITC.")
+            return None
+
+        itc = total_cross_chain_value / total_transaction_value if total_transaction_value else None
+
+        # Insert result into database
+        add_data_to_database('metric_results', date, blockchain, subchain, itc)
+
+        return itc
+    else:
+        logging.info("No data found to calculate ITC for the given date.")
+
+        # Insert null ITC for the date into the database
+        add_data_to_database('metric_results', date, blockchain, subchain, None)
+
+        return None
+
+
+
+#X AND C CHAIN SPECIFIC
+
+@key_mapper("network_economic_efficiency")
+def calculate_nee(blockchain, subchain, date):
+    """
+    Calculate the Network Economic Efficiency (NEE) for a given blockchain subchain on a specified date.
+    NEE is calculated as the total value transacted divided by the total amount burned on that date,
+    where total value transacted is derived from x and c chains, and total amount burned is from p chain.
+    """
+    if not blockchain or not subchain or not date:
+        logging.error("Invalid input parameters for calculate_nee.")
+        return None
+
+    # Combine queries to sum up the amountCreated from x and c chains as Total Value Transacted
+    # query_transacted = f"""
+    # SELECT SUM((\"amountCreated\"::jsonb ->> 'Avalanche')::numeric) as total_value_transacted
+    # FROM (
+    #     SELECT \"amountCreated\" FROM x_transactions WHERE date = '{date}'
+    #     UNION ALL
+    #     SELECT \"amountCreated\" FROM c_transactions WHERE date = '{date}'
+    # ) AS transacted
+    # """
+
+    # Summing up the amountCreated as a proxy for Total Value Transacted
+    query_transacted = f"""
+    SELECT SUM((\"amountCreated\"::jsonb ->> 'Avalanche')::numeric) as total_value_transacted
+    FROM {subchain}_transactions
+    WHERE date = '{date}'
+    """
+
+    # Query to sum up the amountBurned from p chain as Total Amount Burned
+    query_burned = f"""
+    SELECT SUM(\"amountBurned\") as total_amount_burned
+    FROM p_transactions
+    WHERE date = '{date}'
+    """
+
+    result_transacted = execute_query(query_transacted)
+    result_burned = execute_query(query_burned)
+    
+    if result_transacted is not None and not result_transacted.empty and result_burned is not None and not result_burned.empty:
+        total_value_transacted = result_transacted.iloc[0]['total_value_transacted'] if result_transacted.iloc[0]['total_value_transacted'] else 0
+        total_amount_burned = result_burned.iloc[0]['total_amount_burned'] if result_burned.iloc[0]['total_amount_burned'] else 0
+        
+        if total_amount_burned == 0:
+            logging.error("Total amount burned is zero, cannot calculate NEE.")
+            return None
+
+        nee = total_value_transacted / total_amount_burned if total_amount_burned else None
+
+        # Insert result into database
+        add_data_to_database('metric_results', date, blockchain, subchain, nee)
+
+        return nee
+    else:
+        logging.info("No data found to calculate NEE for the given date and subchain.")
+
+        # Insert null NEE for the date into the database
+        add_data_to_database('metric_results', date, blockchain, subchain, None)
+
+        return None
+    
 
 
 
