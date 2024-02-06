@@ -1,59 +1,24 @@
-def calculate_amount_unlocked(transaction):
-    amountUnlocked = transaction.get('amountUnlocked', [])
+from utils.database.database_service import batch_insert_dataframes
+import pandas as pd
+
+def store_data(chain, current_date, trxs, emitted_utxos, consumed_utxos):
+    # TODO: Store the data in the database as a batch transaction
+    if trxs:
+        df_trx = pd.DataFrame(trxs)
+        df_trx['date'] = pd.to_datetime(current_date)
+        df_trx._table_name = f'{chain}_transactions1'
+        # append_dataframe_to_sql(f'{chain}_transactions', df_trx)
+
+    if emitted_utxos:
+        df_emitted_utxos = pd.DataFrame(emitted_utxos)
+        df_emitted_utxos['date'] = pd.to_datetime(current_date)
+        df_emitted_utxos._table_name = f'{chain}_emitted_utxos1'
+        # append_dataframe_to_sql(f'{chain}_emitted_utxos', df_emitted_utxos)
+
+    if consumed_utxos:
+        df_consumed_utxos = pd.DataFrame(consumed_utxos)
+        df_consumed_utxos['date'] = pd.to_datetime(current_date)
+        df_consumed_utxos._table_name = f'{chain}_consumed_utxos1'
+        # append_dataframe_to_sql(f'{chain}_consumed_utxos', df_consumed_utxos)
     
-    amount_unlocked = {}
-    
-    for amount in amountUnlocked:
-        if int(amount['denomination']) != 0:
-            unlocked_value = int(amount['amount']) / int(amount['denomination'])
-        else:
-            unlocked_value = int(amount['amount'])
-
-        if amount['name'] in amount_unlocked:
-            amount_unlocked[amount['name']] += unlocked_value
-        else:
-            amount_unlocked[amount['name']] = unlocked_value
-
-    return amount_unlocked
-
-def calculate_amount_created(transaction):
-    amountCreated = transaction.get('amountCreated', [])
-
-    amount_created = {}
-    
-    for amount in amountCreated:
-        if int(amount['denomination']) != 0:
-            created_value = int(amount['amount']) / int(amount['denomination'])
-        else:
-            created_value = int(amount['amount'])
-
-        if amount['name'] in amount_created:
-            amount_created[amount['name']] += created_value
-        else:
-            amount_created[amount['name']] = created_value
-
-    return amount_created
-
-def getAssetId(utxo):
-    asset =  utxo['asset']
-    return asset.get('assetId')
-
-def getAssetName(utxo):
-    asset =  utxo['asset']
-    return asset.get('name', '')
-
-def getSymbol(utxo):
-    asset =  utxo['asset']
-    return asset.get('symbol', '')
-
-def getDenomination(utxo):
-    asset =  utxo['asset']
-    return asset.get('denomination',0)
-
-def getAsset_type(utxo):
-    asset =  utxo['asset']
-    return asset.get('type','')
-
-def getAmount(utxo):
-    asset =  utxo['asset']
-    return asset.get('amount',0)
+    batch_insert_dataframes([df_trx,df_emitted_utxos,df_consumed_utxos])

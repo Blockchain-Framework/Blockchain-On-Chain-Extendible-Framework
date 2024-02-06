@@ -4,14 +4,14 @@ import sys
 sys.path.insert(0, r"D:\Academics\FYP\Repos new\Blockchain-On-Chain-Extendible-Framework\src\extraction")
 
 from utils.scripts.utils.http_utils import fetch_transactions
-from utils.scripts.avalanche.avalanche_model import Avalanche_X_Model, Avalanche_C_Model, Avalanche_P_Model
-from utils.scripts.avalanche.avalanche_UTXO_model import AvalancheUTXO
-from utils.database.database_service import append_dataframe_to_sql, get_query_results, batch_insert_dataframes
-from utils.scripts.utils.time_utils import convert_to_gmt_timestamp, get_today_start_gmt_timestamp
-from utils.scripts.new_.mappers import map_transaction, map_utxo, data_mapper_for_trx_a_day
-from datetime import datetime
+
+from utils.scripts.utils.time_utils import convert_to_gmt_timestamp
+from utils.scripts.new_.mappers import data_mapper
+from utils.scripts.new_.helper import store_data
+
 import pandas as pd
 
+# @keymapper("x")
 def extract_avalanche_data(date):
     start_timestamp = convert_to_gmt_timestamp(date)
     end_timestamp = start_timestamp + 86400
@@ -25,6 +25,9 @@ def extract_avalanche_data(date):
     }
     
     trxs = []
+    emitted_utxos = []
+    consumed_utxos =[]
+    
     run = True
     
     while run:
@@ -33,44 +36,118 @@ def extract_avalanche_data(date):
         
         res_data = fetch_transactions(url, params)
         transactions = res_data.get('transactions', [])
-          
+        
         for tx in transactions:
             timestamp = int(tx.get("timestamp"))
+            txHash = tx.get('txHash','')
+            blockHash = tx.get('blockHash','')
+            txType= tx.get(('txType'),'')
+            
+            print(timestamp, txHash, blockHash, txType)
+            
             if timestamp < start_timestamp:
                 run = False
                 break
             if timestamp < end_timestamp:
+                
+                # Process the main transaction details
                 trxs.append(tx)
+                
+                # Process emitted UTXOs
+                for e_utxo in tx.get('emittedUtxos', []):
+                    e_utxo_modified = e_utxo.copy()  
+                    e_utxo_modified['txHash'] = txHash
+                    e_utxo_modified['blockHash'] = blockHash
+                    e_utxo_modified['txType'] = txType
+                    # print(e_utxo_modified)
+                    # print()
+                    emitted_utxos.append(e_utxo_modified)
+                
+                # Process consumed UTXOs
+                for c_utxo in tx.get('consumedUtxos', []):
+                    c_utxo_modified = c_utxo.copy()
+                    c_utxo_modified['txHash'] = txHash
+                    c_utxo_modified['blockHash'] = blockHash
+                    c_utxo_modified['txType'] = txType
+                    consumed_utxos.append(c_utxo_modified)
+
         if 'nextPageToken' in res_data:
             page_token = res_data['nextPageToken']
         else:
             run = False
-    return  trxs
+        
+    return  trxs, emitted_utxos, consumed_utxos
 
-def store_data(chain, current_date, trxs, emitted_utxos, consumed_utxos):
-    # TODO: Store the data in the database as a batch transaction
-    if trxs:
-        df_trx = pd.DataFrame(trxs)
-        df_trx['date'] = pd.to_datetime(current_date)
-        df_trx._table_name = f'{chain}_transactions1'
-        # append_dataframe_to_sql(f'{chain}_transactions', df_trx)
 
-    if emitted_utxos:
-        df_emitted_utxos = pd.DataFrame(emitted_utxos)
-        df_emitted_utxos['date'] = pd.to_datetime(current_date)
-        df_emitted_utxos._table_name = f'{chain}_emitted_utxos1'
-        # append_dataframe_to_sql(f'{chain}_emitted_utxos', df_emitted_utxos)
-
-    if consumed_utxos:
-        df_consumed_utxos = pd.DataFrame(consumed_utxos)
-        df_consumed_utxos['date'] = pd.to_datetime(current_date)
-        df_consumed_utxos._table_name = f'{chain}_consumed_utxos1'
-        # append_dataframe_to_sql(f'{chain}_consumed_utxos', df_consumed_utxos)
+def calculate_amount_unlocked(transaction):
+    amountUnlocked = transaction.get('amountUnlocked', [])
     
-    batch_insert_dataframes([df_trx,df_emitted_utxos,df_consumed_utxos])
+    amount_unlocked = {}
+    
+    for amount in amountUnlocked:
+        if int(amount['denomination']) != 0:
+            unlocked_value = int(amount['amount']) / int(amount['denomination'])
+        else:
+            unlocked_value = int(amount['amount'])
+
+        if amount['name'] in amount_unlocked:
+            amount_unlocked[amount['name']] += unlocked_value
+        else:
+            amount_unlocked[amount['name']] = unlocked_value
+
+    return amount_unlocked
+
+def calculate_amount_created(transaction):
+    amountCreated = transaction.get('amountCreated', [])
+
+    amount_created = {}
+    
+    for amount in amountCreated:
+        if int(amount['denomination']) != 0:
+            created_value = int(amount['amount']) / int(amount['denomination'])
+        else:
+            created_value = int(amount['amount'])
+
+        if amount['name'] in amount_created:
+            amount_created[amount['name']] += created_value
+        else:
+            amount_created[amount['name']] = created_value
+    return amount_created
+
+def getAssetId(utxo):
+    asset =  utxo['asset']
+    return asset.get('assetId')
+
+def getAssetName(utxo):
+    asset =  utxo['asset']
+    return asset.get('name', '')
+
+def getSymbol(utxo):
+    asset =  utxo['asset']
+    return asset.get('symbol', '')
+
+def getDenomination(utxo):
+    asset =  utxo['asset']
+    return asset.get('denomination',0)
+
+def getAsset_type(utxo):
+    asset =  utxo['asset']
+    return asset.get('type','')
+
+def getAmount(utxo):
+    asset =  utxo['asset']
+    return asset.get('amount',0)
+
 
 if __name__ == "__main__":
-    
+    # meta_data ={
+    #     blockchain
+    #     subchain
+    #     last_date
+    #     description
+    #     extraction_function
+    #     metrics = [metric_keys]  
+    # }
     x_feature_mapping =  {
             'txHash' : ('transactionId',"feature"),
             'blockHash':('blockHash',"feature"),
@@ -86,6 +163,8 @@ if __name__ == "__main__":
     x_emit_utxo_mapping = {
         'addresses': ('addresses',"feature"),
         'utxoId': ('utxoId',"feature"),
+        'txHash':('txHash',"feature"),
+        'txType':('txType',"feature"),
         'assetId': ('assetId',"function", 'getAssetId'),
         'asset_name': ('asset_name',"function", 'getAssetName'),
         'symbol': ('symbol',"function", 'getSymbol'),
@@ -96,7 +175,10 @@ if __name__ == "__main__":
     
     x_consume_utxo_mapping = {
         'addresses': ('addresses',"feature"),
-        'value': ('value',"feature"),
+        'utxoId': ('utxoId',"feature"),
+        'txHash':('txHash',"feature"),
+        'txType':('txType',"feature"),
+        'blockHash':('blockHash',"feature"),
         'assetId': ('assetId',"function", 'getAssetId'),
         'asset_name': ('asset_name',"function", 'getAssetName'),
         'symbol': ('symbol',"function", 'getSymbol'),
@@ -104,23 +186,34 @@ if __name__ == "__main__":
         'asset_type': ('asset_type',"function", 'getAsset_type'),
         'amount': ('amount',"function", 'getAmount')
     }
-    
-    emitted_utxos_key = ['emittedUtxos',"envInputs"]
-    consumed_utxos_key = ['envOutputs','consumedUtxos']
+
+    transformation_functions = {
+        "calculate_amount_unlocked": calculate_amount_unlocked,
+        "calculate_amount_created": calculate_amount_created,
+    }
+
+    utxo_functions = {
+        "getAssetId": getAssetId,
+        "getAssetName":getAssetName,
+        "getSymbol":getSymbol,
+        "getDenomination":getDenomination,
+        "getAsset_type":getAsset_type,
+        "getAmount":getAmount
+    }
     
     x_url = "https://glacier-api.avax.network/v1/networks/mainnet/blockchains/x-chain/transactions"
     
     day = "2024-02-01"
 
-    data = extract_avalanche_data(day)
+    trxs, emitted_utxos, consumed_utxos = extract_avalanche_data(day)
     
     config = [
         x_feature_mapping,
         x_emit_utxo_mapping,
         x_consume_utxo_mapping,
-        emitted_utxos_key,
-        consumed_utxos_key
+        transformation_functions,
+        utxo_functions
     ]
-    trxs, emitted_utxos, consumed_utxos = data_mapper_for_trx_a_day(config, data)
+    trxs, emitted_utxos, consumed_utxos = data_mapper(config, trxs, emitted_utxos, consumed_utxos)
     
-    store_data('x', "2024-02-05", trxs, emitted_utxos, consumed_utxos)
+    store_data('x', day, trxs, emitted_utxos, consumed_utxos)

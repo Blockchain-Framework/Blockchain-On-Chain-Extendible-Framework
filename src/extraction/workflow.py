@@ -45,7 +45,7 @@ class MetricCalculationWorkflowManager:
         query = f"SELECT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}';"
         return get_query_results(query, self.db_connection_string)
 
-    def extract_workflow(self, date, blockchain, subchain):
+    def extract(self, date, blockchain, subchain):
         try:
             self.logger.info(f"Computing metrics for {blockchain} subchain {subchain}...")
             module_path = r"src/extraction/utils/scripts/avalanche/avalanche_data_extraction.py"
@@ -71,13 +71,13 @@ class MetricCalculationWorkflowManager:
                 subchains = self.get_subchains(blockchain)
                 if subchains is not None:
                     for subchain in subchains['sub_chain']:
-                        log_workflow_status(blockchain, subchain, 'start', 'metric', None)
+                        log_workflow_status(blockchain, subchain, 'start', 'extract', None)
                         try:
-                            self.extract_workflow(date, blockchain, subchain)
+                            self.extract(date, blockchain, subchain)
                         except Exception as e:
-                            log_workflow_status(blockchain, subchain, 'fail', 'metric', str(e))
+                            log_workflow_status(blockchain, subchain, 'fail', 'extract', str(e))
                         finally:
-                            log_workflow_status(blockchain, subchain, 'completed', 'metric', None)
+                            log_workflow_status(blockchain, subchain, 'completed', 'extract', None)
 
 if __name__ == "__main__":
     date = "2024-01-27"
