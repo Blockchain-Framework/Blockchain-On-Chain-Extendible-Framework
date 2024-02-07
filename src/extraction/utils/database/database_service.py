@@ -42,9 +42,11 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
 
     except SQLAlchemyError as e:
         print(f"Error: {e}")
+        raise
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-
+        raise
+    
 def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNECTION")):
     """
     Executes a SQL query and returns the results as a DataFrame.

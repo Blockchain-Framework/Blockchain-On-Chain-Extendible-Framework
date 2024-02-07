@@ -1,6 +1,7 @@
 from utils.scripts.model import GeneralTransactionModel
 from utils.scripts.model import GeneralUTXOModel
 
+
 # Mapping of function names to actual functions for dynamic invocation
 def data_mapper(config, raw_trxs, raw_emitted_utxos, raw_consumed_utxos):
     trxs, emitted_utxos, consumed_utxos = [], [], []
@@ -47,3 +48,4 @@ def map_transaction(blockchain_feature_mapping,tx,functions):
                 transformed_data[general_attr] = functions[function_name](tx)
     
     return GeneralTransactionModel(**transformed_data)
+

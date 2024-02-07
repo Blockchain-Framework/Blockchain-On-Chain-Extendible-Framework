@@ -1,10 +1,11 @@
 CREATE TABLE blockchain_table (
-    id SERIAL PRIMARY KEY,
+    id UUID NOT NULL,
     blockchain VARCHAR(255) NOT NULL,
-    sub_chain VARCHAR(255),
+    sub_chain VARCHAR(255) NOT NULL,
     start_date DATE NOT NULL,
     create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id, blockchain, sub_chain)
 );
 
 CREATE TABLE metric_table (
@@ -26,35 +27,6 @@ CREATE TABLE chain_metric (
 );
 
 INSERT INTO blockchain_table (blockchain, sub_chain, start_date) VALUES
-<<<<<<< HEAD
-('Avalanche', 'X', '2024-01-19'),
-('Avalanche', 'C', '2024-01-19'),
-('Avalanche', 'P', '2024-01-19');
-
-INSERT INTO metric_table (metric_name, description) VALUES
-('trx_per_second', 'Transactions processed per second'),
-('trx_per_day', 'Total number of transactions processed per day'),
-('avg_trx_per_block', 'Average number of transactions per block'),
-('total_trxs', 'Total number of transactions'),
-('total_blocks', 'Total number of blocks');
-
-INSERT INTO chain_metric (blockchain_id, metric_name, category) VALUES
-(1, 'trx_per_second', 'Transaction Metrics'),
-(1, 'trx_per_day', 'Transaction Metrics'),
-(1, 'avg_trx_per_block', 'Transaction Metrics'),
-(1, 'total_trxs', 'Transaction Metrics'),
-(1, 'total_blocks', 'Transaction Metrics'),
-(2, 'trx_per_second', 'Transaction Metrics'),
-(2, 'trx_per_day', 'Transaction Metrics'),
-(2, 'avg_trx_per_block', 'Transaction Metrics'),
-(2, 'total_trxs', 'Transaction Metrics'),
-(2, 'total_blocks', 'Transaction Metrics'),
-(3, 'trx_per_second', 'Transaction Metrics'),
-(3, 'trx_per_day', 'Transaction Metrics'),
-(3, 'avg_trx_per_block', 'Transaction Metrics'),
-(3, 'total_trxs', 'Transaction Metrics'),
-(3, 'total_blocks', 'Transaction Metrics');
-=======
 ('Avalanche', 'x', '2024-01-19'),
 ('Avalanche', 'c', '2024-01-19'),
 ('Avalanche', 'p', '2024-01-19');
@@ -209,5 +181,4 @@ INSERT INTO consumed_utxos_feature_mappings (blockchain, subchain, sourceField, 
 ('x', 'default', 'amount', 'amount', 'function', 'getAmount');
 
 
->>>>>>> feature/dual-workflow
 
