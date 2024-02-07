@@ -52,7 +52,8 @@ INSERT INTO metric_table (metric_name, description) VALUES
 ('total_staked_amount', 'Total amount of currency staked in the network'),
 ('total_burned_amount', 'Total amount of currency that has been burned or removed from circulation'),
 ('network_economic_efficiency', 'Evaluates the economic efficiency of transactions over the network'),
-('interchain_transactional_coherence', 'Measures the volume and value coherence between different chains or subnets');
+('interchain_transactional_coherence', 'Measures the volume and value coherence between different chains or subnets'),
+('staking_dynamics_index', 'Analyzes the staking behavior on the network to provide an index of staking attractiveness and profitability');
 
 INSERT INTO chain_metric (blockchain_id, metric_name, category) VALUES
 (1, 'trx_per_second', 'Chain Throughput and Efficiency'),
@@ -113,4 +114,5 @@ INSERT INTO chain_metric (blockchain_id, metric_name, category) VALUES
 (3, 'total_burned_amount', 'Economic Indicators'),
 (1, 'network_economic_efficiency', 'Economic Indicators'),
 (2, 'network_economic_efficiency', 'Economic Indicators'),
-(2, 'interchain_transactional_coherence', 'Chain Throughput and Efficiency');
+(2, 'interchain_transactional_coherence', 'Chain Throughput and Efficiency'),
+(3, 'staking_dynamics_index', 'Network Health and Activity');

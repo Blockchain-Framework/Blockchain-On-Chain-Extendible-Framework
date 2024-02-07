@@ -180,7 +180,7 @@ def total_blocks(blockchain, subchain, date):
         # add_data_to_database('trx_per_day', date, blockchain, subchain,  results.iloc[0]['count'])
         return results.iloc[0]['count']
     # add_data_to_database('trx_per_day', date, blockchain, subchain, None)
-    return None
+    # return None
 
 @key_mapper("avg_tx_per_block")
 def avg_tx_per_block(blockchain, subchain, date):
@@ -649,6 +649,59 @@ def total_burned_amount(blockchain, subchain, date):
         # add_data_to_database('total_burned_amount', date, blockchain, subchain, None)
 
         return None
+
+@key_mapper("staking_dynamics_index")
+def calculate_sdi(blockchain, subchain, date):
+    """
+    Calculate the Staking Dynamics Index (SDI) for the Avalanche network on a specified date,
+    focusing on the p chain for staking-related transactions.
+    """
+    if not blockchain or not date:
+        logging.error("Invalid input parameters for calculate_sdi.")
+        return None
+
+    # Assuming `estimatedReward` and `delegationFeePercent` need to be derived or are represented by proxy metrics
+    # Here we use placeholders for these values, and you'll need to adjust the queries or calculations based on your actual data structure and availability
+
+    # Placeholder query to sum up the amountStaked and amountBurned from p chain transactions
+    query_staking_info = f"""
+    SELECT SUM(\"amountStaked\") as total_amount_staked,
+           SUM(\"amountBurned\") as total_amount_burned,
+           SUM(CAST(CASE WHEN \"estimatedReward\" = '' THEN '0' ELSE \"estimatedReward\" END AS numeric)) as total_estimated_reward,
+           AVG(CAST(CASE WHEN \"delegationFeePercent\" = '' THEN '0' ELSE \"delegationFeePercent\" END AS numeric)) as avg_delegation_fee_percent
+    FROM {subchain}_transactions
+    WHERE date = '{date}'
+    """
+
+    result_staking_info = execute_query(query_staking_info)
+    
+    if result_staking_info is not None and not result_staking_info.empty:
+        total_amount_staked = result_staking_info.iloc[0]['total_amount_staked'] if result_staking_info.iloc[0]['total_amount_staked'] else 0
+        total_amount_burned = result_staking_info.iloc[0]['total_amount_burned'] if result_staking_info.iloc[0]['total_amount_burned'] else 0
+        total_estimated_reward = result_staking_info.iloc[0]['total_estimated_reward'] if result_staking_info.iloc[0]['total_estimated_reward'] else 0
+        avg_delegation_fee_percent = result_staking_info.iloc[0]['avg_delegation_fee_percent'] if result_staking_info.iloc[0]['avg_delegation_fee_percent'] else 0
+
+        if total_amount_burned == 0:
+            logging.error("Total amount burned is zero, cannot calculate SDI.")
+            return None
+
+        # Calculate SDI using the provided formula
+        #sdi = (total_amount_staked * total_estimated_reward / total_amount_burned) * (1 - avg_delegation_fee_percent / 100)
+        sdi = ((total_amount_staked * total_estimated_reward) / (total_amount_burned)) * (avg_delegation_fee_percent)
+
+
+        # Insert result into database
+        add_data_to_database('metric_results', date, blockchain, subchain, sdi)
+
+        return sdi
+    else:
+        logging.info("No data found to calculate SDI for the given date.")
+
+        # Insert null SDI for the date into the database
+        add_data_to_database('metric_results', date, blockchain, subchain, None)
+
+        return None
+
 
 
 #C CHAIN SPECIFIC
