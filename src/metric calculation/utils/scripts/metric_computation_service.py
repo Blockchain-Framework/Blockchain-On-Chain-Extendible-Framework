@@ -702,6 +702,49 @@ def calculate_sdi(blockchain, subchain, date):
 
         return None
 
+@key_mapper("staking_engagement_index")
+def calculate_sei(blockchain, subchain, date):
+    """
+    Calculate the Staking Engagement Index (SEI) for the Avalanche network on a specified date,
+    focusing on the p chain for staking-related transactions. Treats 'estimatedReward' values
+    that are empty strings as 0.
+    """
+    if not blockchain or not date:
+        logging.error("Invalid input parameters for calculate_sei.")
+        return None
+
+    # Adjust the query to handle empty 'estimatedReward' as 0 using COALESCE and NULLIF
+    query_staking_engagement = f"""
+    SELECT 
+        SUM(COALESCE(NULLIF("estimatedReward", '')::numeric, 0)) AS total_estimated_reward,
+        SUM("amountStaked") AS total_amount_staked
+    FROM {subchain}_transactions
+    WHERE date = '{date}'
+    """
+
+    result_staking_engagement = execute_query(query_staking_engagement)
+    
+    if result_staking_engagement is not None and not result_staking_engagement.empty:
+        total_estimated_reward = result_staking_engagement.iloc[0]['total_estimated_reward'] if result_staking_engagement.iloc[0]['total_estimated_reward'] else 0
+        total_amount_staked = result_staking_engagement.iloc[0]['total_amount_staked'] if result_staking_engagement.iloc[0]['total_amount_staked'] else 0
+
+        if total_amount_staked == 0:
+            logging.error("Total amount staked is zero, cannot calculate SEI.")
+            return None
+
+        sei = total_estimated_reward / total_amount_staked if total_amount_staked else 0  # Ensure division by zero is handled
+
+        # Insert result into database
+        add_data_to_database('metric_results', date, blockchain, subchain, sei)
+
+        return sei
+    else:
+        logging.info(f"No data found to calculate SEI for the given date: {date}.")
+
+        # Insert null SEI for the date into the database
+        add_data_to_database('metric_results', date, blockchain, subchain, None)
+
+        return None
 
 
 #C CHAIN SPECIFIC
