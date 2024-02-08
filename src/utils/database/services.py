@@ -18,7 +18,7 @@ def insert_blockchain_metadata(data, config):
         try:
             with conn.cursor() as cur:
                 # Example insertion, adjust according to your schema
-                cur.execute("INSERT INTO blockchains (blockchain, sub_chain, start_date, description) VALUES (%s, %s, %s, %s)",
+                cur.execute("INSERT INTO blockchain_table (blockchain, sub_chain, start_date, description) VALUES (%s, %s, %s, %s)",
                             data['blockchain'], data['sub_chain'], data['start_date'], data['description'])
                 conn.commit()
                 
