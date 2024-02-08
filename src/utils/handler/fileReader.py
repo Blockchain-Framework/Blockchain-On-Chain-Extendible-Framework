@@ -1,11 +1,12 @@
 import json
 from ..logs import Logger
+import os
 
 logger = Logger("GodSight")
 
-def read_blockchain_metadata(file_name, path):
+def read_blockchain_metadata(file_name, relative_path_from_project_root):
 
-    file_path = path + file_name
+    file_path = os.path.join(os.getcwd(), relative_path_from_project_root, file_name)
     try:
         with open(file_path, 'r') as file:
             data = json.load(file)

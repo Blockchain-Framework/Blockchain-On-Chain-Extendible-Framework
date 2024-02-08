@@ -4,18 +4,15 @@ from ..logs import Logger
 logger = Logger("GodSight")
 
 def connect_database(config):
-    logger.log_debug(config.db_name)
-    logger.log_debug(config.db_password)
-    logger.log_debug("loggggggggggggggggggggggggggggg")
     try:
         conn = psycopg2.connect(
             dbname=config.db_name, user=config.db_user,
-            password=config.db_password, host=config.db_host
+            password=config.db_password, host=config.db_host, port=config.db_port
         )
         return conn
     except psycopg2.OperationalError as e:
         logger.log_error(f"Database connection failed: {e}")
-        return None
+        raise Exception(e)
     
 def test_connection(config):
 
@@ -45,8 +42,10 @@ def initialize_database(config):
     try:
         conn = connect_database(config)
 
+        path = config.sql_path + 'data.sql'
+
         # Read SQL commands from the data.sql file
-        with open('data.sql', 'r') as file:
+        with open(path, 'r') as file:
             sql_commands = file.read()
 
         # Execute SQL commands
@@ -55,11 +54,9 @@ def initialize_database(config):
             conn.commit()
         
         logger.log_info("Database initialized successfully.")
-        cur.close()
-        conn.close()
     except psycopg2.OperationalError as e:
         logger.log_error(f"Database connection failed: {e}")
-        return None
+        raise Exception(e)
     except Exception as e:
         logger.log_error(f"Database failed: {e}")
-        return None
+        raise Exception(e)

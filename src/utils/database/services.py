@@ -7,7 +7,7 @@ def check_blockchain_exists(blockchain_name, config):
     conn = connect_database(config)
     if conn is not None:
         with conn.cursor() as cur:
-            cur.execute("SELECT 1 FROM blockchains WHERE name = %s", (blockchain_name,))
+            cur.execute("SELECT 1 FROM blockchain_table WHERE blockchain = %s", (blockchain_name,))
             result = cur.fetchone() is not None
             return result
     return False

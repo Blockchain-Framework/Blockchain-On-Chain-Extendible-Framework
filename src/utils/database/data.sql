@@ -16,10 +16,12 @@ CREATE TABLE IF NOT EXISTS metric_table (
 );
 
 CREATE TABLE IF NOT EXISTS chain_metric (
-    blockchain_id INT,
+    blockchain_id UUID NOT NULL,
+    blockchain VARCHAR(255) NOT NULL,
+    sub_chain VARCHAR(255) NOT NULL,
     metric_name VARCHAR(255),
     category VARCHAR(255),
-    FOREIGN KEY (blockchain_id) REFERENCES blockchain_table(id),
+    FOREIGN KEY (blockchain_id, blockchain, sub_chain) REFERENCES blockchain_table(id, blockchain, sub_chain),
     FOREIGN KEY (metric_name) REFERENCES metric_table(metric_name),
     PRIMARY KEY (blockchain_id, metric_name),
 	create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -28,9 +30,9 @@ CREATE TABLE IF NOT EXISTS chain_metric (
 
 
 CREATE TABLE IF NOT EXISTS transactions_feature_mappings (
-    id SERIAL PRIMARY KEY,
+    id SERIAL,
     blockchain VARCHAR(255) NOT NULL,
-	subchain VARCHAR(255) NOT NULL,
+	sub_chain VARCHAR(255) NOT NULL,
     sourceField VARCHAR(255) NOT NULL,
     targetField VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL, -- 'feature' or 'function'
@@ -39,9 +41,9 @@ CREATE TABLE IF NOT EXISTS transactions_feature_mappings (
 );
 
 CREATE TABLE IF NOT EXISTS emitted_utxos_feature_mappings (
-    id SERIAL PRIMARY KEY,
+    id SERIAL,
     blockchain VARCHAR(255) NOT NULL,
-	subchain VARCHAR(255) NOT NULL,
+	sub_chain VARCHAR(255) NOT NULL,
     sourceField VARCHAR(255) NOT NULL,
     targetField VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL, -- 'feature' or 'function'
@@ -50,9 +52,9 @@ CREATE TABLE IF NOT EXISTS emitted_utxos_feature_mappings (
 );
 
 CREATE TABLE IF NOT EXISTS consumed_utxos_feature_mappings (
-    id SERIAL PRIMARY KEY,
+    id SERIAL,
     blockchain VARCHAR(255) NOT NULL,
-	subchain VARCHAR(255) NOT NULL,
+	sub_chain VARCHAR(255) NOT NULL,
     sourceField VARCHAR(255) NOT NULL,
     targetField VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL, -- 'feature' or 'function'

@@ -27,7 +27,7 @@ def validate_metadata(blockchain_metadata):
     return True, "Metadata is valid."
 
 
-def validate_extraction_function(file_name, path, test_input):
+def validate_extraction_function(file_name, relative_path_from_project_root, test_input):
     """
     Validate the extraction function in the specified file.
 
@@ -36,7 +36,7 @@ def validate_extraction_function(file_name, path, test_input):
     :return: Boolean indicating whether the validation passed, and an error message if it failed.
     """
 
-    file_path = path + file_name
+    file_path = os.path.join(os.getcwd(), relative_path_from_project_root, file_name+'.py')
 
     # Ensure the file exists
     if not os.path.isfile(file_path):
@@ -70,9 +70,9 @@ def validate_extraction_function(file_name, path, test_input):
     return True, "Validation passed."
 
 
-def validate_mapper_file(file_name, path):
+def validate_mapper_file(file_name, relative_path_from_project_root):
 
-    file_path = path + file_name
+    file_path = os.path.join(os.getcwd(), relative_path_from_project_root, file_name+'.py')
 
     mapper_funcs = []
 
@@ -122,9 +122,11 @@ def validate_mapper_file(file_name, path):
 
 def validate_extract_and_mapper(extraction_file_name, mapper_file_name, extraction_path, mapper_path, start_date):
     test_input = start_date
+    print("check 7")
     extract_validation_passed, extract_validation_message = validate_extraction_function(extraction_file_name, extraction_path, test_input)
-    mapper_validation_passed, mapper_validation_message, mappings, mapper_funcs = validate_mapper_file(mapper_file_name, extraction_path)
-
+    print("check 8", extract_validation_message)
+    mapper_validation_passed, mapper_validation_message, mappings, mapper_funcs = validate_mapper_file(mapper_file_name, mapper_path)
+    print("check 9")
     funcs = ['extract'] + mapper_funcs
 
     return extract_validation_passed, mapper_validation_passed, extract_validation_message, mapper_validation_message, mappings, funcs

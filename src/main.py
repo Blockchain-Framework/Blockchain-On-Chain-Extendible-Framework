@@ -33,30 +33,28 @@ def process():
     # can add other commands here
 
 def add_blockchain(file_name):
-    if not connect_database():
-        logger.log_error("Database connection failed.")
-        return
-
+    logger.log_info("check 1")
     metadata = read_blockchain_metadata(file_name, config.meta_path)
     if metadata is None:
         logger.log_error("Failed to read blockchain metadata.")
         return
-
+    logger.log_info("check 2")
     valid, message = validate_metadata(metadata)
+    logger.log_info("check 3")
     if not valid:
         logger.log_error(message)
         return
-    
+    logger.log_info("check 4")
     if check_blockchain_exists(metadata['name'], config):
         return False, f"Blockchain {metadata['name']} already exists in the system."
-    
+    logger.log_info("check 5")
     meta_data = []
     mapper_data = []
     funcs = []
-    
+    logger.log_info("check 6")
     for subchain in metadata['subChains']:
-    
-        extract_validation_passed, mapper_validation_passed, extract_validation_message, mapper_validation_message, mappings, functions = validate_extract_and_mapper(subchain['extract_file'], subchain['mapper_file'], config.extract_path, config.mapper_path, subchain['start_date'])
+        logger.log_info(f"check {subchain['name']}")
+        extract_validation_passed, mapper_validation_passed, extract_validation_message, mapper_validation_message, mappings, functions = validate_extract_and_mapper(subchain['extract_file'], subchain['mapper_file'], config.extract_path, config.mapper_path, subchain['startDate'])
 
         if not extract_validation_passed:
             logger.log_error(extract_validation_message)
@@ -87,7 +85,7 @@ def add_blockchain(file_name):
     
     insert_blockchain_metadata_and_mappings(meta_data, mapper_data, config)
     output_path = 'src\\extraction\\user_functions'
-    write_functions_to_new_script(funcs, output_path)
+    write_functions_to_new_scripts(funcs, output_path)
     logger.log_info(f"Blockchain {metadata['name']} added successfully.")
 
 if __name__ == "__main__":
