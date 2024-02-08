@@ -823,6 +823,60 @@ def calculate_itc(blockchain, subchain, date):
 
         return None
 
+@key_mapper("interchain_liquidity_ratio")
+def calculate_ilr(blockchain, subchain, date):
+    """
+    Calculate the Interchain Liquidity Ratio (ILR) for the Avalanche network on a specified date.
+    Correctly handles text fields containing JSON representations by converting them to JSONB before extraction.
+    """
+    if not date:
+        logging.error("Invalid input parameter for date.")
+        return None
+
+    # Adjusted queries to first cast text fields to JSONB before extracting 'Avalanche' values
+    query_interchain_value = f"""
+    SELECT 
+        SUM((CAST(CAST(\"amountUnlocked\" AS JSONB)->>'Avalanche' AS NUMERIC) + 
+        CAST(CAST(\"amountCreated\" AS JSONB)->>'Avalanche' AS NUMERIC))) AS total_interchain_value
+    FROM {subchain}_transactions
+    WHERE date = '{date}' AND \"sourceChain\" IS NOT NULL AND \"destinationChain\" IS NOT NULL
+    """
+
+    query_total_created_value = f"""
+    SELECT 
+        SUM(CAST(CAST(\"amountCreated\" AS JSONB)->>'Avalanche' AS NUMERIC)) AS total_created_value
+    FROM (
+        SELECT \"amountCreated\" FROM x_transactions WHERE date = '{date}'
+        UNION ALL
+        SELECT \"amountCreated\" FROM {subchain}_transactions WHERE date = '{date}'
+    ) AS created_values
+    """
+
+    result_interchain_value = execute_query(query_interchain_value)
+    result_total_created_value = execute_query(query_total_created_value)
+    
+    if result_interchain_value is not None and not result_interchain_value.empty and result_total_created_value is not None and not result_total_created_value.empty:
+        total_interchain_value = result_interchain_value.iloc[0]['total_interchain_value'] if result_interchain_value.iloc[0]['total_interchain_value'] else 0
+        total_created_value = result_total_created_value.iloc[0]['total_created_value'] if result_total_created_value.iloc[0]['total_created_value'] else 0
+
+        if total_created_value == 0:
+            logging.error("Total created value is zero, cannot calculate ILR.")
+            return None
+
+        ilr = total_interchain_value / total_created_value if total_created_value else 0  # Ensure division by zero is handled
+
+        # Insert result into database
+        add_data_to_database('metric_results', date, blockchain, subchain, ilr)
+
+        return ilr
+    else:
+        logging.info(f"No data found to calculate ILR for the given date: {date}.")
+
+        # Insert null ILR for the date into the database
+        add_data_to_database('metric_results', date, blockchain, subchain, None)
+
+        return None
+
 
 
 #X AND C CHAIN SPECIFIC
@@ -887,8 +941,6 @@ def calculate_nee(blockchain, subchain, date):
 
         return None
     
-
-
 
 #Realized cap
 def get_avax_price_at_timestamp(timestamp):

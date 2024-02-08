@@ -54,7 +54,9 @@ INSERT INTO metric_table (metric_name, description) VALUES
 ('network_economic_efficiency', 'Evaluates the economic efficiency of transactions over the network'),
 ('interchain_transactional_coherence', 'Measures the volume and value coherence between different chains or subnets'),
 ('staking_dynamics_index', 'Analyzes the staking behavior on the network to provide an index of staking attractiveness and profitability'),
-('staking_engagement_index','Tracks the level of active engagement in the staking process');
+('staking_engagement_index','Tracks the level of active engagement in the staking process'),
+('interchain_liquidity_ratio', 'Measures the ratio of value transferred between Avalanche chains to the total value created');
+
 
 INSERT INTO chain_metric (blockchain_id, metric_name, category) VALUES
 (1, 'trx_per_second', 'Chain Throughput and Efficiency'),
@@ -117,4 +119,5 @@ INSERT INTO chain_metric (blockchain_id, metric_name, category) VALUES
 (2, 'network_economic_efficiency', 'Economic Indicators'),
 (2, 'interchain_transactional_coherence', 'Chain Throughput and Efficiency'),
 (3, 'staking_dynamics_index', 'Network Health and Activity'),
-(3, 'staking_engagement_index', 'Network Health and Activity');
+(3, 'staking_engagement_index', 'Network Health and Activity'),
+(2, 'interchain_liquidity_ratio', 'Chain Throughput and Efficiency');
