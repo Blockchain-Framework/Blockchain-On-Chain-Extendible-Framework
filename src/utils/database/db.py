@@ -4,6 +4,9 @@ from ..logs import Logger
 logger = Logger("GodSight")
 
 def connect_database(config):
+    logger.log_debug(config.db_name)
+    logger.log_debug(config.db_password)
+    logger.log_debug("loggggggggggggggggggggggggggggg")
     try:
         conn = psycopg2.connect(
             dbname=config.db_name, user=config.db_user,

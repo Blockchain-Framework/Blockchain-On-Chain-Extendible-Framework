@@ -1,4 +1,4 @@
-from db import connect_database
+from .db import connect_database
 from ..logs import Logger
 
 logger = Logger("GodSight")
