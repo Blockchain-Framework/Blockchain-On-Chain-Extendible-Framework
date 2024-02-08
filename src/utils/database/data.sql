@@ -12,8 +12,7 @@ CREATE TABLE IF NOT EXISTS metric_table (
     metric_name VARCHAR(255) PRIMARY KEY,
     description TEXT,
 	create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id, blockchain, sub_chain)
+    update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS chain_metric (
@@ -24,8 +23,7 @@ CREATE TABLE IF NOT EXISTS chain_metric (
     FOREIGN KEY (metric_name) REFERENCES metric_table(metric_name),
     PRIMARY KEY (blockchain_id, metric_name),
 	create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id, blockchain, sub_chain)
+    update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -37,7 +35,7 @@ CREATE TABLE IF NOT EXISTS transactions_feature_mappings (
     targetField VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL, -- 'feature' or 'function'
     info VARCHAR(255), -- Function name or NULL
-    PRIMARY KEY (id, blockchain, sub_chain)
+    PRIMARY KEY (id, blockchain, sub_chain, sourceField)
 );
 
 CREATE TABLE IF NOT EXISTS emitted_utxos_feature_mappings (
@@ -48,7 +46,7 @@ CREATE TABLE IF NOT EXISTS emitted_utxos_feature_mappings (
     targetField VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL, -- 'feature' or 'function'
     info VARCHAR(255), -- Function name or NULL
-    PRIMARY KEY (id, blockchain, sub_chain)
+    PRIMARY KEY (id, blockchain, sub_chain, sourceField)
 );
 
 CREATE TABLE IF NOT EXISTS consumed_utxos_feature_mappings (
@@ -59,7 +57,7 @@ CREATE TABLE IF NOT EXISTS consumed_utxos_feature_mappings (
     targetField VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL, -- 'feature' or 'function'
     info VARCHAR(255), -- Function name or NULL
-    PRIMARY KEY (id, blockchain, sub_chain)
+    PRIMARY KEY (id, blockchain, sub_chain, sourceField)
 );
 
 
