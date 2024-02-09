@@ -102,6 +102,41 @@ def total_trxs(blockchain, subchain, date):
     # add_data_to_database('total_trxs', date, blockchain, subchain, None)
     return None
 
+@key_mapper("total_trx_amount")
+def total_trx_amount(blockchain, subchain, date):
+    """
+    Calculate the total transaction amount in a given blockchain subchain for a specified date.
+    """
+    if not subchain or not date:
+        logging.error("Invalid input parameters for total_trx_amount.")
+        return None
+
+    # Query for the sum of transaction amounts
+    query = f"""
+    SELECT SUM(CAST(amount AS NUMERIC)) as total_amount
+    FROM {subchain}_consumed_utxos
+    WHERE date = '{date}'
+    """
+    results = execute_query(query)
+
+    if results is not None and not results.empty:
+        total_amount = results.iloc[0]['total_amount']
+
+        if total_amount is not None:
+            # Insert result into database, assuming you have a similar function for total amounts
+            add_data_to_database('total_trx_amount', date, blockchain, subchain, total_amount)
+            return total_amount
+        else:
+            logging.info("No transactions found for the given date.")
+            # Insert zero total amount for the date into the database
+            add_data_to_database('total_trx_amount', date, blockchain, subchain, 0)
+            return 0
+    else:
+        logging.info("No data found to calculate total transaction amount for the given date.")
+        # Insert null total amount for the date into the database
+        add_data_to_database('total_trx_amount', date, blockchain, subchain, None)
+        return None
+
 @key_mapper("avg_trx_amount")
 def avg_trx_amount(blockchain, subchain, date):
     """
@@ -281,33 +316,6 @@ def active_senders(blockchain, subchain, date):
 
         # Insert zero active senders for the date into the database
         # add_data_to_database('active_senders', date, blockchain, subchain, 0)
-
-        return 0
-
-@key_mapper("cumulative_number_of_trx")
-def cumulative_number_of_trx(blockchain, subchain, end_date):
-    """
-    Calculate the cumulative number of transactions in a given blockchain subchain up to a specified date.
-    """
-    if not subchain or not end_date:
-        logging.error("Invalid input parameters for cumulative_number_of_trx.")
-        return None
-
-    query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date <= '{end_date}'"
-    results = execute_query(query)
-    
-    if results is not None and not results.empty:
-        cumulative_trx_count = results.iloc[0]['count']
-
-        # Insert result into database
-        # add_data_to_database('cumulative_number_of_trx', end_date, blockchain, subchain, cumulative_trx_count)
-
-        return cumulative_trx_count
-    else:
-        logging.info("No transactions found up to the given date.")
-
-        # Insert zero transactions for the date range into the database
-        # add_data_to_database('cumulative_number_of_trx', end_date, blockchain, subchain, 0)
 
         return 0
 
