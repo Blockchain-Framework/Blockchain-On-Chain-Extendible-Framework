@@ -169,7 +169,7 @@ def avg_trx_amount(blockchain, subchain, date):
     # add_data_to_database('avg_trx_amount', date, blockchain, subchain, None)
     return None
 
-@key_mapper("avg_trxs_per_hour")
+@key_mapper("trxs_per_hour")
 def avg_trxs_per_hour(blockchain, subchain, date):
     """
     Calculate the average number of transactions per hour for a given blockchain subchain and date.
