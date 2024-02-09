@@ -217,7 +217,7 @@ def total_blocks(blockchain, subchain, date):
     # add_data_to_database('trx_per_day', date, blockchain, subchain, None)
     # return None
 
-@key_mapper("avg_tx_per_block")
+@key_mapper("tx_per_block")
 def avg_tx_per_block(blockchain, subchain, date):
     """
     Calculate the average number of transactions per block in a given blockchain subchain for a specified date.
