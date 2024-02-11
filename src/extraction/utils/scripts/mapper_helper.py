@@ -24,3 +24,6 @@ def insert_feature_mapping_to_df(blockchain, subchain, mapping):
     
     df = pd.DataFrame(data)
     return df
+
+if __name__ == "__main__":
+    print("x")

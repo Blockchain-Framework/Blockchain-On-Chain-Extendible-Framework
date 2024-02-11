@@ -8,7 +8,7 @@ import pandas as pd
 import importlib.util
 
 
-from utils.database.database_service import get_query_results, append_dataframe_to_sql, batch_insert_dataframes
+from utils.database.database_service import get_query_results, batch_insert_dataframes
 from utils.scripts.utils import log_workflow_status
 
 load_dotenv()

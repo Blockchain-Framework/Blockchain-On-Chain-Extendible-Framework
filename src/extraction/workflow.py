@@ -10,13 +10,19 @@ from utils.scripts.mappers import data_mapper
 from utils.scripts.extraction_helper import store_data, dataframe_to_mapping_dict, extract_function_names, get_function, load_functions_from_file, get_transaction_mappings, get_emitted_utxo_mappings, get_consumed_utxo_mappings
 from utils.scripts.mapper_helper import load_config_from_file, insert_feature_mapping_to_df
 
+import os
+
 load_dotenv()
 
 
 def store_configuration(blockchain, subchain, id):
     # Load configuration from file
-    config_path = f'user_functions/mappers/{id}.py'
+    # config_path = f'user_functions/mappers/{id}.py'
+    config_path = f'blockchains/mappers/{id}.py'
     config = load_config_from_file(config_path)
+    
+    # config_path = os.path.abspath(f'blockchains/mappers/{id}.py')
+    # config = load_config_from_file(config_path)
     
     # Insert mappings into the database
     trx_df = insert_feature_mapping_to_df(blockchain, subchain, config['trx_mapping'])
@@ -88,20 +94,20 @@ def add_blockchain_configuration(blockchain, sub_chain, start_date):
         return unique_id
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
-        return 
+        return
     
 if __name__ == "__main__":
     blockchain = "Avalanche"
     sub_chain = "x"
-    start_date = "2024-02-06"  # Example start date
-    date_range = ["2024-02-07"] 
-    
+    start_date = "2024-02-10"  # Example start date
+    date_range = ["2024-02-10"] 
+    id = 'd3976d76-e9f4-49a2-b311-4d29b4bed400'
     # Optionally add blockchain configuration to blockchain_table
     # id = add_blockchain_configuration(blockchain, sub_chain, start_date)
     
     # Optionally store new configuration to the database (uncomment if needed)
-    # store_configuration(blockchain, sub_chain, 'd3976d76-e9f4-49a2-b311-4d29b4bed400')
+    # store_configuration(blockchain, sub_chain, id)
 
     # # Extract and store data for each day in the date range
     for day in date_range:
-        extract_and_store_data(blockchain, sub_chain, day, 'd3976d76-e9f4-49a2-b311-4d29b4bed400')
+        extract_and_store_data(blockchain, sub_chain, day, id)

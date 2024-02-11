@@ -5,7 +5,7 @@ CREATE TABLE blockchain_table (
     start_date DATE NOT NULL,
     create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id, blockchain, sub_chain)
+    PRIMARY KEY (id)
 );
 
 CREATE TABLE metric_table (
@@ -16,7 +16,7 @@ CREATE TABLE metric_table (
 );
 
 CREATE TABLE chain_metric (
-    blockchain_id INT,
+    blockchain_id UUID,
     metric_name VARCHAR(255),
     category VARCHAR(255),
     FOREIGN KEY (blockchain_id) REFERENCES blockchain_table(id),
@@ -111,7 +111,6 @@ INSERT INTO chain_metric (blockchain_id, metric_name, category) VALUES
 (3, 'total_staked_amount', 'Economic Indicators'),
 (3, 'total_burned_amount', 'Economic Indicators');
 
-
 CREATE TABLE transactions_feature_mappings (
     id SERIAL PRIMARY KEY,
     blockchain VARCHAR(255) NOT NULL,
@@ -142,7 +141,6 @@ CREATE TABLE consumed_utxos_feature_mappings (
     info VARCHAR(255) -- Function name or NULL
 );
 
-
 INSERT INTO transactions_feature_mappings (blockchain, subchain, sourceField, targetField, type, info) VALUES
 ('Avalanche', 'x', 'txHash', 'txHash', 'feature', NULL),
 ('Avalanche', 'x', 'blockHash', 'blockHash', 'feature', NULL),
@@ -166,7 +164,6 @@ INSERT INTO emitted_utxos_feature_mappings (blockchain, subchain, sourceField, t
 ('x', 'default', 'asset_type', 'assetType', 'function', 'getAsset_type'),
 ('x', 'default', 'amount', 'amount', 'function', 'getAmount');
 
-
 INSERT INTO consumed_utxos_feature_mappings (blockchain, subchain, sourceField, targetField, type, info) VALUES
 ('x', 'default', 'addresses', 'addresses', 'feature', NULL),
 ('x', 'default', 'utxoId', 'utxoId', 'feature', NULL),
@@ -179,6 +176,3 @@ INSERT INTO consumed_utxos_feature_mappings (blockchain, subchain, sourceField, 
 ('x', 'default', 'denomination', 'denomination', 'function', 'getDenomination'),
 ('x', 'default', 'asset_type', 'assetType', 'function', 'getAsset_type'),
 ('x', 'default', 'amount', 'amount', 'function', 'getAmount');
-
-
-
