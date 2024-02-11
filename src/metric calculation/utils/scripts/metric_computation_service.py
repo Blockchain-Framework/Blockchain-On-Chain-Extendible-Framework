@@ -50,19 +50,31 @@ def trx_per_second(blockchain, subchain, date):
     if not subchain or not date:
         logging.error("Invalid input parameters for trx_per_second.")
         return None
-
+    
+    if subchain == "default":
+        query = f"SELECT DISTINCT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain IS NOT NULL AND sub_chain != 'default';"
+        results = execute_query(query)
+        if results is not None and not results.empty:
+            count = 0
+            for sub_chain in results['sub_chain']:
+                sub_query = "select value from trx_per_second where date = '{date}' and blockchain = '{blockchain}' and subchain = '{sub_chain}'"
+                sub_results = execute_query(sub_query)
+                count+=sub_results.iloc[0]['value']
+                count += float(results[(results['sub_chain']==sub_chain)]['value'])
+                trx_per_second(blockchain, sub_chain, date)
+        return count
+    
     query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
     results = execute_query(query)
     
     if results is not None and not results.empty:
-        count = results.iloc[0]['count']
+        count = results.iloc[0]['value']
         if count > 0:
             # add_data_to_database('trx_per_second', date, blockchain, subchain, count / 86400)
             return count / 86400
         else:
             logging.info("No transactions found for the given date.")
             # add_data_to_database('trx_per_second', date, blockchain, subchain, 0)
-
             return 0
     return None
 

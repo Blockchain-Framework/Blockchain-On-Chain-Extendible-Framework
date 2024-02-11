@@ -29,6 +29,7 @@ INSERT INTO blockchain_table (blockchain, sub_chain, start_date) VALUES
 ('Avalanche', 'x', '2024-01-19'),
 ('Avalanche', 'c', '2024-01-19'),
 ('Avalanche', 'p', '2024-01-19');
+('Avalanche', 'default', '2024-01-19');
 
 INSERT INTO metric_table (metric_name, description) VALUES
 ('trx_per_second', 'Number of transactions processed each second'),

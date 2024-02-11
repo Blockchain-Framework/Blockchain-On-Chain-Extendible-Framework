@@ -17,7 +17,6 @@ load_dotenv()
 # sys.path.insert(0, os.environ.get("ROOT_DIRECTORY_LOCAL_PATH"))
 
 class MetricCalculationWorkflowManager:
-    
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.db_connection_string = os.environ.get("DATABASE_CONNECTION")
@@ -125,7 +124,7 @@ def insert_metric_results(metrics_df):
         dfs_to_insert.append(row_df)
 
     return dfs_to_insert
-
+    
 if __name__ == "__main__":
     #TODO: need to check all metric tables exits
     get_metrics(self, blockchain, subchain)
