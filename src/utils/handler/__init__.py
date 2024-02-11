@@ -1,5 +1,5 @@
 from .fileReader import read_blockchain_metadata
-from .filerWriter import write_functions_to_new_scripts
+from .filerWriter import write_functions_to_new_scripts, is_import_statement, combine_scripts_ignore_imports
 from .validate import validate_metadata, validate_extract_and_mapper, validate_extraction_function, validate_mapper_file
 from .http import fetch_transactions
 from .time import convert_to_gmt_timestamp, get_today_start_gmt_timestamp

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS blockchain_table (
     blockchain VARCHAR(255) NOT NULL,
     sub_chain VARCHAR(255) NOT NULL,
     start_date DATE NOT NULL,
+    description VARCHAR(255) NULL,
     create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id, blockchain, sub_chain)

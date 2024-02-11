@@ -1,4 +1,10 @@
 def format_config_for_insertion(config, blockchain_name, subchain_name):
+
+    table_names = {
+        'trx_mapping': 'transactions_feature_mappings',
+        'emit_utxo_mapping': 'emitted_utxos_feature_mappings',
+        'consume_utxo_mapping': 'consumed_utxos_feature_mappings'
+    }
     formatted_data = {
         'transactions_feature_mappings': [],
         'emitted_utxos_feature_mappings': [],
@@ -6,7 +12,8 @@ def format_config_for_insertion(config, blockchain_name, subchain_name):
     }
 
     for mapping_type, mappings in config.items():
-        table_name = f"{mapping_type}"  # Map config keys to table names
+        print(1)
+        table_name = table_names[f"{mapping_type}"]  # Map config keys to table names
         for source_field, mapping_info in mappings.items():
             target_field, type_, info = mapping_info[0], mapping_info[1], None
             if len(mapping_info) > 2:

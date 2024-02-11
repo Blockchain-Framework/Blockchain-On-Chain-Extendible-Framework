@@ -1,0 +1,46 @@
+def extract(date):
+    # Convert the date to GMT timestamp and define the end timestamp for one day later
+    return
+
+
+def calculate_amount_unlocked(transaction):
+    amountUnlocked = transaction.get('amountUnlocked', [])
+    
+    amount_unlocked = {}
+    
+    for amount in amountUnlocked:
+        if int(amount['denomination']) != 0:
+            unlocked_value = int(amount['amount']) / int(amount['denomination'])
+        else:
+            unlocked_value = int(amount['amount'])
+
+
+def calculate_amount_created(transaction):
+    amountCreated = transaction.get('amountCreated', [])
+
+
+def getAssetId(utxo):
+    asset =  utxo['asset']
+    return asset.get('assetId')
+
+
+def getAssetName(utxo):
+    asset =  utxo['asset']
+    return asset.get('name', '')
+
+
+def getSymbol(utxo):
+    asset =  utxo['asset']
+    return asset.get('symbol', '')
+
+
+def getDenomination(utxo):
+    asset =  utxo['asset']
+    return asset.get('denomination',0)
+
+
+def getAsset_type(utxo):
+    asset =  utxo['asset']
+    return asset.get('type','')
+
+

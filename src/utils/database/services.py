@@ -34,11 +34,11 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, config):
         with connect_database(config) as conn, conn.cursor() as cur:
             # Insert metadata for blockchains
             insert_stmt_meta = """
-                INSERT INTO blockchain_table (blockchain, sub_chain, start_date, description)
-                VALUES (%s, %s, %s, %s)
+                INSERT INTO blockchain_table (id, blockchain, sub_chain, start_date, description)
+                VALUES (%s, %s, %s, %s, %s)
             """
             meta_values = [
-                (data['blockchain'], data['subchain'], data['start_date'], data['description'])
+                (data['id'], data['blockchain'], data['subchain'], data['start_date'], data['description'])
                 for data in meta_data
             ]
             cur.executemany(insert_stmt_meta, meta_values)
@@ -47,7 +47,7 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, config):
             for mapping in mapping_data:
                 for table, entries in mapping.items():
                     insert_stmt_mapping = f"""
-                        INSERT INTO {table} (blockchain, subchain, sourceField, targetField, type, info)
+                        INSERT INTO {table} (blockchain, sub_chain, sourceField, targetField, type, info)
                         VALUES (%(blockchain)s, %(subchain)s, %(sourceField)s, %(targetField)s, %(type)s, %(info)s)
                     """
                     cur.executemany(insert_stmt_mapping, entries)
@@ -57,5 +57,31 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, config):
     except Exception as e:
         # Assuming logger is configured and available globally or passed as an argument
         logger.log_error(f"Failed to insert data into database: {e}")
+        conn.rollback() 
         # Optionally, re-raise the exception or handle it based on your application's requirements
+        raise Exception(e)
+    
+
+def delete_blockchain_data(blockchain, config):
+    table_names = ['transactions_feature_mappings', 'emitted_utxos_feature_mappings', 'consumed_utxos_feature_mappings']
+    try:
+        with connect_database(config) as conn, conn.cursor() as cur:
+            for mapper_table in table_names:
+                delete_stmt_mapping_table = f"""
+                    DELETE FROM {mapper_table}
+                    WHERE blockchain = %s;
+                """
+                cur.execute(delete_stmt_mapping_table, (blockchain,))
+
+            delete_stmt_blockchain = """
+                DELETE FROM blockchain_table
+                WHERE blockchain = %s;
+            """
+            cur.execute(delete_stmt_blockchain, (blockchain,))
+            
+            conn.commit()
+    except Exception as e:
+        logger.log_error(f"Failed to delete data: {e}")
+        conn.rollback()
         raise
+
