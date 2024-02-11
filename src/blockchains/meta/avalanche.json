@@ -3,7 +3,7 @@
     "description": "Description of the Blockchain Avalacnhe",
     "subChains": [
       {
-        "name": "X",
+        "name": "x",
         "startDate": "2024-02-06",
         "description": "Description of SubChain X",
         "extract_file": "d3976d76-e9f4-49a2-b311-4d29b4bed400",
