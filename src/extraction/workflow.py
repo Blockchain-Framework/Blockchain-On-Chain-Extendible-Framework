@@ -18,11 +18,11 @@ load_dotenv()
 def store_configuration(blockchain, subchain, id):
     # Load configuration from file
     # config_path = f'user_functions/mappers/{id}.py'
-    config_path = f'blockchains/mappers/{id}.py'
-    config = load_config_from_file(config_path)
-    
-    # config_path = os.path.abspath(f'blockchains/mappers/{id}.py')
+    # config_path = f'blockchains/mappers/{id}.py'
     # config = load_config_from_file(config_path)
+    
+    config_path = os.path.abspath(f'blockchains/mappers/{id}.py')
+    config = load_config_from_file(config_path)
     
     # Insert mappings into the database
     trx_df = insert_feature_mapping_to_df(blockchain, subchain, config['trx_mapping'])
