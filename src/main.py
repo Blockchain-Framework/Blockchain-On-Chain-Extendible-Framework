@@ -12,6 +12,8 @@ from config import Config
 
 config = Config()
 
+# print(config)
+
 logger = Logger("GodSight")
 
 def process():
@@ -58,15 +60,17 @@ def add_blockchain(file_name):
         mapper_data = []
         funcs = []
         for subchain in metadata['subChains']:
-            logger.log_info(f"check {subchain['name']}")
-            extract_validation_passed, mapper_validation_passed, extract_validation_message, mapper_validation_message, mappings, functions = validate_extract_and_mapper(subchain['extract_file'], subchain['mapper_file'], config.extract_path, config.mapper_path, subchain['startDate'])
+            # logger.log_info(f"check {subchain['name']}")
 
-            if not extract_validation_passed:
-                logger.log_error(extract_validation_message)
-                return
-            
-            if not mapper_validation_passed:
-                logger.log_error(mapper_validation_message)
+            extract_file_path = os.path.join(os.getcwd(),config.extract_path, subchain['extract_file']+'.py')
+            mapper_file_path = os.path.join(os.getcwd(),config.mapper_path, subchain['mapper_file']+'.py')
+
+            # print(extract_file_path, mapper_file_path)
+
+            final_validation, validation_message, funcs, mappings = validate_extract_and_mapper(extract_file_path, mapper_file_path, subchain['startDate'])
+
+            if not final_validation:
+                logger.log_error(validation_message)
                 return
             
             chain_unique_id = str(uuid.uuid4())
@@ -82,12 +86,9 @@ def add_blockchain(file_name):
             subchain_mappings = format_config_for_insertion(mappings,  metadata['name'], subchain['name'])
             mapper_data.append(subchain_mappings)
 
-            extract_file_path = os.path.join(os.getcwd(),config.extract_path, subchain['extract_file']+'.py')
-            mapper_file_path = os.path.join(os.getcwd(),config.mapper_path, subchain['mapper_file']+'.py')
-
             funcs.append({
                 'id': chain_unique_id,
-                'funcs': functions,
+                'funcs': funcs,
                 'sources_files': [extract_file_path, mapper_file_path]
             })
 
@@ -95,7 +96,7 @@ def add_blockchain(file_name):
         insert_blockchain_metadata_and_mappings(meta_data, mapper_data, config)
         output_path = 'extraction\\user_functions'
         print(funcs)
-        combine_scripts_ignore_imports(funcs, output_path)
+        # combine_scripts_ignore_imports(funcs, output_path)
         logger.log_info(f"Blockchain {metadata['name']} added successfully.")
     except Exception as e:
         if not blockchain_name is None:
