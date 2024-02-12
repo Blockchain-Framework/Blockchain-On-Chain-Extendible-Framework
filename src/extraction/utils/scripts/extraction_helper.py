@@ -2,6 +2,7 @@ from utils.database.database_service import batch_insert_dataframes, get_query_r
 import pandas as pd
 import importlib.util
 from sqlalchemy import text
+import dill
 
 def store_data(chain, current_date, trxs, emitted_utxos, consumed_utxos):
     # TODO: Store the data in the database as a batch transaction
@@ -49,6 +50,14 @@ def get_function(file_path, function_name):
     spec.loader.exec_module(function_module)
     return getattr(function_module, function_name, None)  # Returns None if the function does not exist
 
+def save_function(function, file_path):
+    with open(file_path, 'wb') as f:
+        dill.dump(function, f)
+
+def load_function(file_path):
+    with open(file_path, 'rb') as f:
+        return dill.load(f)
+    
 def load_functions_from_file(file_path, function_names):
     functions = {}
     for name in function_names:

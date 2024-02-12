@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 # Assuming the necessary imports are correctly set up
 from utils.scripts.mappers import data_mapper
-from utils.scripts.extraction_helper import store_data, dataframe_to_mapping_dict, extract_function_names, get_function, load_functions_from_file, get_transaction_mappings, get_emitted_utxo_mappings, get_consumed_utxo_mappings
+from utils.scripts.extraction_helper import save_function,load_function, store_data, dataframe_to_mapping_dict, extract_function_names, get_function, load_functions_from_file, get_transaction_mappings, get_emitted_utxo_mappings, get_consumed_utxo_mappings
 from utils.scripts.mapper_helper import load_config_from_file, insert_feature_mapping_to_df
 
 import os
@@ -17,11 +17,12 @@ load_dotenv()
 
 def store_configuration(blockchain, subchain, id):
     # Load configuration from file
-    # config_path = f'user_functions/mappers/{id}.py'
+    config_path = f'user_functions/mappers/{id}.py'
     # config_path = f'blockchains/mappers/{id}.py'
     # config = load_config_from_file(config_path)
     
-    config_path = os.path.abspath(f'blockchains/mappers/{id}.py')
+    # config_path = os.path.abspath(f'blockchains/mappers/{id}.py')
+    # print(config_path)
     config = load_config_from_file(config_path)
     
     # Insert mappings into the database
@@ -33,7 +34,10 @@ def store_configuration(blockchain, subchain, id):
     emit_utxo_df._table_name  = 'emitted_utxos_feature_mappings'
     consume_utxo_df._table_name  = 'consumed_utxos_feature_mappings'
     
-    batch_insert_dataframes([trx_df, emit_utxo_df, consume_utxo_df])
+    print(trx_df.head)
+    print(emit_utxo_df.head)
+    print(consume_utxo_df.head)
+    # batch_insert_dataframes([trx_df, emit_utxo_df, consume_utxo_df])
 
 
 def extract_and_store_data(blockchain, subchain, date, id):
@@ -64,8 +68,10 @@ def extract_and_store_data(blockchain, subchain, date, id):
     ]
     
     # Extract data using the extract function
-    extract = get_function(functions_file_path, 'extract')
-    trxs, emitted_utxos, consumed_utxos = extract(date)
+    # extract = get_function(functions_file_path, 'extract')
+    # save_function(extract, f'user_functions/saved_functions/x_extract.pkl')
+    ex = load_function(f'saved_functions/x_extract.pkl')
+    trxs, emitted_utxos, consumed_utxos = ex(date)
     
     # Map and store data
     trxs, emitted_utxos, consumed_utxos = data_mapper(config, trxs, emitted_utxos, consumed_utxos)
@@ -100,13 +106,13 @@ if __name__ == "__main__":
     blockchain = "Avalanche"
     sub_chain = "x"
     start_date = "2024-02-10"  # Example start date
-    date_range = ["2024-02-10"] 
+    date_range = ["2024-02-12"] 
     id = 'd3976d76-e9f4-49a2-b311-4d29b4bed400'
     # Optionally add blockchain configuration to blockchain_table
     # id = add_blockchain_configuration(blockchain, sub_chain, start_date)
     
     # Optionally store new configuration to the database (uncomment if needed)
-    # store_configuration(blockchain, sub_chain, id)
+    store_configuration(blockchain, sub_chain, id)
 
     # # Extract and store data for each day in the date range
     for day in date_range:
