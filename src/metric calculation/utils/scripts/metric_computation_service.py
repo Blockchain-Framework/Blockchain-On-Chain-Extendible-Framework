@@ -1,3 +1,9 @@
+import sys
+import os
+
+# Ensure the correct paths are included for imports
+sys.path.insert(0, r"D:\Academics\FYP\Repos new\Blockchain-On-Chain-Extendible-Framework\src\metric calculation")
+
 import pandas as pd
 import psycopg2
 import sys
@@ -55,13 +61,9 @@ def trx_per_second(blockchain, subchain, date):
         query = f"SELECT DISTINCT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain IS NOT NULL AND sub_chain != 'default';"
         results = execute_query(query)
         if results is not None and not results.empty:
-            count = 0
-            for sub_chain in results['sub_chain']:
-                sub_query = "select value from trx_per_second where date = '{date}' and blockchain = '{blockchain}' and subchain = '{sub_chain}'"
-                sub_results = execute_query(sub_query)
-                count+=sub_results.iloc[0]['value']
-                count += float(results[(results['sub_chain']==sub_chain)]['value'])
-                trx_per_second(blockchain, sub_chain, date)
+            sub_query = f"SELECT SUM(value) as total_value FROM trx_per_second WHERE date = {date} AND blockchain = {blockchain} AND subchain IN {tuple(results['sub_chain'])}"
+            results = execute_query(sub_query)
+            count = results.iloc[0]['value']
         return count
     
     query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
@@ -86,10 +88,23 @@ def trx_per_day(blockchain, subchain, date):
     if not subchain or not date:
         logging.error("Invalid input parameters for trx_per_day.")
         return None
-
+    
+    if subchain == "default":
+        query = f"SELECT DISTINCT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain IS NOT NULL AND sub_chain != 'default';"
+        results = execute_query(query)
+        print(results)
+        count = 0
+        if results is not None and not results.empty:
+            sub_query = f"SELECT SUM(value) as total_value FROM trx_per_day WHERE date = {date} AND blockchain = {blockchain} AND subchain IN {tuple(results['sub_chain'])}"
+            results = execute_query(sub_query)
+            count = results.iloc[0]['value']
+        return count
+    
     query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
     results = execute_query(query)
-    
+    query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
+    results = execute_query(query)
+
     if results is not None and not results.empty:
         # add_data_to_database('trx_per_day', date, blockchain, subchain, results.iloc[0]['count'])
         return results.iloc[0]['count']
@@ -1040,3 +1055,6 @@ if __name__ == "__main__":
     #Total staked amount
     #staked_amount = total_staked_amount('x_emitted_utxos', date_range_full)
     #print(f'Total staked amount in X-Chain (date range {date_range_full}): {staked_amount}')
+    
+    
+    trx_per_day("Avalanche", "default", "2024-01-21")
