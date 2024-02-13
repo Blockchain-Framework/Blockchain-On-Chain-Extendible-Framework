@@ -95,8 +95,11 @@ def trx_per_day(blockchain, subchain, date):
         print(results)
         count = 0
         if results is not None and not results.empty:
-            sub_query = f"SELECT SUM(value) as total_value FROM trx_per_day WHERE date = {date} AND blockchain = {blockchain} AND subchain IN {tuple(results['sub_chain'])}"
+            subchains = tuple(results['sub_chain'])
+            subchains = ('x','c','p')
+            sub_query = f"SELECT SUM(value) as value FROM trx_per_day WHERE date = '{date}' AND blockchain = '{blockchain}' AND subchain IN {subchains}"
             results = execute_query(sub_query)
+            
             count = results.iloc[0]['value']
         return count
     
@@ -120,6 +123,21 @@ def total_trxs(blockchain, subchain, date):
         logging.error("Invalid input parameter for total_trxs.")
         return None
 
+    # Query for the total number of transactions on the entire chain
+    if subchain == "default":
+        query = f"SELECT DISTINCT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain IS NOT NULL AND sub_chain != 'default';"
+        results = execute_query(query)
+        print(results)
+        count = 0
+        if results is not None and not results.empty:
+            subchains = tuple(results['sub_chain'])
+            subchains = ('x','c','p')
+            sub_query = f"SELECT SUM(value) as value FROM total_trxs WHERE date = '{date}' AND blockchain = '{blockchain}' AND subchain IN {subchains}"
+            results = execute_query(sub_query)
+            
+            count = results.iloc[0]['value']
+        return count
+    
     query = f"SELECT COUNT(*) FROM {subchain}_transactions"
     results = execute_query(query)
     
@@ -138,6 +156,21 @@ def total_trx_amount(blockchain, subchain, date):
         logging.error("Invalid input parameters for total_trx_amount.")
         return None
 
+    # Query for the total amount of transactions on the entire chain
+    if subchain == "default":
+        query = f"SELECT DISTINCT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain IS NOT NULL AND sub_chain != 'default';"
+        results = execute_query(query)
+        print(results)
+        count = 0
+        if results is not None and not results.empty:
+            subchains = tuple(results['sub_chain'])
+            subchains = ('x','c','p')
+            sub_query = f"SELECT SUM(value) as value FROM total_trx_amount WHERE date = '{date}' AND blockchain = '{blockchain}' AND subchain IN {subchains}"
+            results = execute_query(sub_query)
+            
+            count = results.iloc[0]['value']
+        return count
+    
     # Query for the sum of transaction amounts
     query = f"""
     SELECT SUM(CAST(amount AS NUMERIC)) as total_amount
@@ -173,6 +206,21 @@ def avg_trx_amount(blockchain, subchain, date):
         logging.error("Invalid input parameters for avg_trx_amount.")
         return None
 
+    # Query for the avarage number of transactions on the entire chain
+    if subchain == "default":
+        query = f"SELECT DISTINCT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain IS NOT NULL AND sub_chain != 'default';"
+        results = execute_query(query)
+        print(results)
+        count = 0
+        if results is not None and not results.empty:
+            subchains = tuple(results['sub_chain'])
+            subchains = ('x','c','p')
+            sub_query = f"SELECT SUM(value) as value FROM avg_trx_amount WHERE date = '{date}' AND blockchain = '{blockchain}' AND subchain IN {subchains}"
+            results = execute_query(sub_query)
+            
+            count = results.iloc[0]['value']
+        return count
+    
     # Query for the sum of transaction amounts and count of transactions
     query = f"""
     SELECT SUM(CAST(amount AS NUMERIC)) as total_amount, COUNT(*) as trx_count
@@ -205,6 +253,21 @@ def avg_trxs_per_hour(blockchain, subchain, date):
         logging.error("Invalid input parameters for avg_trxs_per_hour.")
         return None
 
+    # Query for the trxs_per_hour on the entire chain
+    if subchain == "default":
+        query = f"SELECT DISTINCT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain IS NOT NULL AND sub_chain != 'default';"
+        results = execute_query(query)
+        print(results)
+        count = 0
+        if results is not None and not results.empty:
+            subchains = tuple(results['sub_chain'])
+            subchains = ('x','c','p')
+            sub_query = f"SELECT SUM(value) as value FROM trxs_per_hour WHERE date = '{date}' AND blockchain = '{blockchain}' AND subchain IN {subchains}"
+            results = execute_query(sub_query)
+            
+            count = results.iloc[0]['value']
+        return count
+    
     # Query for total number of transactions
     trx_count_query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
     trx_results = execute_query(trx_count_query)
