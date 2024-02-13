@@ -1,7 +1,8 @@
 from .db import connect_database
-from ..logs import Logger
+from ..logs.log import Logger
 
 logger = Logger("GodSight")
+
 
 def check_blockchain_exists(blockchain_name, config):
     conn = connect_database(config)
@@ -12,27 +13,30 @@ def check_blockchain_exists(blockchain_name, config):
             return result
     return False
 
+
 def insert_blockchain_metadata(data, config):
     conn = connect_database(config)
     if conn is not None:
         try:
             with conn.cursor() as cur:
                 # Example insertion, adjust according to your schema
-                cur.execute("INSERT INTO blockchain_table (blockchain, sub_chain, start_date, description) VALUES (%s, %s, %s, %s)",
-                            data['blockchain'], data['sub_chain'], data['start_date'], data['description'])
+                cur.execute(
+                    "INSERT INTO blockchain_table (blockchain, sub_chain, start_date, description) VALUES (%s, %s, %s, %s)",
+                    data['blockchain'], data['sub_chain'], data['start_date'], data['description'])
                 conn.commit()
-                
+
                 # Additional logic for subChains and storing extract.py and mapper.py goes here
         except Exception as e:
             logger.log_error(f"Failed to insert blockchain data: {e}")
             conn.rollback()
             raise Exception(e)
-        
+
+
 def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, config):
     # Connect to the database using a context manager for better resource management
     try:
         with connect_database(config) as conn, conn.cursor() as cur:
-            # Insert metadata for blockchains
+            # Insert metadata for temp
             insert_stmt_meta = """
                 INSERT INTO blockchain_table (id, blockchain, sub_chain, start_date, description)
                 VALUES (%s, %s, %s, %s, %s)
@@ -57,10 +61,10 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, config):
     except Exception as e:
         # Assuming logger is configured and available globally or passed as an argument
         logger.log_error(f"Failed to insert data into database: {e}")
-        conn.rollback() 
+        conn.rollback()
         # Optionally, re-raise the exception or handle it based on your application's requirements
         raise Exception(e)
-    
+
 
 def delete_blockchain_data(blockchain, config):
     table_names = ['transactions_feature_mappings', 'emitted_utxos_feature_mappings', 'consumed_utxos_feature_mappings']
@@ -78,10 +82,9 @@ def delete_blockchain_data(blockchain, config):
                 WHERE blockchain = %s;
             """
             cur.execute(delete_stmt_blockchain, (blockchain,))
-            
+
             conn.commit()
     except Exception as e:
         logger.log_error(f"Failed to delete data: {e}")
         conn.rollback()
         raise
-

@@ -1,14 +1,18 @@
 from datetime import datetime
-from utils.model.model import model
+from pathlib import Path
 import importlib.util
 import os
 import sys
-from .blockchains.extract import extract_ava
-from .blockchains.mappers import mapper_ava
+import pandas as pd
+from src.utils.model.model import model
+from src.utils.model.metric import BaseMetric
+from src.utils.handler.http import fetch_transactions
+from src.utils.handler.time import convert_to_gmt_timestamp
 
-from ..logs import Logger
+from ..logs.log import Logger
 
 logger = Logger("GodSight")
+
 
 def load_module_from_path(module_name, file_path):
     module_dir = os.path.dirname(file_path)
@@ -27,12 +31,14 @@ def load_module_from_path(module_name, file_path):
 
     return module
 
+
 def get_function(file_path, function_name):
     spec = importlib.util.spec_from_file_location("module.name", file_path)
     function_module = importlib.util.module_from_spec(spec)
-    #TODO: check this below line - ERROR:  attempted relative import beyond top-level package
-    spec.loader.exec_module(function_module) 
+    # TODO: check this below line - ERROR:  attempted relative import beyond top-level package
+    spec.loader.exec_module(function_module)
     return getattr(function_module, function_name, None)  # Returns None if the function does not exist
+
 
 def load_config_from_file(file_path):
     spec = importlib.util.spec_from_file_location("module.name", file_path)
@@ -57,7 +63,6 @@ def load_functions_from_file(file_path, function_names):
             return None, func
     return functions, ""
 
-from pathlib import Path
 
 def file_exists(file_path):
     """
@@ -68,6 +73,7 @@ def file_exists(file_path):
     """
     return Path(file_path).exists()
 
+
 # And specifically for files
 def is_file(file_path):
     """
@@ -77,6 +83,7 @@ def is_file(file_path):
     :return: Boolean, True if it's a file, False otherwise.
     """
     return Path(file_path).is_file()
+
 
 def is_python_file(file_path):
     """
@@ -94,54 +101,29 @@ def is_python_file(file_path):
     return path.is_file() and path.suffix == '.py'
 
 
-def load_and_access_script(relative_path, script_name):
-    """
-    Load a Python script dynamically at runtime and access its functions and variables.
-    
-    Args:
-        relative_path (str): The relative path to the directory containing the script.
-        script_name (str): The name of the script to load.
-        
-    Returns:
-        module: The loaded module.
-    """
-    # Construct the absolute path to the scrip
-    # abs_path = r'E:\Academic Works\7 Sem Academic\FYP\Blockchain-On-Chain-Extendible-Framework\src\utils\handler\blockchains\extract\d3976d76-e9f4-49a2-b311-4d29b4bed400.py'
-
-
-    # # Check if the script is already loaded
-    # if script_name in sys.modules:
-    #     module = sys.modules[script_name]
-    # else:
-    #     # Load the module dynamically
-    #     spec = importlib.util.spec_from_file_location(script_name, abs_path)
-    #     module = importlib.util.module_from_spec(spec)
-    #     spec.loader.exec_module(module)
-
-    return extract_ava
-
 def validate_metadata(blockchain_metadata):
     required_keys = ['name', 'description', 'subChains']
     subchain_required_keys = ['name', 'startDate', 'description', 'extract_file', 'mapper_file']
-    
+
     # Check the presence of top-level required keys
     if not isinstance(blockchain_metadata, dict) or not all(key in blockchain_metadata for key in required_keys):
         return False, "Invalid format. Required keys: ['name', 'description', 'subChains']"
-    
+
     # Validate each subchain
     for subchain in blockchain_metadata['subChains']:
         # Check the presence of all required subchain keys
         if not all(key in subchain for key in subchain_required_keys):
             missing_keys = [key for key in subchain_required_keys if key not in subchain]
             return False, f"Missing keys in subchain object. Required keys: {missing_keys}"
-        
+
         # Validate the 'startDate' format
         try:
             datetime.strptime(subchain['startDate'], "%Y-%m-%d")
         except ValueError:
             return False, f"Invalid startDate format for subchain {subchain['name']}. Use YYYY-MM-DD."
-        
+
     return True, "Metadata is valid."
+
 
 def validate_extraction_file(relative_path_from_project_root, test_input):
     """
@@ -158,13 +140,11 @@ def validate_extraction_file(relative_path_from_project_root, test_input):
 
     if not file_exists(relative_path_from_project_root):
         return False, "The 'extract' file is not exist.", output, None
-    
+
     if not is_python_file(relative_path_from_project_root):
         return False, "The 'extract' file is not a python script.", output, None
-    
-    extract_func = get_function(relative_path_from_project_root, 'extract')
 
-    print('done')
+    extract_func = get_function(relative_path_from_project_root, 'extract')
 
     if extract_func is None:
         return False, "The 'extract' file is not containing the 'extract' function.", output, None
@@ -176,12 +156,12 @@ def validate_extraction_file(relative_path_from_project_root, test_input):
         # Check if output is a tuple (or list) of exactly three elements
         if not isinstance(output, (list, tuple)) or len(output) != 3:
             return False, "Invalid output structure. Expected a tuple or list of three elements.", None, None
-        
+
         # Validate each element in the output
         for element in output:
             if not isinstance(element, (list, tuple)) or not all(isinstance(item, dict) for item in element):
                 return False, "Invalid output structure. Each element must be a list or tuple of dictionaries.", None, None
-            
+
     except Exception as e:
         return False, f"Error executing the 'extract' function: {e}", None, None
 
@@ -189,22 +169,21 @@ def validate_extraction_file(relative_path_from_project_root, test_input):
 
 
 def validate_mapper_file(relative_path_from_project_root):
-
     # file_path = os.path.join(os.getcwd(), relative_path_from_project_root, file_name+'.py')
 
     mapper_funcs_str = []
-    
+
     if not file_exists(relative_path_from_project_root):
-        return False, "The 'mapper' file is not exist.",  None, []
-    
+        return False, "The 'mapper' file is not exist.", None, []
+
     if not is_python_file(relative_path_from_project_root):
-        return False, "The 'mapper' file is not a python script.",  None, []
-    
+        return False, "The 'mapper' file is not a python script.", None, []
+
     mapper_config = load_config_from_file(relative_path_from_project_root)
 
     if mapper_config is None:
-        return False, "No 'config' found in the mapper module.",  None, []
-    
+        return False, "No 'config' found in the mapper module.", None, []
+
     if not isinstance(model, dict):
         raise TypeError("model is expected to be a dictionary.")
 
@@ -220,17 +199,16 @@ def validate_mapper_file(relative_path_from_project_root):
             config_field = mapper_config[category].get(field)
             if not config_field:
                 return False, f"Configuration for '{field}' in '{category}' is not defined.", None, []
-            
-            if len(config_field)<2:
+
+            if len(config_field) < 2:
                 return False, f"Configuration for '{field}' in '{category}' is not correct.", None, []
-            
+
             if config_field[1] == "function":
-                if len(config_field)<3:
+                if len(config_field) < 3:
                     return False, f"Configuration for '{field}' in '{category}' is not correct.", None, []
-                
+
                 mapper_funcs_str.append(config_field[2])
 
-    
     mapper_funcs, msg = load_functions_from_file(relative_path_from_project_root, mapper_funcs_str)
 
     if mapper_funcs is None:
@@ -250,75 +228,143 @@ def validate_mapping_with_functions(mapper_config, extracted_data, functions):
     :return: Boolean indicating whether the mapping is valid, and an error message if not.
     """
     for category, mappings in mapper_config.items():
-        test_data = None
 
-        if category=='':
+        formatted_all_data = {
+            'transaction': [],
+            'emitted': [],
+            'consumed': []
+        }
+
+        if category == 'trx_mapping':
             data = extracted_data[0]
             if data:
-                test_data = data[0]
+                test_data = data[:3]
+            else:
+                continue
 
-        elif category=='':
-            data = extracted_data[0]
+        elif category == 'emit_utxo_mapping':
+            data = extracted_data[1]
             if data:
-                test_data = data[0]
+                test_data = data[:3]
+            else:
+                continue
 
-        elif category=='':
-            data = extracted_data[0]
+        elif category == 'consume_utxo_mapping':
+            data = extracted_data[2]
             if data:
-                test_data = data[0]
-        
+                test_data = data[:3]
+            else:
+                continue
+
         else:
             return False, f"Invalid category in mapper config"
 
-        for field, mapping_details in mappings.items():
-            if field not in test_data:
-                return False, f"Field '{field}' not present in sample data."
+        format_data_lst = []
+        for test in test_data:
+            format_data = {}
+            for field, mapping_details in mappings.items():
+                # TODO: if field is an function then field is not exist is okay
+                mapping_field = mapping_details[0]
+                mapping_type = mapping_details[1]
+                if (mapping_field not in test) and mapping_type == "feature":
+                    return False, f"Field '{field}' not present in sample data."
 
-            mapping_type = mapping_details[1]
-            if mapping_type == "function":
-                function_name = mapping_details[2]
-                if function_name not in functions:
-                    return False, f"Function '{function_name}' required for mapping '{field}' is not loaded."
+                if mapping_type == "feature":
+                    format_data[field] = test[mapping_field]
 
-                # Attempt to apply the function to the field value from the sample data
-                try:
-                    # Here, we assume the functions take the field value and return a processed value
-                    _ = functions[function_name](test_data[field])
-                except Exception as e:
-                    return False, f"Error applying function '{function_name}' to field '{field}': {e}"
+                elif mapping_type == "function":
+                    function_name = mapping_details[2]
+                    if function_name not in functions:
+                        return False, f"Function '{function_name}' required for mapping '{field}' is not loaded."
 
+                    # Attempt to apply the function to the field value from the sample data
+                    try:
+                        # Here, we assume the functions take the field value and return a processed value
+                        result = functions[function_name](test)
+
+                        format_data[field] = result
+
+                    except Exception as e:
+                        return False, f"Error applying function '{function_name}' to field '{field}': {e}"
+
+            format_data_lst.append(format_data)
+
+        if category == 'trx_mapping':
+            formatted_all_data['transaction'] = pd.DataFrame(format_data_lst)
+
+        elif category == 'emit_utxo_mapping':
+            formatted_all_data['emitted'] = pd.DataFrame(format_data_lst)
+
+        elif category == 'consume_utxo_mapping':
+            formatted_all_data['consumed'] = pd.DataFrame(format_data_lst)
 
     # If all fields are processed without errors
-    return True, "Mapping validation passed."
+    return True, "Mapping validation passed.", formatted_all_data
 
+
+def load_metrics(script_path):
+    """
+    Load metric classes from a script and validate them using test data.
+
+    :param script_path: Path to the Python script containing metric definitions.
+    :return: A dictionary of metric class objects keyed by their 'chain' attribute.
+    """
+    # Load the script as a module
+    module_name = os.path.splitext(os.path.basename(script_path))[0]
+    spec = importlib.util.spec_from_file_location(module_name, script_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    metric_classes = {}
+    for attribute_name in dir(module):
+        attribute = getattr(module, attribute_name)
+        if isinstance(attribute, type) and issubclass(attribute, BaseMetric) and attribute is not BaseMetric:
+            # Instantiate the class
+            metric_instance = attribute()
+
+            metric_classes[metric_instance.chain] = attribute
+
+    return metric_classes
+
+
+def validate_metrics(metric_classes, test_data):
+    for chain, metric_class in metric_classes.items():
+        metric_obj = metric_class()
+        chain_test_data = test_data[chain]
+        type_ = metric_obj.transaction_type
+        data = chain_test_data[type_]
+        try:
+            _ = metric_obj.calculate(data)
+        except Exception as e:
+            return False
+
+    return True
 
 
 def validate_extract_and_mapper(extraction_path, mapper_path, start_date):
-
     final_validation = False
 
     test_input = start_date
-    
-    extract_validation_passed, extract_validation_message, extract_output, extract_func = validate_extraction_file( extraction_path, test_input)
-    print(extract_validation_message)
-    
+
+    extract_validation_passed, extract_validation_message, extract_output, extract_func = validate_extraction_file(
+        extraction_path, test_input)
+
     mapper_validation_passed, mapper_validation_message, mappings, mapper_funcs = validate_mapper_file(mapper_path)
-    print(mapper_validation_message)
 
     if not extract_validation_passed:
         # logger.log_error(extract_validation_message)
-        return False, extract_validation_message, None, None
-    
+        return False, extract_validation_message, None, None, None
+
     if not mapper_validation_passed:
         # logger.log_error(mapper_validation_message)
-        return False, mapper_validation_message, None, None
+        return False, mapper_validation_message, None, None, None
 
     if extract_validation_passed and mapper_validation_passed:
-        final_validation, validation_message = validate_mapping_with_functions(mappings, extract_output, mapper_funcs)
-    
+        final_validation, validation_message, formatted_test_data = validate_mapping_with_functions(mappings,
+                                                                                                    extract_output,
+                                                                                                    mapper_funcs)
+
     funcs = mapper_funcs
     funcs['extract'] = extract_func
 
-    return final_validation, validation_message, funcs, mappings
-
-
+    return final_validation, validation_message, funcs, mappings, formatted_test_data

@@ -1,7 +1,8 @@
 import psycopg2
-from ..logs import Logger
+from ..logs.log import Logger
 
 logger = Logger("GodSight")
+
 
 def connect_database(config):
     try:
@@ -13,9 +14,9 @@ def connect_database(config):
     except psycopg2.OperationalError as e:
         logger.log_error(f"Database connection failed: {e}")
         raise Exception(e)
-    
-def test_connection(config):
 
+
+def test_connection(config):
     try:
         conn = connect_database(config)
         cur = conn.cursor()
@@ -37,7 +38,8 @@ def test_connection(config):
     except Exception as e:
         logger.log_error(f"Database failed: {e}")
         return None
-    
+
+
 def initialize_database(config):
     try:
         conn = connect_database(config)
@@ -52,7 +54,7 @@ def initialize_database(config):
         with conn.cursor() as cur:
             cur.execute(sql_commands)
             conn.commit()
-        
+
         logger.log_info("Database initialized successfully.")
     except psycopg2.OperationalError as e:
         logger.log_error(f"Database connection failed: {e}")

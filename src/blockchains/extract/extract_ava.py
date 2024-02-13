@@ -1,4 +1,6 @@
-from ...utils import fetch_transactions, convert_to_gmt_timestamp
+from src.utils.handler.time import convert_to_gmt_timestamp
+from src.utils.handler.http import fetch_transactions
+
 
 def extract(date):
     # Convert the date to GMT timestamp and define the end timestamp for one day later
@@ -24,7 +26,8 @@ def extract(date):
 
             # Process each transaction
             for tx in transactions:
-                timestamp, txHash, blockHash, txType = int(tx.get("timestamp")), tx.get('txHash',''), tx.get('blockHash',''), tx.get('txType','')
+                timestamp, txHash, blockHash, txType = int(tx.get("timestamp")), tx.get('txHash', ''), tx.get(
+                    'blockHash', ''), tx.get('txType', '')
 
                 # Break the loop if transaction timestamp is before the start timestamp
                 if timestamp < start_timestamp:
@@ -53,7 +56,6 @@ def extract(date):
                 run = False
 
         return trxs, emitted_utxos, consumed_utxos
-    
+
     except Exception as e:
         raise Exception(e)
-
