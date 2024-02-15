@@ -8,8 +8,9 @@
         "description": "Description of SubChain X",
         "extract_file": "extract_ava",
         "mapper_file": "mapper_ava",
-        "metric_file": "metrics_ava"
+        "metrics": ["trx_per_day", "total_trxs"]
       }
-    ]
-  }
+    ],
+    "metric_file": "metrics_ava"
+}
   

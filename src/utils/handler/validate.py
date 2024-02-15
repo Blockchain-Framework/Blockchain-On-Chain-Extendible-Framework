@@ -5,7 +5,7 @@ import os
 import sys
 import pandas as pd
 from src.utils.model.model import model
-from src.utils.model.metric import BaseMetric
+from src.utils.model.metric import BaseMetric, CustomMetric
 from src.utils.handler.http import fetch_transactions
 from src.utils.handler.time import convert_to_gmt_timestamp
 
@@ -227,13 +227,11 @@ def validate_mapping_with_functions(mapper_config, extracted_data, functions):
     :param functions: A dictionary of loaded functions by name.
     :return: Boolean indicating whether the mapping is valid, and an error message if not.
     """
-    for category, mappings in mapper_config.items():
 
-        formatted_all_data = {
-            'transaction': [],
-            'emitted': [],
-            'consumed': []
-        }
+    formatted_all_data = {
+    }
+
+    for category, mappings in mapper_config.items():
 
         if category == 'trx_mapping':
             data = extracted_data[0]
@@ -302,7 +300,13 @@ def validate_mapping_with_functions(mapper_config, extracted_data, functions):
     return True, "Mapping validation passed.", formatted_all_data
 
 
-def load_metrics(script_path):
+def get_chain_id(lst, chain):
+    for chain_data in lst:
+        if chain_data['subchain'] == chain:
+            return chain_data['id']
+
+
+def load_metrics(script_path, meta_data, metrics):
     """
     Load metric classes from a script and validate them using test data.
 
@@ -315,28 +319,69 @@ def load_metrics(script_path):
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
+    metric_meta = []
+    metric_chain_meta = []
+
+    for chain_data in meta_data:
+        for basic_metric in metrics:
+            metric_chain_meta.append({
+                'blockchain_id': chain_data['id'],
+                'blockchain': chain_data['blockchain'],
+                'sub_chain': chain_data['subchain'],
+                'metric_name': basic_metric
+            })
+
     metric_classes = {}
     for attribute_name in dir(module):
         attribute = getattr(module, attribute_name)
-        if isinstance(attribute, type) and issubclass(attribute, BaseMetric) and attribute is not BaseMetric:
+        if isinstance(attribute, type) and issubclass(attribute, CustomMetric) and attribute is not CustomMetric:
             # Instantiate the class
             metric_instance = attribute()
 
-            metric_classes[metric_instance.chain] = attribute
+            if metric_instance.name == "" or metric_instance.name is None:
+                raise Exception(f"Metric Name cannot be empty.")
 
-    return metric_classes
+            if metric_instance.name in metrics:
+                raise Exception(f"Duplicate metric name: {metric_instance.name}")
+
+            metric_meta.append({
+                'metric_name': metric_instance.name,
+                'description': metric_instance.description,
+                'category': metric_instance.category,
+                'type': 'custom'
+            })
+
+            chain = metric_instance.chain
+
+            chain_id = get_chain_id(meta_data, chain)
+
+            metric_chain_meta.append({
+                'blockchain_id': chain_id,
+                'blockchain': metric_instance.blockchain,
+                'sub_chain': metric_instance.chain,
+                'metric_name': metric_instance.name
+            })
+
+            if chain not in metric_classes:
+                metric_classes[chain] = [attribute]
+            else:
+                metric_classes[chain].append(attribute)
+
+    return metric_classes, metric_meta, metric_chain_meta
 
 
-def validate_metrics(metric_classes, test_data):
-    for chain, metric_class in metric_classes.items():
-        metric_obj = metric_class()
-        chain_test_data = test_data[chain]
-        type_ = metric_obj.transaction_type
-        data = chain_test_data[type_]
-        try:
-            _ = metric_obj.calculate(data)
-        except Exception as e:
-            return False
+def validate_custom_metrics(metric_classes, test_data):
+    for chain, metric_classes in metric_classes.items():
+        for metric_class in metric_classes:
+            metric_obj = metric_class()
+            chain_test_data = test_data[chain]
+            type_ = metric_obj.transaction_type
+            data = chain_test_data[type_]
+            try:
+                _ = metric_obj.calculate(data)
+            except Exception as e:
+                print(e)
+                return False
 
     return True
 

@@ -102,7 +102,10 @@ def concatenate_and_fill_dfs(all_test_data):
     # Aggregate DataFrames by transaction type
     for chain_data in all_test_data.values():
         for type_, df in chain_data.items():
-            type_dfs.setdefault(type_, []).append(df)
+            if type_ in type_dfs:
+                type_dfs[type_].append(df)
+            else:
+                type_dfs[type_] = [df]
 
     # Concatenate and fill missing values for each transaction type
     for type_, dfs in type_dfs.items():

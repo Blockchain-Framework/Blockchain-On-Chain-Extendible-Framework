@@ -21,7 +21,8 @@ def insert_blockchain_metadata(data, config):
             with conn.cursor() as cur:
                 # Example insertion, adjust according to your schema
                 cur.execute(
-                    "INSERT INTO blockchain_table (blockchain, sub_chain, start_date, description) VALUES (%s, %s, %s, %s)",
+                    "INSERT INTO blockchain_table (blockchain, sub_chain, start_date, description) VALUES (%s, %s, "
+                    "%s, %s)",
                     data['blockchain'], data['sub_chain'], data['start_date'], data['description'])
                 conn.commit()
 
@@ -32,7 +33,7 @@ def insert_blockchain_metadata(data, config):
             raise Exception(e)
 
 
-def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, config):
+def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta, metric_chain_meta, config):
     # Connect to the database using a context manager for better resource management
     try:
         with connect_database(config) as conn, conn.cursor() as cur:
@@ -56,6 +57,18 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, config):
                     """
                     cur.executemany(insert_stmt_mapping, entries)
 
+            insert_stmt_metric_meta = """
+                INSERT INTO metric_table (metric_name, description, category, type)
+                VALUES (%(metric_name)s, %(description)s, %(category)s, %(type)s)
+            """
+            cur.executemany(insert_stmt_metric_meta, metric_meta)
+
+            insert_stmt_metric = """
+                INSERT INTO chain_metric (blockchain_id, blockchain, sub_chain, metric_name)
+                VALUES (%(blockchain_id)s, %(blockchain)s, %(sub_chain)s, %(metric_name)s)
+            """
+            cur.executemany(insert_stmt_metric, metric_chain_meta)
+
             conn.commit()
 
     except Exception as e:
@@ -77,14 +90,42 @@ def delete_blockchain_data(blockchain, config):
                 """
                 cur.execute(delete_stmt_mapping_table, (blockchain,))
 
+            delete_stmt_blockchain_metric = """
+                                        DELETE FROM chain_metric
+                                        WHERE blockchain = %s;
+                                    """
+            cur.execute(delete_stmt_blockchain_metric, (blockchain,))
+
             delete_stmt_blockchain = """
                 DELETE FROM blockchain_table
                 WHERE blockchain = %s;
             """
             cur.execute(delete_stmt_blockchain, (blockchain,))
 
+            delete_stmt_metrics = """
+                            DELETE FROM metric_table;
+                        """
+            cur.execute(delete_stmt_metrics)
+
             conn.commit()
     except Exception as e:
         logger.log_error(f"Failed to delete data: {e}")
         conn.rollback()
         raise
+
+
+def get_all_metrics(config):
+    metrics_list = []
+    try:
+        with connect_database(config) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT DISTINCT metric_name FROM metric_table")
+                # Fetch all results
+                metrics = cur.fetchall()
+                # Extract metric names from the query result and add to the list
+                metrics_list = [metric[0] for metric in metrics]
+    except Exception as e:
+        logger.log_error(f"Failed to fetch metrics: {e}")
+        raise Exception(f"Failed to fetch metrics: {e}")
+    return metrics_list
+

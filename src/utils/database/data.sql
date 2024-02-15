@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS blockchain_table (
 CREATE TABLE IF NOT EXISTS metric_table (
     metric_name VARCHAR(255) PRIMARY KEY,
     description TEXT,
+    category VARCHAR(255),
+    type VARCHAR(255),
 	create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -21,7 +23,6 @@ CREATE TABLE IF NOT EXISTS chain_metric (
     blockchain VARCHAR(255) NOT NULL,
     sub_chain VARCHAR(255) NOT NULL,
     metric_name VARCHAR(255),
-    category VARCHAR(255),
     FOREIGN KEY (blockchain_id, blockchain, sub_chain) REFERENCES blockchain_table(id, blockchain, sub_chain),
     FOREIGN KEY (metric_name) REFERENCES metric_table(metric_name),
     PRIMARY KEY (blockchain_id, metric_name),
@@ -62,6 +63,16 @@ CREATE TABLE IF NOT EXISTS consumed_utxos_feature_mappings (
     info VARCHAR(255), -- Function name or NULL
     PRIMARY KEY (id, blockchain, sub_chain, sourceField)
 );
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM metric_table) THEN
+        INSERT INTO metric_table (metric_name, description, category, type) VALUES
+        ('trx_per_day', 'Total number of transactions processed in a day', 'Chain Throughput and Efficiency', 'basic'),
+        ('total_trxs', 'Cumulative number of transactions processed', 'Network Health and Activity', 'basic');
+    END IF;
+END $$;
+
 
 
 
