@@ -153,7 +153,7 @@ def add_blockchain(file_name):
 
         insert_blockchain_metadata_and_mappings(meta_data, mapper_data, metric_meta, metric_chain_meta, config)
 
-        output_file_path = 'src/extraction/user_functions'
+        output_file_path = 'extraction/user_functions'
 
 
         extract_imports = [
@@ -172,7 +172,7 @@ def add_blockchain(file_name):
             "from ...utils.model.metric import CustomMetric"
         ]
 
-        output_file_path = 'src/metric calculation/metrics/custom'
+        output_file_path = 'metric calculation/metrics/custom'
         output_file = os.path.join(output_file_path, metadata['name'] + '.py')
 
         if extract_and_write_class_definitions(metric_path, output_file, metric_imports):

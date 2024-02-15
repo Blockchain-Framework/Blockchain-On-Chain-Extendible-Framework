@@ -4,10 +4,10 @@ import importlib.util
 import os
 import sys
 import pandas as pd
-from src.utils.model.model import model
-from src.utils.model.metric import BaseMetric, CustomMetric
-from src.utils.handler.http import fetch_transactions
-from src.utils.handler.time import convert_to_gmt_timestamp
+from utils.model.model import model
+from utils.model.metric import BaseMetric, CustomMetric
+from utils.handler.http import fetch_transactions
+from utils.handler.time import convert_to_gmt_timestamp
 
 from ..logs.log import Logger
 

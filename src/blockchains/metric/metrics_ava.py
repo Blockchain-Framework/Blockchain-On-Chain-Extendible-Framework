@@ -1,5 +1,5 @@
 
-from src.utils.model.metric import CustomMetric
+from utils.model.metric import CustomMetric
 import pandas as pd
 
 
