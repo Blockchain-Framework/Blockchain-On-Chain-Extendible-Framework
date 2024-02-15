@@ -1,5 +1,5 @@
-from ..utils.scripts.utils.http_utils import fetch_transactions
-from ..utils.scripts.utils.time_utils import convert_to_gmt_timestamp
+from utils.scripts.utils.http_utils import fetch_transactions
+from utils.scripts.utils.time_utils import convert_to_gmt_timestamp
 
 def calculate_amount_unlocked(transaction):
     amountUnlocked = transaction.get('amountUnlocked', [])

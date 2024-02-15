@@ -152,7 +152,7 @@ def add_blockchain(file_name):
             return
 
         insert_blockchain_metadata_and_mappings(meta_data, mapper_data, metric_meta, metric_chain_meta, config)
-
+        
         output_file_path = 'extraction/user_functions'
 
 

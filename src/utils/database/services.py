@@ -101,7 +101,7 @@ def delete_blockchain_data(blockchain, config):
                 WHERE blockchain = %s;
             """
             cur.execute(delete_stmt_blockchain, (blockchain,))
-
+            
             delete_stmt_metrics = """
                             DELETE FROM metric_table;
                         """

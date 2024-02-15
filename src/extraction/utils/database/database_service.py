@@ -25,7 +25,7 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
     
     try:
         # Create the database engine
-        engine = create_engine(os.environ.get("DATABASE_CONNECTION"))
+        engine = create_engine(r"postgresql://postgres:12345@localhost:5432/onchain3")
 
         # Create an inspector
         insp = Inspector.from_engine(engine)
@@ -57,7 +57,7 @@ def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNEC
     """
     try:
         # Create the database engine
-        engine = create_engine(os.environ.get("DATABASE_CONNECTION"))
+        engine = create_engine(r"postgresql://postgres:12345@localhost:5432/onchain3")
         # Execute the query and fetch the results
         with engine.connect() as connection:
             results = pd.read_sql_query(query, connection)
@@ -73,7 +73,7 @@ def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNEC
    
 def batch_insert_dataframes(dfs_to_insert, database_connection=os.environ.get("DATABASE_CONNECTION")):
     print(os.environ.get("DATABASE_CONNECTION"))
-    engine = create_engine("postgresql://postgres:12345@localhost:5432/onchain")
+    engine = create_engine("postgresql://postgres:12345@localhost:5432/onchain3")
     
     # Start a single transaction
     with engine.begin() as connection:

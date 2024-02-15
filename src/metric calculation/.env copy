@@ -1,2 +1,2 @@
-DATABASE_CONNECTION=postgresql://postgres:12345@localhost:5432/onchain
+DATABASE_CONNECTION=postgresql://postgres:12345@localhost:5432/onchain3
 

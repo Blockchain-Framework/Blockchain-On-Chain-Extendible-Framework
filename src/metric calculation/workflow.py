@@ -58,40 +58,79 @@ class MetricCalculationWorkflowManager:
     def metric_workflow(self, date, blockchain, subchain, metrics):
         try:
             self.logger.info(f"Computing metrics for {blockchain} subchain {subchain}...")
-            #TODO : pathe need to add env
-            module_path = r"src/metric calculation/utils/scripts/metric_computation_service.py"
-            function_map = self.map_functions(module_path)
+            # Assuming the environment variable or some config holds the paths
+            custom_metric_script_path = r"src/metric calculation/utils/scripts/custom_metric_computation.py"
+            base_metric_script_path = r"src/metric calculation/utils/scripts/base_metric_computation.py"
             
+            # Retrieve the necessary data for custom metric calculations
+            trx = get_transactions(blockchain, subchain)
+            emit_utxo = get_emitted_utxos(blockchain, subchain)
+            consume_utxo = get_consumed_utxos(blockchain, subchain)
+            
+            # Load metric classes for the specified chain
+            custom_metric_blueprints, base_metric_blueprints = load_metrics(custom_metric_script_path, base_metric_script_path, subchain)
+
             metric_results = []
-            for metric in metrics:
-                if metric in function_map:
-                    metric_value = function_map[metric](blockchain, subchain, date)
-                    self.logger.info(f"Calculated {metric} for {blockchain} subchain {subchain}: {metric_value}")
+
+            # Process CustomMetric instances
+            for blueprint in custom_metric_blueprints:
+                metric_instance = blueprint()
+                if metric_instance.name in metrics:
+                    # Determine the correct data to pass based on transaction_type
+                    if metric_instance.transaction_type == "transaction":
+                        data = trx
+                    elif metric_instance.transaction_type == "emitted_utxo":
+                        data = emit_utxo
+                    elif metric_instance.transaction_type == "consumed_utxo":
+                        data = consume_utxo
+                    else:
+                        self.logger.warning(f"Unknown transaction type for metric: {metric_instance.name}")
+                        continue
+                    
+                    # Calculate the metric
+                    metric_value = metric_instance.calculate(data)  # Pass the correct data
+                    self.logger.info(f"Calculated {metric_instance.name} for {blockchain} subchain {subchain}: {metric_value}")
+                    
                     # Collect each metric result
                     metric_results.append({
                         'date': date,
                         'blockchain': blockchain,
                         'subchain': subchain,
-                        'metric': metric,
+                        'metric': metric_instance.name,
                         'value': metric_value
                     })
-                else:
-                    self.logger.warning(f"No function mapped for metric: {metric}")
-                    
-            # Convert collected metric results into a DataFrame
-            metrics_df = pd.DataFrame(metric_results)
-            # Insert each metric result into its respective table
-            if not metrics_df.empty:
+
+            # Process BaseMetric instances separately if needed
+            for blueprint in base_metric_blueprints:
+                metric_instance = blueprint()
+                if metric_instance.name in metrics:
+                    # For BaseMetric, adjust calculation call as needed
+                    metric_value = metric_instance.calculate(blockchain, subchain, date)  # Example signature
+                    self.logger.info(f"Calculated {metric_instance.name} for {blockchain} subchain {subchain}: {metric_value}")
+
+                    # Collect each metric result
+                    metric_results.append({
+                        'date': date,
+                        'blockchain': blockchain,
+                        'subchain': subchain,
+                        'metric': metric_instance.name,
+                        'value': metric_value
+                    })
+
+            # Convert collected metric results into a DataFrame and proceed as before
+            if metric_results:
+                metrics_df = pd.DataFrame(metric_results)
                 dfs_to_insert = insert_metric_results(metrics_df)
                 batch_insert_dataframes(dfs_to_insert)
                 self.logger.info("Metric values successfully inserted into their respective tables in a single transaction.")
-            
+
             self.logger.info("Workflow completed successfully.")
-            
+
         except Exception as e:
             self.logger.error(f"An error occurred during the workflow for {blockchain} subchain {subchain}: {e}")
             raise
-            
+
+                
     def run_workflow(self, date=None):
         blockchains = self.get_blockchains()
         print("bolockchain",blockchains)
@@ -128,7 +167,6 @@ def insert_metric_results(metrics_df):
 
 if __name__ == "__main__":
     #TODO: need to check all metric tables exits
-    get_metrics(self, blockchain, subchain)
     
     dates = ["2024-01-20","2024-01-22","2024-01-23","2024-01-24","2024-01-25","2024-01-26"]
     # date = "2024-01-21"

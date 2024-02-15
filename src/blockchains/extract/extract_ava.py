@@ -43,7 +43,7 @@ def extract(date):
                         {**e_utxo, 'txHash': txHash, 'blockHash': blockHash, 'txType': txType}
                         for e_utxo in tx.get('emittedUtxos', [])
                     ]
-
+        
                     # Process and append consumed UTXOs
                     consumed_utxos += [
                         {**c_utxo, 'txHash': txHash, 'blockHash': blockHash, 'txType': txType}

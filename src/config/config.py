@@ -1,7 +1,6 @@
 from dotenv import load_dotenv
 import os
 
-
 class Config:
     def __init__(self):
         dotenv_path = os.path.join(os.path.dirname(__file__), '.env')

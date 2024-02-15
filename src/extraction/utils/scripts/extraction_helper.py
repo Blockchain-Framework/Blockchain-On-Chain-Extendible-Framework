@@ -30,9 +30,9 @@ def dataframe_to_mapping_dict(df):
     mapping_dict = {}
     for _, row in df.iterrows():
         if row['type'] == 'feature':
-            mapping_dict[row['source_field']] = (row['target_field'], 'feature')
+            mapping_dict[row['sourcefield']] = (row['targetfield'], 'feature')
         elif row['type'] == 'function':
-            mapping_dict[row['source_field']] = (row['target_field'], 'function', row['info'])
+            mapping_dict[row['sourcefield']] = (row['targetfield'], 'function', row['info'])
     return mapping_dict
 
 def extract_function_names(df):
@@ -60,20 +60,20 @@ def load_functions_from_file(file_path, function_names):
 def get_transaction_mappings(blockchain, subchain):
     query = text(f"""
     SELECT * FROM transactions_feature_mappings
-    WHERE blockchain = '{blockchain}' AND subchain = '{subchain}';
+    WHERE blockchain = '{blockchain}' AND sub_chain = '{subchain}';
     """)
     return get_query_results(query)
 
 def get_emitted_utxo_mappings(blockchain, subchain):
     query = text(f"""
     SELECT * FROM emitted_utxos_feature_mappings
-    WHERE blockchain = '{blockchain}' AND subchain = '{subchain}';
+    WHERE blockchain = '{blockchain}' AND sub_chain = '{subchain}';
     """)
     return get_query_results(query)
 
 def get_consumed_utxo_mappings(blockchain, subchain):
     query = text(f"""
     SELECT * FROM consumed_utxos_feature_mappings
-    WHERE blockchain = '{blockchain}' AND subchain = '{subchain}';
+    WHERE blockchain = '{blockchain}' AND sub_chain = '{subchain}';
     """)
     return get_query_results(query)

@@ -36,6 +36,7 @@ def extract_and_store_data(blockchain, subchain, date, id):
     emitted_utxo_mappings_df = get_emitted_utxo_mappings(blockchain, subchain)
     consumed_utxo_mappings_df = get_consumed_utxo_mappings(blockchain, subchain)
     
+    print(transaction_mappings_df)
     # Convert DataFrames to mapping dictionaries
     transaction_feature_mapping = dataframe_to_mapping_dict(transaction_mappings_df)
     emit_utxo_mapping = dataframe_to_mapping_dict(emitted_utxo_mappings_df)
@@ -46,7 +47,7 @@ def extract_and_store_data(blockchain, subchain, date, id):
                                   extract_function_names(emitted_utxo_mappings_df) + 
                                   extract_function_names(consumed_utxo_mappings_df)))
     
-    functions_file_path = f'user_functions/functions/{id}.py'
+    functions_file_path = f'src/extraction/user_functions/{id}.py'
     functions = load_functions_from_file(functions_file_path, all_function_names)
     
     # Prepare config for data mapper
@@ -89,12 +90,12 @@ def add_blockchain_configuration(blockchain, sub_chain, start_date):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
         return 
-    
+
 if __name__ == "__main__":
     blockchain = "Avalanche"
     sub_chain = "x"
     start_date = "2024-02-06"  # Example start date
-    date_range = ["2024-02-07"] 
+    date_range = ["2024-02-14"] 
     
     # Optionally add blockchain configuration to blockchain_table
     # id = add_blockchain_configuration(blockchain, sub_chain, start_date)
@@ -102,6 +103,6 @@ if __name__ == "__main__":
     # Optionally store new configuration to the database (uncomment if needed)
     # store_configuration(blockchain, sub_chain, 'd3976d76-e9f4-49a2-b311-4d29b4bed400')
 
-    # # Extract and store data for each day in the date range
+    # Extract and store data for each day in the date range
     for day in date_range:
-        extract_and_store_data(blockchain, sub_chain, day, 'd3976d76-e9f4-49a2-b311-4d29b4bed400')
+        extract_and_store_data(blockchain, sub_chain, day, '7dd13be3-c489-48eb-8826-7ad9119ba65a')

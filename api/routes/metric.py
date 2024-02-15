@@ -40,10 +40,6 @@ def get_paginated_data(model, query):
     return query.paginate(page=page, per_page=page_size, error_out=False)
 
 def handle_metric_route():
-<<<<<<< HEAD
-=======
-    print("ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg")
->>>>>>> feature/dual-workflow
     """
     Handle the route logic, including validation, querying, and response formatting.
     """
@@ -52,13 +48,7 @@ def handle_metric_route():
         subchain = request.args.get('subChain')
         metric = request.args.get('metric')
         time_range = request.args.get('timeRange')
-<<<<<<< HEAD
    
-=======
-        
-        print(blockchain,subchain,metric,time_range)
-        
->>>>>>> feature/dual-workflow
         model = metric_route_map[metric]
         
         if blockchain is None or subchain is None or metric is None or time_range is None:
@@ -72,23 +62,12 @@ def handle_metric_route():
             raise ValueError("Invalid time range.")
         
         query = model.query
-<<<<<<< HEAD
         query = query.filter(model.date.between(start_date, end_date))
         # Add additional filters based on the new parameters
         query = query.filter_by(blockchain=blockchain, subchain=subchain)
         paginated_query = get_paginated_data(model, query)
         items = paginated_query.items
 
-=======
-        # query = query.filter(model.date.between(start_date, end_date))
-        
-        # Add additional filters based on the new parameters
-        query = query.filter_by(blockchain=blockchain, subchain=subchain)
-        print(query)
-        paginated_query = get_paginated_data(model, query)
-        items = paginated_query.items
-        print(items)
->>>>>>> feature/dual-workflow
         response = Response(True, [item.serialize() for item in items], len(items))
         return jsonify(response.to_dict()), 200
 
