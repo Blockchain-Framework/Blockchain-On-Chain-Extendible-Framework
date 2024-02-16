@@ -12,7 +12,8 @@ from GodSight.utils.handler.filerWriter import write_functions_to_file, write_me
     extract_and_write_class_definitions
 from GodSight.utils.handler.helper import format_config_for_insertion, copy_file, delete_files_in_directory, \
     concatenate_and_fill_dfs
-from GodSight.utils.handler.validate import validate_metadata, validate_extract_and_mapper, load_metrics, validate_custom_metrics
+from GodSight.utils.handler.validate import validate_metadata, validate_extract_and_mapper, load_metrics, \
+    validate_custom_metrics
 from GodSight.utils.logs.log import Logger
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -176,6 +177,18 @@ def display_info():
     # Add more information about your tool here
 
 
+def print_logo():
+    logo = """       
+   ____           _ ____  _       _     _   
+  / ___| ___   __| / ___|(_) __ _| |__ | |_ 
+ | |  _ / _ \ / _` \___ \| |/ _` | '_ \| __|
+ | |_| | (_) | (_| |___) | | (_| | | | | |_ 
+  \____|\___/ \__,_|____/|_|\__, |_| |_|\__|
+                            |___/           
+    """
+    print(logo)
+
+
 def main():
     # Main parser
     parser = argparse.ArgumentParser(description="GodSight Framework CLI")
@@ -193,6 +206,8 @@ def main():
     parser_info = subparsers.add_parser('info', help='Display information about GodSight')
 
     args = parser.parse_args()
+
+    print_logo()
 
     if args.command == 'add-blockchain':
         add_blockchain(args.file_path)

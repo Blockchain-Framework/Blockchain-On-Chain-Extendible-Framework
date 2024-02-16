@@ -24,7 +24,7 @@ def _post_install():
         print("Replace '/path/to/GodSight' with the actual path to your GodSight installation directory.")
         print("Then, source your profile or restart your terminal session to apply the changes.")
     else:
-        print("Please manually set the GODSIGHT_HOME environment variable.")
+        print("Your operating system is not recognized. Please manually set the GODSIGHT_HOME environment variable.")
 
 
 class PostInstallCommand(install):
@@ -61,7 +61,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-        'GodSight=GodSight.main:main',
+            'GodSight=GodSight.main:main',  # Ensure this points to the correct module and callable
         ],
     },
     cmdclass={
