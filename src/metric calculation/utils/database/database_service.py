@@ -87,3 +87,16 @@ def batch_insert_dataframes(dfs_to_insert, database_connection=os.environ.get("D
             except Exception as e:
                 print(f"An unexpected error occurred during batch insertion into {table_name}: {e}")
                 raise  # Raising an error to trigger the transaction rollback
+
+
+def get_transactions(blockchain, subchain, date):
+    query = f"SELECT * FROM {subchain}_transactions WHERE date = '{date}'"
+    return get_query_results(query)
+
+def get_emitted_utxos(blockchain, subchain,date):
+    query = f"SELECT * FROM {subchain}_emitted_utxos WHERE date = '{date}'"
+    return get_query_results(query)
+
+def get_consumed_utxos(blockchain, subchain):
+    query = f"SELECT * FROM {subchain}_consumed_utxos WHERE date = '{date}'"
+    return get_query_results(query)

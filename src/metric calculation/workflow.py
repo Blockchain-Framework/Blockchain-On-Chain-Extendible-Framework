@@ -8,8 +8,9 @@ import pandas as pd
 import importlib.util
 
 
-from utils.database.database_service import get_query_results, append_dataframe_to_sql, batch_insert_dataframes
+from utils.database.database_service import get_query_results, append_dataframe_to_sql, batch_insert_dataframes , get_transactions, get_emitted_utxos, get_consumed_utxos
 from utils.scripts.utils import log_workflow_status
+from utils.scripts.metric_calculate_helper import load_metrics
 
 load_dotenv()
 
@@ -129,7 +130,7 @@ class MetricCalculationWorkflowManager:
         except Exception as e:
             self.logger.error(f"An error occurred during the workflow for {blockchain} subchain {subchain}: {e}")
             raise
-
+                
                 
     def run_workflow(self, date=None):
         blockchains = self.get_blockchains()
