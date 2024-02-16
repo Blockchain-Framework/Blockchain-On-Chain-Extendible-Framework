@@ -178,15 +178,17 @@ def display_info():
 
 
 def print_logo():
-    logo = """       
+    green_color = '\033[92m'  # ANSI escape sequence for green
+    reset_color = '\033[0m'
+    logo = """
    ____           _ ____  _       _     _   
   / ___| ___   __| / ___|(_) __ _| |__ | |_ 
  | |  _ / _ \ / _` \___ \| |/ _` | '_ \| __|
  | |_| | (_) | (_| |___) | | (_| | | | | |_ 
   \____|\___/ \__,_|____/|_|\__, |_| |_|\__|
-                            |___/           
+                            |___/                           
     """
-    print(logo)
+    print(f"{green_color}{logo}{reset_color}")
 
 
 def main():
