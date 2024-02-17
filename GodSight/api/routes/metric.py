@@ -1,7 +1,7 @@
 from flask import Blueprint, request, current_app
-from utils.get_metric_model import metric_route_map
-from models.response import Response # Import the custom Response
-from utils.json_utils import jsonify  # Import the custom jsonify
+from ..utils.get_metric_model import metric_route_map
+from ..models.response import Response # Import the custom Response
+from ..utils.json_utils import jsonify  # Import the custom jsonify
 from datetime import datetime, timedelta
 from sqlalchemy.exc import SQLAlchemyError
 import logging
@@ -40,6 +40,7 @@ def get_paginated_data(model, query):
     return query.paginate(page=page, per_page=page_size, error_out=False)
 
 def handle_metric_route():
+    print("ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg")
     """
     Handle the route logic, including validation, querying, and response formatting.
     """
@@ -48,7 +49,9 @@ def handle_metric_route():
         subchain = request.args.get('subChain')
         metric = request.args.get('metric')
         time_range = request.args.get('timeRange')
-   
+        
+        print(blockchain,subchain,metric,time_range)
+        
         model = metric_route_map[metric]
         
         if blockchain is None or subchain is None or metric is None or time_range is None:
@@ -62,12 +65,14 @@ def handle_metric_route():
             raise ValueError("Invalid time range.")
         
         query = model.query
-        query = query.filter(model.date.between(start_date, end_date))
+        # query = query.filter(model.date.between(start_date, end_date))
+        
         # Add additional filters based on the new parameters
         query = query.filter_by(blockchain=blockchain, subchain=subchain)
+        print(query)
         paginated_query = get_paginated_data(model, query)
         items = paginated_query.items
-
+        print(items)
         response = Response(True, [item.serialize() for item in items], len(items))
         return jsonify(response.to_dict()), 200
 

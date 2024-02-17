@@ -3,17 +3,6 @@ import sys
 import os
 import uuid
 from GodSight.config.config import Config
-from GodSight.utils.database.db import test_connection, initialize_database
-from GodSight.utils.database.services import check_blockchain_exists, insert_blockchain_metadata_and_mappings, \
-    delete_blockchain_data, get_all_metrics
-
-from GodSight.utils.handler.fileReader import read_blockchain_metadata
-from GodSight.utils.handler.filerWriter import write_functions_to_file, write_metric_classes_to_script, \
-    extract_and_write_class_definitions
-from GodSight.utils.handler.helper import format_config_for_insertion, copy_file, delete_files_in_directory, \
-    concatenate_and_fill_dfs
-from GodSight.utils.handler.validate import validate_metadata, validate_extract_and_mapper, load_metrics, \
-    validate_custom_metrics
 from GodSight.utils.logs.log import Logger
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -22,7 +11,32 @@ sys.path.append(current_dir)
 logger = Logger("GodSight")
 
 
+def start_api():
+    from GodSight.api.app import create_app
+
+    logger.log_info("Starting the GodSight API server...")
+
+    config = Config()
+
+    app = create_app(config)
+    app.run(host=config.api_host, port=config.api_port,
+            debug=app.config.get('DEBUG', True))
+
+
 def add_blockchain(file_name):
+
+    from GodSight.utils.database.db import test_connection, initialize_database
+    from GodSight.utils.database.services import check_blockchain_exists, insert_blockchain_metadata_and_mappings, \
+        delete_blockchain_data, get_all_metrics
+
+    from GodSight.utils.handler.fileReader import read_blockchain_metadata
+    from GodSight.utils.handler.filerWriter import write_functions_to_file, write_metric_classes_to_script, \
+        extract_and_write_class_definitions
+    from GodSight.utils.handler.helper import format_config_for_insertion, copy_file, delete_files_in_directory, \
+        concatenate_and_fill_dfs
+    from GodSight.utils.handler.validate import validate_metadata, validate_extract_and_mapper, load_metrics, \
+        validate_custom_metrics
+
     blockchain_name = None
 
     try:
@@ -50,6 +64,8 @@ def add_blockchain(file_name):
             return
 
         metrics = get_all_metrics(config)
+
+        logger.log_info(f"Checking Blockchain {metadata['name']} data files....")
 
         meta_data = []
         chains = []
@@ -194,11 +210,11 @@ def print_logo():
 def main():
     # Main parser
     parser = argparse.ArgumentParser(description="GodSight Framework CLI")
-    parser.add_argument('--version', action='version', version='GodSight 1.0.0',
-                        help="Show the version number and exit")
+    parser.add_argument('--version', action='version', version='GodSight 1.0.0', help="Show the version number and exit")
 
     # Subparsers for commands
     subparsers = parser.add_subparsers(dest='command', help='sub-command help')
+    subparsers.required = True  # Makes sure at least one sub-command is provided
 
     # Sub-command: add-blockchain
     parser_add = subparsers.add_parser('add-blockchain', help='Add a blockchain file')
@@ -207,17 +223,28 @@ def main():
     # Sub-command: info
     parser_info = subparsers.add_parser('info', help='Display information about GodSight')
 
+    # Sub-command: start
+    parser_start = subparsers.add_parser('start', help='Start a specific service')
+    parser_start.add_argument('service', help='The service to start (e.g., "api")')
+
     args = parser.parse_args()
 
     print_logo()
 
     if args.command == 'add-blockchain':
         add_blockchain(args.file_path)
+    elif args.command == 'start':
+        if args.service == 'api':
+            start_api()
+        else:
+            print(f"Service '{args.service}' is not recognized.")
+            sys.exit(1)
     elif args.command == 'info':
         display_info()
-    elif not vars(args):  # No arguments provided
-        parser.print_help()
     else:
+        # This block might be unnecessary because argparse will handle unknown commands
+        # and display the help message automatically.
+        parser.print_help()
         sys.exit(1)
 
 

@@ -58,6 +58,9 @@ setup(
         'pytz~=2024.1',
         'astor~=0.8.1',
         'setuptools~=68.2.0',
+        'Flask==3.0.1',
+        'Flask-Cors==4.0.0',
+        'Flask-SQLAlchemy==3.1.1',
     ],
     entry_points={
         'console_scripts': [

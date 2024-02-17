@@ -17,6 +17,9 @@ class Config:
         self.meta_path = os.getenv('META_PATH')
         self.metric_path = os.getenv('METRIC_PATH')
 
+        self.api_host = os.getenv('API_HOST')
+        self.api_port = os.getenv('API_PORT')
+
         self.env_path = dotenv_path
 
     def __str__(self):
