@@ -1,4 +1,4 @@
-from utils.database.database_service import append_dataframe_to_sql
+from ...utils.database.database_service import append_dataframe_to_sql
 import pandas as pd
 from datetime import datetime
 

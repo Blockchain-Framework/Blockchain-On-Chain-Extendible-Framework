@@ -24,5 +24,5 @@ def test_connection(connection_string):
         print(f"Error: {e}")
 
 if __name__ == "__main__":
-    db_connection_string = "postgresql://postgres:root@localhost:5432/onchain3"
+    db_connection_string = "postgresql://postgres:root@localhost:5432/onchain"
     test_connection(db_connection_string)

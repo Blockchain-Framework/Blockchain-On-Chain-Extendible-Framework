@@ -24,7 +24,6 @@ def start_api():
 
 
 def add_blockchain(file_name):
-
     from GodSight.utils.database.db import test_connection, initialize_database
     from GodSight.utils.database.services import check_blockchain_exists, insert_blockchain_metadata_and_mappings, \
         delete_blockchain_data, get_all_metrics
@@ -188,6 +187,22 @@ def add_blockchain(file_name):
         logger.log_error(e)
 
 
+def extract_date(date):
+    return
+
+
+def extract_date_range(start_date, end_date):
+    return
+
+
+def compute_date(date):
+    return
+
+
+def compute_date_range(start_date, end_date):
+    return
+
+
 def display_info():
     print("GodSight Framework - A tool for blockchain data management.")
     # Add more information about your tool here
@@ -208,13 +223,11 @@ def print_logo():
 
 
 def main():
-    # Main parser
     parser = argparse.ArgumentParser(description="GodSight Framework CLI")
-    parser.add_argument('--version', action='version', version='GodSight 1.0.0', help="Show the version number and exit")
-
-    # Subparsers for commands
+    parser.add_argument('--version', action='version', version='GodSight 1.0.0',
+                        help="Show the version number and exit")
     subparsers = parser.add_subparsers(dest='command', help='sub-command help')
-    subparsers.required = True  # Makes sure at least one sub-command is provided
+    subparsers.required = True
 
     # Sub-command: add-blockchain
     parser_add = subparsers.add_parser('add-blockchain', help='Add a blockchain file')
@@ -226,6 +239,16 @@ def main():
     # Sub-command: start
     parser_start = subparsers.add_parser('start', help='Start a specific service')
     parser_start.add_argument('service', help='The service to start (e.g., "api")')
+
+    # Sub-command: extract
+    parser_extract = subparsers.add_parser('extract', help='Extract data for a specific date or date range')
+    parser_extract.add_argument('dates', nargs='+',
+                                help='Date or date range for extraction (YYYY/MM/DD [start_date end_date])')
+
+    # Sub-command: compute
+    parser_compute = subparsers.add_parser('compute', help='Compute data for a specific date or date range')
+    parser_compute.add_argument('dates', nargs='+',
+                                help='Date or date range for computation (YYYY/MM/DD [start_date end_date])')
 
     args = parser.parse_args()
 
@@ -241,9 +264,23 @@ def main():
             sys.exit(1)
     elif args.command == 'info':
         display_info()
+    elif args.command == 'extract':
+        if len(args.dates) == 1:
+            extract_date(args.dates[0])
+        elif len(args.dates) == 2:
+            extract_date_range(args.dates[0], args.dates[1])
+        else:
+            print("Invalid number of dates provided for extraction.")
+            sys.exit(1)
+    elif args.command == 'compute':
+        if len(args.dates) == 1:
+            compute_date(args.dates[0])
+        elif len(args.dates) == 2:
+            compute_date_range(args.dates[0], args.dates[1])
+        else:
+            print("Invalid number of dates provided for computation.")
+            sys.exit(1)
     else:
-        # This block might be unnecessary because argparse will handle unknown commands
-        # and display the help message automatically.
         parser.print_help()
         sys.exit(1)
 

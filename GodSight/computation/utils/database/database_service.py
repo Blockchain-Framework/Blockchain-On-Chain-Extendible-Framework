@@ -6,10 +6,25 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy import create_engine, exc
 
+from ...config import Config
+
+config = Config()
+
+def execute_query(query):
+    """
+    Execute a database query safely.
+    Returns a DataFrame or None if an exception occurs.
+    """
+    try:
+        return get_query_results(query)
+    except Exception as error:
+        raise
+    
 def convert_dict_to_json(x):
     if isinstance(x, dict) or (isinstance(x, list) and all(isinstance(elem, dict) for elem in x)):
         return json.dumps(x)
     return x
+
 
 def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get("DATABASE_CONNECTION")):
     """
@@ -24,7 +39,7 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
     
     try:
         # Create the database engine
-        engine = create_engine(os.environ.get("DATABASE_CONNECTION"))
+        engine = create_engine(config.db_connection)
 
         # Create an inspector
         insp = Inspector.from_engine(engine)
@@ -55,7 +70,7 @@ def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNEC
     """
     try:
         # Create the database engine
-        engine = create_engine(os.environ.get("DATABASE_CONNECTION"))
+        engine = create_engine(config.db_connection)
         # Execute the query and fetch the results
         with engine.connect() as connection:
             results = pd.read_sql_query(query, connection)
@@ -97,6 +112,24 @@ def get_emitted_utxos(blockchain, subchain,date):
     query = f"SELECT * FROM {subchain}_emitted_utxos WHERE date = '{date}'"
     return get_query_results(query)
 
-def get_consumed_utxos(blockchain, subchain):
+def get_consumed_utxos(blockchain, subchain, date):
     query = f"SELECT * FROM {subchain}_consumed_utxos WHERE date = '{date}'"
+    return get_query_results(query)
+
+def get_blockchains():
+    query = "SELECT DISTINCT blockchain FROM blockchain_table;"
+    return get_query_results(query)
+
+def get_subchains(blockchain):
+    query =f"SELECT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain != 'default'"
+    return get_query_results(query)
+
+def get_metrics(blockchain, subchain):
+    query = f"""
+    SELECT m.metric_name 
+    FROM metric_table m 
+    JOIN chain_metric cm ON m.metric_name = cm.metric_name 
+    JOIN blockchain_table b ON cm.blockchain_id = b.id 
+    WHERE b.blockchain = '{blockchain}' AND b.sub_chain = '{subchain}';
+    """
     return get_query_results(query)
