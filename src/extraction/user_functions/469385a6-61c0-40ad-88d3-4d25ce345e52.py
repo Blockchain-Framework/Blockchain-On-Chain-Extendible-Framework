@@ -1,5 +1,5 @@
-from utils.scripts.utils.http_utils import fetch_transactions
-from utils.scripts.utils.time_utils import convert_to_gmt_timestamp
+from ..utils.scripts.utils.http_utils import fetch_transactions
+from ..utils.scripts.utils.time_utils import convert_to_gmt_timestamp
 
 def calculate_amount_unlocked(transaction):
     amountUnlocked = transaction.get('amountUnlocked', [])
@@ -70,6 +70,7 @@ def getAmount(utxo):
 
 def extract(date):
     # Convert the date to GMT timestamp and define the end timestamp for one day later
+
     try:
         start_timestamp = convert_to_gmt_timestamp(date)
         end_timestamp = start_timestamp + 86400  # 24 hours later
@@ -93,7 +94,7 @@ def extract(date):
             for tx in transactions:
                 timestamp, txHash, blockHash, txType = int(tx.get("timestamp")), tx.get('txHash', ''), tx.get(
                     'blockHash', ''), tx.get('txType', '')
-            
+
                 # Break the loop if transaction timestamp is before the start timestamp
                 if timestamp < start_timestamp:
                     run = False
@@ -108,7 +109,7 @@ def extract(date):
                         {**e_utxo, 'txHash': txHash, 'blockHash': blockHash, 'txType': txType}
                         for e_utxo in tx.get('emittedUtxos', [])
                     ]
-
+        
                     # Process and append consumed UTXOs
                     consumed_utxos += [
                         {**c_utxo, 'txHash': txHash, 'blockHash': blockHash, 'txType': txType}

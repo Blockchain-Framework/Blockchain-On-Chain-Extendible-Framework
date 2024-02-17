@@ -5,11 +5,7 @@ import os
 
 from database import db
 from routes.metric import metrics_blueprint
-<<<<<<< HEAD
-
-=======
 from routes.init import init_blueprint
->>>>>>> feature/dual-workflow
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -24,10 +20,7 @@ def create_app():
     
     # Initialize the SQLAlchemy instance with the app
     db.init_app(app)
-
+    
     app.register_blueprint(metrics_blueprint, url_prefix='/metrics')
-<<<<<<< HEAD
-=======
     app.register_blueprint(init_blueprint, url_prefix='/init')
->>>>>>> feature/dual-workflow
     return app

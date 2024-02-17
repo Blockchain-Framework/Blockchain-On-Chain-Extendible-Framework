@@ -2,9 +2,7 @@ import pandas as pd
 
 
 class BaseMetric:
-    def __init__(self, blockchain, chain, name, transaction_type, category, description):
-        self.blockchain = blockchain
-        self.chain = chain
+    def __init__(self, name, category, description):
         self.name = name
         self.category = category
         self.description = description
