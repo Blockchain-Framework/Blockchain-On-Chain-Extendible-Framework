@@ -29,7 +29,7 @@ from GodSight.extraction.utils.scripts.mapper_helper import load_config_from_fil
 
 
 def extract_and_store_data(blockchain, subchain, date, id, config):
-    logger.log_info(f"Transaction extraction strats for {blockchain} {subchain} date:{date}")
+    logger.log_info(f"Transaction extraction starts for {blockchain} {subchain} date:{date}")
 
     # Extract feature mappings from the database
     transaction_mappings_df = get_transaction_mappings(blockchain, subchain, config)

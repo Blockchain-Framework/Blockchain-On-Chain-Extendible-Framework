@@ -1,5 +1,5 @@
 
-from utils.model.metric import CustomMetric
+from GodSight.utils.model.metric import CustomMetric
 import pandas as pd
 
 

@@ -26,4 +26,9 @@ def create_app(config=None):
 
     app.register_blueprint(metrics_blueprint, url_prefix='/metrics')
     app.register_blueprint(init_blueprint, url_prefix='/init')
+
+    @app.route('/')
+    def welcome():
+        return 'Welcome GodSight'
+
     return app

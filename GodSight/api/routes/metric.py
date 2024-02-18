@@ -40,7 +40,6 @@ def get_paginated_data(model, query):
     return query.paginate(page=page, per_page=page_size, error_out=False)
 
 def handle_metric_route():
-    print("ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg")
     """
     Handle the route logic, including validation, querying, and response formatting.
     """

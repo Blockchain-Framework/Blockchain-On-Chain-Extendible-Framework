@@ -1,5 +1,5 @@
-from utils.handler.time import convert_to_gmt_timestamp
-from utils.handler.http import fetch_transactions
+from GodSight.utils.handler.time import convert_to_gmt_timestamp
+from GodSight.utils.handler.http import fetch_transactions
 
 
 def extract(date):

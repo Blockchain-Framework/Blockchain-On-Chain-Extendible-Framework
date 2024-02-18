@@ -217,6 +217,59 @@ def validate_mapper_file(relative_path_from_project_root):
     return True, "Mapper validation passed.", mapper_config, mapper_funcs
 
 
+# def validate_mapper_file(relative_path_from_project_root):
+#
+#     mapper_funcs_str = []
+#
+#     model_mapping = {
+#         'trx_mapping': GeneralTransactionModel,
+#         'emit_utxo_mapping': GeneralUTXOModel,
+#         'consume_utxo_mapping': GeneralUTXOModel,
+#     }
+#
+#     if not file_exists(relative_path_from_project_root):
+#         return False, "The 'mapper' file is not exist.", None, []
+#
+#     if not is_python_file(relative_path_from_project_root):
+#         return False, "The 'mapper' file is not a python script.", None, []
+#
+#     mapper_config = load_config_from_file(relative_path_from_project_root)
+#
+#     if mapper_config is None:
+#         return False, "No 'config' found in the mapper module.", None, []
+#
+#     if not isinstance(mapper_config, dict):
+#         raise TypeError("model is expected to be a dictionary.")
+#
+#     for mapping_name, model_class in model_mapping.items():
+#         mapping = mapper_config.get(mapping_name)
+#         if not mapping:
+#             return False, f"Mapping {mapping_name} not found in config.", None, []
+#
+#         for field, details in mapping.items():
+#
+#             if len(details) < 2:
+#                 return False, f"Configuration for '{field}' in '{mapping_name}' is not correct.", None, []
+#
+#             model_field_name = details[0]
+#
+#             if not hasattr(model_class, model_field_name):
+#                 raise AttributeError(
+#                     f"Field {model_field_name} in mapping {mapping_name} does not exist in {model_class.__name__}.")
+#
+#             if details[1] == "function":
+#                 if len(details) < 3:
+#                     return False, f"Configuration for '{field}' in '{mapping_name}' is not correct.", None, []
+#                 mapper_funcs_str.append(details[2])
+#
+#     mapper_funcs, msg = load_functions_from_file(relative_path_from_project_root, mapper_funcs_str)
+#
+#     if mapper_funcs is None:
+#         return False, f"'{msg}' is not a function in mapper file.", None, []
+#
+#     return True, "Mapper validation passed.", mapper_config, mapper_funcs
+
+
 def validate_mapping_with_functions(mapper_config, extracted_data, functions):
     """
     Validates that the extracted data can be correctly mapped using the mapper config
