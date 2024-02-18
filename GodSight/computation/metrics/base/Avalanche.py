@@ -48,7 +48,11 @@ class TotalTransactions(BaseMetric):
         if not subchain:
             return None
 
-        query = f"SELECT COUNT(*) FROM {subchain}_transactions"
+        query = f"""
+        SELECT SUM(CAST(amount AS NUMERIC)) as count
+        FROM {subchain}_consumed_utxos
+        WHERE date = '{date}'
+        """
         results = execute_query(query)
         
         if results is not None and not results.empty:
@@ -124,9 +128,9 @@ class TotalBlocks(BaseMetric):
             return results.iloc[0]['count']
         return None    
     
-class AverageTransactionPerBlock(BaseMetric):
+class TransactionPerBlock(BaseMetric):
     def __init__(self):
-        super().__init__(name = 'avg_tx_per_block', category = "'Economic Indicators'", description = 'Description')
+        super().__init__(name = 'trx_per_block', category = "'Economic Indicators'", description = 'Description')
           
     def calculate(self, blockchain: str, subchain: str, date: str) -> float:
         if not subchain or not date:
@@ -193,7 +197,212 @@ class ActiveSenders(BaseMetric):
         else:
             return 0
 
+# class CummulativeNumberOfTransactions(BaseMetric):
+#     def __init__(self):
+#         super().__init__(name = 'cumulative_number_of_trx', category = "'Economic Indicators'", description = 'Description')
+            
+#     def calculate(self, blockchain: str, subchain: str, date: str) -> float:
+#         if not subchain or not date:
+#             return None
 
+#         query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date <= '{date}'"
+#         results = execute_query(query)
+        
+#         if results is not None and not results.empty:
+#             cumulative_trx_count = results.iloc[0]['count']
+#             return cumulative_trx_count
+#         else:
+#             return 0
+
+class SumEmittedUtxoAmount(BaseMetric):
+    def __init__(self):
+        super().__init__(name = 'active_senders', category = "'Economic Indicators'", description = 'Description')
+            
+    def calculate(self, blockchain: str, subchain: str, date: str) -> float:
+        if not subchain or not date:
+            return None
+
+        query = f"SELECT SUM(CAST(amount AS NUMERIC)) FROM {subchain}_emitted_utxos WHERE date = '{date}'"
+        results = execute_query(query)
+        
+        if results is not None and not results.empty:
+            emitted_utxo_sum = results.iloc[0]['sum']
+            return emitted_utxo_sum
+        else:
+            return None
+        
+class AverageEmittedUtxoAmount(BaseMetric):
+    def __init__(self):
+        super().__init__(name = 'avg_emmited_utxo_amount', category = "'Economic Indicators'", description = 'Description')
+            
+    def calculate(self, blockchain: str, subchain: str, date: str) -> float:
+        if not subchain or not date:
+            return None
+
+        query = f"SELECT AVG(CAST(amount AS NUMERIC)) FROM {subchain}_emitted_utxos WHERE date = '{date}'"
+        results = execute_query(query)
+        
+        if results is not None and not results.empty:
+            avg_utxo_amount = results.iloc[0]['avg']
+            return avg_utxo_amount
+        else:
+            return None
+class MedianEmittedUtxoAmount(BaseMetric):
+    def __init__(self):
+        super().__init__(name = 'active_senders', category = "'Economic Indicators'", description = 'Description')
+            
+    def calculate(self, blockchain: str, subchain: str, date: str) -> float:
+        if not subchain or not date:
+            return None
+
+        query = f"""
+        SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(amount AS NUMERIC)) 
+        FROM {subchain}_emitted_utxos 
+        WHERE date = '{date}'
+        """
+        results = execute_query(query)
+        
+        if results is not None and not results.empty:
+            median_utxo_amount = results.iloc[0]['percentile_cont']
+            return median_utxo_amount
+        else:
+            return None
+class SumConsumedUtxoAmount(BaseMetric):
+    def __init__(self):
+        super().__init__(name = 'sum_consumed_utxo_amount', category = "'Economic Indicators'", description = 'Description')
+            
+    def calculate(self, blockchain: str, subchain: str, date: str) -> float:
+        if not subchain or not date:
+            return None
+
+        # Assuming 'consumed_table' refers to a table where UTXOs are consumed in the subchain transactions
+        query = f"SELECT SUM(CAST(amount AS NUMERIC)) FROM {subchain}_consumed_utxos WHERE date = '{date}'"
+        results = execute_query(query)
+        
+        if results is not None and not results.empty:
+            consumed_utxo_sum = results.iloc[0]['sum']
+            return consumed_utxo_sum
+        else:
+            return None
+class AverageConsumedUtxoAmount(BaseMetric):
+    def __init__(self):
+        super().__init__(name = 'avg_consumed_utxo_amount', category = "'Economic Indicators'", description = 'Description')
+            
+    def calculate(self, blockchain: str, subchain: str, date: str) -> float:
+        if not subchain or not date:
+            return None
+
+        # Assuming 'table' refers to a table that tracks consumed UTXOs in the subchain transactions
+        query = f"SELECT AVG(CAST(amount AS NUMERIC)) FROM {subchain}_consumed_utxos WHERE date = '{date}'"
+        results = execute_query(query)
+        
+        if results is not None and not results.empty:
+            avg_consumed_utxo = results.iloc[0]['avg']
+            return avg_consumed_utxo
+        else:
+            return None
+
+class MedianConsumedUtxoAmount(BaseMetric):
+    def __init__(self):
+        super().__init__(name = 'median_consumed_utxo_amount', category = "'Economic Indicators'", description = 'Description')
+            
+    def calculate(self, blockchain: str, subchain: str, date: str) -> float:
+        if not subchain or not date:
+            return None
+
+        # Assuming 'table' refers to a table that tracks consumed UTXOs in the subchain transactions
+        query = f"""
+        SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(amount AS NUMERIC)) 
+        FROM {subchain}_consumed_utxos 
+        WHERE date = '{date}'
+        """
+        results = execute_query(query)
+        
+        if results is not None and not results.empty:
+            median_consumed_utxo = results.iloc[0]['percentile_cont']
+            return median_consumed_utxo
+        else:
+            return None
+class LargeTransactions(BaseMetric):
+    def __init__(self):
+        super().__init__(name = 'large_trx', category = "'Economic Indicators'", description = 'Description')
+            
+    def calculate(self, blockchain: str, subchain: str, date: str) -> float:
+        threshold = 1000000  # Threshold for a large transaction
+
+        if not subchain or not date or threshold is None:
+            return None
+
+        # Assuming that emitted_table and consumed_table are both part of the same subchain transactions
+        query = f"""
+        WITH emitted AS (
+            SELECT \"txHash\", SUM(CAST(amount AS NUMERIC)) as total_emitted
+            FROM {subchain}_emitted_utxos
+            WHERE date = '{date}'
+            GROUP BY \"txHash\"
+            HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
+        ),
+        consumed AS (
+            SELECT \"txHash\", SUM(CAST(amount AS NUMERIC)) as total_consumed
+            FROM {subchain}_consumed_utxos
+            WHERE date = '{date}'
+            GROUP BY \"txHash\"
+            HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
+        )
+        SELECT COUNT(DISTINCT \"txHash\") as large_transactions_count
+        FROM (
+            SELECT \"txHash\" FROM emitted
+            UNION
+            SELECT \"txHash\" FROM consumed
+        ) as combined
+        """
+        results = execute_query(query)
+        
+        if results is not None and not results.empty:
+            large_trx_count = results.iloc[0]['large_transactions_count']
+            return large_trx_count
+        else:
+            return None
+class WhaleAddreessActivity(BaseMetric):
+    def __init__(self):
+        super().__init__(name = 'whale_address_activity', category = "'Economic Indicators'", description = 'Description')
+            
+    def calculate(self, blockchain: str, subchain: str, date: str) -> float:
+        threshold = 8000000000000  # Threshold for whale transactions
+    
+        if not subchain or not date or threshold is None:
+            return None
+
+        # Assuming that emitted_table and consumed_table are both part of the same subchain transactions
+        query = f"""
+        WITH whale_emitted AS (
+            SELECT \"txHash\"
+            FROM {subchain}_emitted_utxos
+            WHERE date = '{date}'
+            GROUP BY \"txHash\"
+            HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
+        ),
+        whale_consumed AS (
+            SELECT \"txHash\"
+            FROM {subchain}_consumed_utxos
+            WHERE date = '{date}'
+            GROUP BY \"txHash\"
+            HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
+        )
+        SELECT COUNT(DISTINCT \"txHash\") as whale_transactions_count
+        FROM (
+            SELECT \"txHash\" FROM whale_emitted
+            UNION
+            SELECT \"txHash\" FROM whale_consumed
+        ) as combined_whale_transactions
+        """
+        results = execute_query(query)
+        
+        if results is not None and not results.empty:
+            whale_trx_count = results.iloc[0]['whale_transactions_count']
+            return whale_trx_count
+        else:
+            return None
 
 if __name__ == "__main__":
     active_senders = ActiveSenders('Avalanche', 'x', 'active_senders', 'transaction', 'Economic Indicators', 'Description')

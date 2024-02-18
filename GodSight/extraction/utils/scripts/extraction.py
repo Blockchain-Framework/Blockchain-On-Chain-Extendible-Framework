@@ -3,11 +3,11 @@ import os
 import sys
 # sys.path.insert(0, r"D:\Academics\FYP\Repos new\Blockchain-On-Chain-Extendible-Framework\src\extraction")
 
-from utils.scripts.utils.http_utils import fetch_transactions
+from GodSight.extraction.utils.scripts.utils.http_utils import fetch_transactions
 
-from utils.scripts.utils.time_utils import convert_to_gmt_timestamp
-from utils.scripts.mappers import data_mapper
-from extraction.utils.scripts.extraction_helper import store_data
+from GodSight.extraction.utils.scripts.utils.time_utils import convert_to_gmt_timestamp
+from GodSight.extraction.utils.scripts.mappers import data_mapper
+from GodSight.extraction.utils.scripts.extraction_helper import store_data
 
 import pandas as pd
 

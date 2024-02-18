@@ -1,5 +1,5 @@
-from src.extraction.utils.scripts.utils.http_utils import fetch_transactions
-from src.extraction.utils.scripts.utils.time_utils import convert_to_gmt_timestamp
+from GodSight.extraction.utils.scripts.utils.time_utils import convert_to_gmt_timestamp
+from GodSight.extraction.utils.scripts.utils.http_utils import fetch_transactions
 
 def calculate_amount_unlocked(transaction):
     amountUnlocked = transaction.get('amountUnlocked', [])
@@ -109,7 +109,7 @@ def extract(date):
                         {**e_utxo, 'txHash': txHash, 'blockHash': blockHash, 'txType': txType}
                         for e_utxo in tx.get('emittedUtxos', [])
                     ]
-
+        
                     # Process and append consumed UTXOs
                     consumed_utxos += [
                         {**c_utxo, 'txHash': txHash, 'blockHash': blockHash, 'txType': txType}

@@ -4,7 +4,7 @@ import sys
 import logging
 import os
 
-from ...utils.database.database_service import get_query_results, append_dataframe_to_sql
+from GodSight.computation.utils.database.database_service import get_query_results, append_dataframe_to_sql
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO)

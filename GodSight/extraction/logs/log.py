@@ -1,6 +1,7 @@
 import logging
 from datetime import datetime
 
+
 class Logger:
     def __init__(self, framework_name):
         self.framework_name = framework_name

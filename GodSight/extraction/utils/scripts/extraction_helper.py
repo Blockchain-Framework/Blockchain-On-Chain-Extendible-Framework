@@ -1,30 +1,32 @@
-from utils.database.database_service import batch_insert_dataframes, get_query_results
+import psycopg2
+from GodSight.extraction.utils.database.database_service import batch_insert_dataframes, get_query_results
+from GodSight.extraction.utils.database.services import delete_existing_records
 import pandas as pd
 import importlib.util
 from sqlalchemy import text
 
-def store_data(chain, current_date, trxs, emitted_utxos, consumed_utxos):
-    # TODO: Store the data in the database as a batch transaction
+def store_data(chain, current_date, trxs, emitted_utxos, consumed_utxos, config):
+    # remove already available records from 3 tables which have given date 
+    delete_existing_records(chain, current_date, config)
+    
     if trxs:
         df_trx = pd.DataFrame(trxs)
         df_trx['date'] = pd.to_datetime(current_date)
-        df_trx._table_name = f'{chain}_transactions1'
-        # append_dataframe_to_sql(f'{chain}_transactions', df_trx)
+        df_trx._table_name = f'{chain}_transactions'
 
     if emitted_utxos:
         df_emitted_utxos = pd.DataFrame(emitted_utxos)
         df_emitted_utxos['date'] = pd.to_datetime(current_date)
-        df_emitted_utxos._table_name = f'{chain}_emitted_utxos1'
-        # append_dataframe_to_sql(f'{chain}_emitted_utxos', df_emitted_utxos)
+        df_emitted_utxos._table_name = f'{chain}_emitted_utxos'
 
     if consumed_utxos:
         df_consumed_utxos = pd.DataFrame(consumed_utxos)
         df_consumed_utxos['date'] = pd.to_datetime(current_date)
-        df_consumed_utxos._table_name = f'{chain}_consumed_utxos1'
-        # append_dataframe_to_sql(f'{chain}_consumed_utxos', df_consumed_utxos)
+        df_consumed_utxos._table_name = f'{chain}_consumed_utxos'
     
-    batch_insert_dataframes([df_trx,df_emitted_utxos,df_consumed_utxos])
-
+    
+    batch_insert_dataframes([df_trx,df_emitted_utxos,df_consumed_utxos], config)
+    
 
 def dataframe_to_mapping_dict(df):
     mapping_dict = {}
@@ -42,7 +44,6 @@ def extract_function_names(df):
     function_names = functions_df['info'].tolist()
     return function_names
 
-
 def get_function(file_path, function_name):
     spec = importlib.util.spec_from_file_location("module.name", file_path)
     function_module = importlib.util.module_from_spec(spec)
@@ -57,23 +58,23 @@ def load_functions_from_file(file_path, function_names):
             functions[name] = func
     return functions
 
-def get_transaction_mappings(blockchain, subchain):
+def get_transaction_mappings(blockchain, subchain, config):
     query = text(f"""
     SELECT * FROM transactions_feature_mappings
     WHERE blockchain = '{blockchain}' AND sub_chain = '{subchain}';
     """)
-    return get_query_results(query)
+    return get_query_results(query, config)
 
-def get_emitted_utxo_mappings(blockchain, subchain):
+def get_emitted_utxo_mappings(blockchain, subchain, config):
     query = text(f"""
     SELECT * FROM emitted_utxos_feature_mappings
     WHERE blockchain = '{blockchain}' AND sub_chain = '{subchain}';
     """)
-    return get_query_results(query)
+    return get_query_results(query, config)
 
-def get_consumed_utxo_mappings(blockchain, subchain):
+def get_consumed_utxo_mappings(blockchain, subchain, config):
     query = text(f"""
     SELECT * FROM consumed_utxos_feature_mappings
     WHERE blockchain = '{blockchain}' AND sub_chain = '{subchain}';
     """)
-    return get_query_results(query)
+    return get_query_results(query, config)

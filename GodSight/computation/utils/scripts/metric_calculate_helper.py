@@ -2,7 +2,7 @@ import importlib.util
 import os
 import pandas as pd
 
-from ...utils.model.metric import BaseMetric, CustomMetric
+from GodSight.computation.utils.model.metric import BaseMetric, CustomMetric
 
 def load_metrics(custom_metric_script_path, base_metric_script_path, target_chain):
     """

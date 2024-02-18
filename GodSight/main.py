@@ -24,21 +24,22 @@ def start_api():
 
 
 def add_blockchain(file_name):
-    from GodSight.utils.database.db import test_connection, initialize_database
-    from GodSight.utils.database.services import check_blockchain_exists, insert_blockchain_metadata_and_mappings, \
-        delete_blockchain_data, get_all_metrics
-
-    from GodSight.utils.handler.fileReader import read_blockchain_metadata
-    from GodSight.utils.handler.filerWriter import write_functions_to_file, write_metric_classes_to_script, \
-        extract_and_write_class_definitions
-    from GodSight.utils.handler.helper import format_config_for_insertion, copy_file, delete_files_in_directory, \
-        concatenate_and_fill_dfs
-    from GodSight.utils.handler.validate import validate_metadata, validate_extract_and_mapper, load_metrics, \
-        validate_custom_metrics
 
     blockchain_name = None
 
     try:
+
+        from GodSight.utils.database.db import test_connection, initialize_database
+        from GodSight.utils.database.services import check_blockchain_exists, insert_blockchain_metadata_and_mappings, \
+            delete_blockchain_data, get_all_metrics
+
+        from GodSight.utils.handler.fileReader import read_blockchain_metadata
+        from GodSight.utils.handler.filerWriter import write_functions_to_file, write_metric_classes_to_script, \
+            extract_and_write_class_definitions
+        from GodSight.utils.handler.helper import format_config_for_insertion, copy_file, delete_files_in_directory, \
+            concatenate_and_fill_dfs
+        from GodSight.utils.handler.validate import validate_metadata, validate_extract_and_mapper, load_metrics, \
+            validate_custom_metrics
 
         config = Config()
 
@@ -188,11 +189,24 @@ def add_blockchain(file_name):
 
 
 def extract_date(date):
-    return
+
+    try:
+        from GodSight.extraction.main import extract_data
+
+        config = Config()
+        extract_data(date, config)
+    except Exception as e:
+        logger.log_error(e)
 
 
 def extract_date_range(start_date, end_date):
-    return
+    try:
+        from GodSight.extraction.main import extract_data_for_date_range
+
+        config = Config()
+        extract_data_for_date_range(start_date, end_date, config)
+    except Exception as e:
+        logger.log_error(e)
 
 
 def compute_date(date):

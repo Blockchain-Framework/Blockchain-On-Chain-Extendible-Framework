@@ -1,42 +1,41 @@
-import pandas as pd
-import uuid
-from utils.database.database_service import get_query_results, append_dataframe_to_sql, batch_insert_dataframes
-from utils.scripts.utils.log_utils import log_workflow_status
+from GodSight.extraction.utils.scripts.utils.log_utils import log_workflow_status
+from .logs.log import Logger
+import os
 
-from dotenv import load_dotenv
+logger = Logger("GodSight")
 
 # Assuming the necessary imports are correctly set up
-from utils.scripts.mappers import data_mapper
-from utils.scripts.extraction_helper import store_data, dataframe_to_mapping_dict, extract_function_names, get_function, load_functions_from_file, get_transaction_mappings, get_emitted_utxo_mappings, get_consumed_utxo_mappings
-from utils.scripts.mapper_helper import load_config_from_file, insert_feature_mapping_to_df
-
-load_dotenv()
+from GodSight.extraction.utils.scripts.mappers import data_mapper
+from GodSight.extraction.utils.scripts.extraction_helper import store_data, dataframe_to_mapping_dict, extract_function_names, get_function, load_functions_from_file, get_transaction_mappings, get_emitted_utxo_mappings, get_consumed_utxo_mappings
+from GodSight.extraction.utils.scripts.mapper_helper import load_config_from_file, insert_feature_mapping_to_df
 
 
-def store_configuration(blockchain, subchain, id):
-    # Load configuration from file
-    config_path = f'user_functions/mappers/{id}.py'
-    config = load_config_from_file(config_path)
+
+# def store_configuration(blockchain, subchain, id):
+#     # Load configuration from file
+#     config_path = f'user_functions/mappers/{id}.py'
+#     config = load_config_from_file(config_path)
     
-    # Insert mappings into the database
-    trx_df = insert_feature_mapping_to_df(blockchain, subchain, config['trx_mapping'])
-    emit_utxo_df = insert_feature_mapping_to_df(blockchain, subchain, config['emit_utxo_mapping'])
-    consume_utxo_df = insert_feature_mapping_to_df(blockchain, subchain, config['consume_utxo_mapping'])
+#     # Insert mappings into the database
+#     trx_df = insert_feature_mapping_to_df(blockchain, subchain, config['trx_mapping'])
+#     emit_utxo_df = insert_feature_mapping_to_df(blockchain, subchain, config['emit_utxo_mapping'])
+#     consume_utxo_df = insert_feature_mapping_to_df(blockchain, subchain, config['consume_utxo_mapping'])
     
-    trx_df._table_name = 'transactions_feature_mappings'
-    emit_utxo_df._table_name  = 'emitted_utxos_feature_mappings'
-    consume_utxo_df._table_name  = 'consumed_utxos_feature_mappings'
+#     trx_df._table_name = 'transactions_feature_mappings'
+#     emit_utxo_df._table_name  = 'emitted_utxos_feature_mappings'
+#     consume_utxo_df._table_name  = 'consumed_utxos_feature_mappings'
     
-    batch_insert_dataframes([trx_df, emit_utxo_df, consume_utxo_df])
+#     batch_insert_dataframes([trx_df, emit_utxo_df, consume_utxo_df])
 
 
-def extract_and_store_data(blockchain, subchain, date, id):
+def extract_and_store_data(blockchain, subchain, date, id, config):
+    logger.log_info(f"Transaction extraction strats for {blockchain} {subchain} date:{date}")
+
     # Extract feature mappings from the database
-    transaction_mappings_df = get_transaction_mappings(blockchain, subchain)
-    emitted_utxo_mappings_df = get_emitted_utxo_mappings(blockchain, subchain)
-    consumed_utxo_mappings_df = get_consumed_utxo_mappings(blockchain, subchain)
+    transaction_mappings_df = get_transaction_mappings(blockchain, subchain, config)
+    emitted_utxo_mappings_df = get_emitted_utxo_mappings(blockchain, subchain, config)
+    consumed_utxo_mappings_df = get_consumed_utxo_mappings(blockchain, subchain, config)
     
-    print(transaction_mappings_df)
     # Convert DataFrames to mapping dictionaries
     transaction_feature_mapping = dataframe_to_mapping_dict(transaction_mappings_df)
     emit_utxo_mapping = dataframe_to_mapping_dict(emitted_utxo_mappings_df)
@@ -47,11 +46,12 @@ def extract_and_store_data(blockchain, subchain, date, id):
                                   extract_function_names(emitted_utxo_mappings_df) + 
                                   extract_function_names(consumed_utxo_mappings_df)))
     
-    functions_file_path = f'src/extraction/user_functions/{id}.py'
+    # functions_file_path = f'user_functions/{id}.py'
+    functions_file_path = os.path.join('GodSight/extraction/user_functions', str(id) + '.py')
     functions = load_functions_from_file(functions_file_path, all_function_names)
     
     # Prepare config for data mapper
-    config = [
+    config_ = [
         transaction_feature_mapping,
         emit_utxo_mapping,
         consume_utxo_mapping,
@@ -62,47 +62,28 @@ def extract_and_store_data(blockchain, subchain, date, id):
     extract = get_function(functions_file_path, 'extract')
     trxs, emitted_utxos, consumed_utxos = extract(date)
     
-    # Map and store data
-    trxs, emitted_utxos, consumed_utxos = data_mapper(config, trxs, emitted_utxos, consumed_utxos)
-    log_workflow_status(blockchain, subchain, 'start', 'extraction', None)
-    try:
-        store_data(sub_chain, date, trxs, emitted_utxos, consumed_utxos)
-    except Exception as e:
-        log_workflow_status(blockchain, subchain, 'fail', 'extraction', str(e))
-    finally:
-        log_workflow_status(blockchain, subchain, 'end', 'extraction', None)
-
-def add_blockchain_configuration(blockchain, sub_chain, start_date):
-    """Insert a new blockchain configuration into the blockchain_table."""        
-    # Generate a unique ID
-    unique_id = str(uuid.uuid4())
+    logger.log_info(f"Transaction extraction finished for {blockchain} {subchain}  date:{date}")
     
-    # Prepare the INSERT statement
-    df = pd.DataFrame({
-        'id': [unique_id],
-        'blockchain': [blockchain],
-        'sub_chain':[sub_chain],
-        'start_date':[start_date]
-    })
+    # Map and store data
+    trxs, emitted_utxos, consumed_utxos = data_mapper(config_, trxs, emitted_utxos, consumed_utxos)
+
+    log_workflow_status(blockchain, subchain, 'start', 'extraction', None, config)
     try:
-        append_dataframe_to_sql('blockchain_table',df)
-        return unique_id
+        logger.log_info(f"Started storing transactions for {blockchain} {subchain} on date: {date}")
+        store_data(subchain, date, trxs, emitted_utxos, consumed_utxos, config)
+        logger.log_info(f"Finished storing transactions for {blockchain} {subchain} on date: {date}")
     except Exception as e:
-        print(f"An unexpected error occurred: {e}")
-        return 
+        logger.log_error(f"An unexpected error occurred while storing transactions: {e}")
+        log_workflow_status(blockchain, subchain, 'fail', 'extraction', str(e), config)
+    finally:
+        log_workflow_status(blockchain, subchain, 'end', 'extraction', None, config)
+
 
 if __name__ == "__main__":
     blockchain = "Avalanche"
     sub_chain = "x"
     start_date = "2024-02-06"  # Example start date
     date_range = ["2024-02-14"] 
-    
-    # Optionally add blockchain configuration to blockchain_table
-    # id = add_blockchain_configuration(blockchain, sub_chain, start_date)
-    
-    # Optionally store new configuration to the database (uncomment if needed)
-    # store_configuration(blockchain, sub_chain, 'd3976d76-e9f4-49a2-b311-4d29b4bed400')
 
-    # Extract and store data for each day in the date range
     for day in date_range:
         extract_and_store_data(blockchain, sub_chain, day, '7dd13be3-c489-48eb-8826-7ad9119ba65a')

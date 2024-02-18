@@ -4,7 +4,7 @@
     "subChains": [
       {
         "name": "x",
-        "startDate": "2024-02-15",
+        "startDate": "2024-02-17",
         "description": "Description of SubChain X",
         "extract_file": "extract_ava",
         "mapper_file": "mapper_ava",
