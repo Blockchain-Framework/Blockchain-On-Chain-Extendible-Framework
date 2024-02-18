@@ -157,8 +157,8 @@ def add_blockchain(file_name):
         output_file_path = 'GodSight/extraction/user_functions'
 
         extract_imports = [
-            "from utils.scripts.utils.time_utils import convert_to_gmt_timestamp",
-            "from utils.scripts.utils.http_utils import fetch_transactions"
+            "from GodSight.extraction.utils.scripts.utils.time_utils import convert_to_gmt_timestamp",
+            "from GodSight.extraction.utils.scripts.utils.http_utils import fetch_transactions"
         ]
 
         if write_functions_to_file(functions, output_file_path, extract_imports):
@@ -169,7 +169,7 @@ def add_blockchain(file_name):
 
         metric_imports = [
             "import pandas as pd",
-            "from utils.model.metric import CustomMetric"
+            "from GodSight.computation.utils.model.metric import CustomMetric"
         ]
 
         output_file_path = 'GodSight/computation/metrics/custom/'
