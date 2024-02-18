@@ -40,7 +40,6 @@ config = {
 }
 
 # Functions
-
 def calculate_amount_unlocked(transaction):
     amountUnlocked = transaction.get('amountUnlocked', [])
     
