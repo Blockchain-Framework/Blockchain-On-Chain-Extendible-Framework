@@ -4,7 +4,6 @@ from utils.handler.http import fetch_transactions
 
 def extract(date):
     # Convert the date to GMT timestamp and define the end timestamp for one day later
-
     try:
         start_timestamp = convert_to_gmt_timestamp(date)
         end_timestamp = start_timestamp + 86400  # 24 hours later
