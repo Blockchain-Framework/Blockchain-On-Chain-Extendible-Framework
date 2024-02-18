@@ -6,11 +6,7 @@ class MetricBase(db.Model):
     date = db.Column(db.DateTime, primary_key=True)
     blockchain = db.Column(db.String, primary_key=True)
     subchain = db.Column(db.String, primary_key=True)
-<<<<<<< HEAD
-    value = db.Column(db.Float)  # Use Float if it's the most common type or adjust as needed
-=======
     value = db.Column(db.Float) 
->>>>>>> feature/dual-workflow
 
     def serialize(self):
         return {
@@ -20,47 +16,6 @@ class MetricBase(db.Model):
             'value': self.value
         }
 
-<<<<<<< HEAD
-class DailyTransactionCount(MetricBase):
-    __tablename__ = 'daily_transaction_count'
-
-class AverageTransactionsPerBlock(MetricBase):
-    __tablename__ = 'average_transactions_per_block'
-
-class TotalStakedAmount(MetricBase):
-    __tablename__ = 'total_staked_amount'
-
-class TotalBurnedAmount(MetricBase):
-    __tablename__ = 'total_burned_amount'
-
-class AverageTransactionValue(MetricBase):
-    __tablename__ = 'average_transaction_value'
-
-class LargeTransactionMonitoring(MetricBase):
-    __tablename__ = 'large_transaction_monitoring'
-    
-
-class CrossChainWhaleActivity(MetricBase):
-    __tablename__ = 'cross_chain_whale_activity'
-    
-class WhaleAddressActivity(MetricBase):
-    __tablename__ = 'whale_address_activity'
-    
-class AvgUtxoValue(MetricBase):
-    __tablename__ = 'avg_utxo_value'
-    
-class MedianTransactionValue(MetricBase):
-    __tablename__ = 'median_trx_value'
-    
-class CumulativeNumberOfTransactions(MetricBase):
-    __tablename__ = 'cumulative_number_of_trx'
-    
-class ActiveAddresses(MetricBase):
-    __tablename__ = 'active_addresses' 
-    
-class TransactionsPerSecond(MetricBase):
-    __tablename__ = 'trx_per_second'
-=======
 class TransactionsPerDay(MetricBase):  
     __tablename__ = 'trx_per_day'
 
@@ -120,4 +75,3 @@ class TotalStakedAmount(MetricBase):
     
 class TotalBurnedAmount(MetricBase): 
     __tablename__ = 'total_burned_amount'
->>>>>>> feature/dual-workflow

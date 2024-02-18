@@ -128,9 +128,9 @@ def insert_metric_results(metrics_df):
 
 if __name__ == "__main__":
     #TODO: need to check all metric tables exits
-    get_metrics(self, blockchain, subchain)
+    # get_metrics(self, blockchain, subchain)
     
-    dates = ["2024-01-20","2024-01-22","2024-01-23","2024-01-24","2024-01-25","2024-01-26"]
+    dates = ["2024-02-12","2024-02-13","2024-02-14","2024-02-15","2024-02-16","2024-02-17"]
     # date = "2024-01-21"
     manager = MetricCalculationWorkflowManager()
     for i in dates:
