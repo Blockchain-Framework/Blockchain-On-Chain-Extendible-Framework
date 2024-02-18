@@ -4,6 +4,7 @@ from ..models.response import Response # Import the custom Response
 from ..utils.json_utils import jsonify  # Import the custom jsonify
 from datetime import datetime, timedelta
 from sqlalchemy.exc import SQLAlchemyError
+from flasgger import swag_from
 import logging
  
 metrics_blueprint = Blueprint('metrics', __name__)
@@ -87,5 +88,76 @@ def handle_metric_route():
 
 # Define individual routes for each metric
 @metrics_blueprint.route('/chart_data')
+@swag_from({
+    'parameters': [
+        {
+            'name': 'blockchain',
+            'in': 'query',
+            'type': 'string',
+            'required': True,
+            'description': 'Blockchain to query metrics for',
+        },
+        {
+            'name': 'subChain',
+            'in': 'query',
+            'type': 'string',
+            'required': True,
+            'description': 'Subchain to query metrics for',
+        },
+        {
+            'name': 'metric',
+            'in': 'query',
+            'type': 'string',
+            'required': True,
+            'description': 'The specific metric to retrieve',
+        },
+        {
+            'name': 'timeRange',
+            'in': 'query',
+            'type': 'string',
+            'required': True,
+            'description': 'The time range for the metric data, e.g., "7_days"',
+        },
+    ],
+    'responses': {
+        200: {
+            'description': 'Successful response with metric data',
+            'schema': {
+                'type': 'object',
+                'properties': {
+                    'success': {
+                        'type': 'boolean',
+                        'example': True,
+                    },
+                    'data': {
+                        'type': 'object',  # Updated to 'object' type
+                        'properties': {}  # Empty properties for dynamic population
+                    },
+                    'count': {
+                        'type': 'integer',
+                        'example': 1,
+                    },
+                },
+            },
+        },
+        400: {
+            'description': 'Invalid parameters',
+        },
+        500: {
+            'description': 'Internal server error',
+        },
+    },
+})
 def get_daily_transaction_count():
-    return handle_metric_route()
+    try:
+        response, status_code = handle_metric_route()
+        data_properties = {}
+        if status_code == 200:
+            data = response.get_json().get('data', [])
+            if data and isinstance(data, list) and isinstance(data[0], dict):
+                # Assume all items have a similar structure as the first item
+                data_properties = {key: {'type': type(value).__name__.lower(), 'example': value} for key, value in data[0].items()}
+                # Update the schema here, but consider this might not be the correct or possible way to dynamically update Swagger schema
+        return response
+    except Exception as e:
+        return jsonify(Response(False, error=f"An unexpected error occurred: {str(e)}").to_dict()), 500
