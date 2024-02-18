@@ -2,8 +2,8 @@ import sys
 from pathlib import Path
 import pandas as pd
 
-from utils.model.metric import BaseMetric
-from utils.database.database_service import execute_query
+from GodSight.computation.utils.model.metric import BaseMetric
+from GodSight.computation.utils.database.database_service import execute_query
 
 class TransactionPerSecond(BaseMetric):
     def __init__(self):

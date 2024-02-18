@@ -10,10 +10,11 @@ import importlib.util
 current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
-from config import Config
-from utils.database.database_service import get_transactions, get_emitted_utxos, get_consumed_utxos, get_blockchains, get_subchains, get_metrics
-from utils.scripts.utils import log_workflow_status
-from utils.scripts.metric_calculate_helper import load_metrics, insert_metric_results
+from .config import Config
+from GodSight.computation.utils.database.database_service import get_transactions, get_emitted_utxos, get_consumed_utxos, get_blockchains, get_subchains, get_metrics
+from GodSight.computation.utils.scripts.utils import log_workflow_status
+from GodSight.computation.utils.scripts.metric_calculate_helper import load_metrics, insert_metric_results
+from GodSight.computation.utils.database.database_service import batch_insert_dataframes
 from logs.log import Logger
 
 load_dotenv()
@@ -23,13 +24,14 @@ logger = Logger("GodSight")
 
 class MetricCalculationWorkflowManager:
 
-    def metric_workflow(self, date, blockchain, subchain, metrics):
+    def metric_workflow(self, date, blockchain, subchain, metrics, config):
         try:
             logger.log_info(f"Computing metrics for {blockchain} subchain {subchain}...")
             # Assuming the environment variable or some config holds the paths
-            custom_metric_script_path = r"metrics\custom\Avalanche.py"
-            base_metric_script_path = r"metrics\base\Avalanche.py"
-            
+            custom_metric_script_path = f"GodSight/computation/metrics/custom/{blockchain}.py"
+            base_metric_script_path = r"GodSight/computation/metrics/base/metrics.py"
+
+
             # Retrieve the necessary data for custom metric calculations
             trx = get_transactions(blockchain, subchain, date)
             emit_utxo = get_emitted_utxos(blockchain, subchain, date)
@@ -91,7 +93,7 @@ class MetricCalculationWorkflowManager:
             if metric_results:
                 metrics_df = pd.DataFrame(metric_results)
                 dfs_to_insert = insert_metric_results(metrics_df)
-                # batch_insert_dataframes(dfs_to_insert)
+                batch_insert_dataframes(dfs_to_insert, config.db_url)
                 logger.log_info("Metric values successfully inserted into their respective tables in a single transaction.")
 
             logger.log_info("Workflow completed successfully.")
@@ -101,7 +103,7 @@ class MetricCalculationWorkflowManager:
             raise
                 
                 
-    def run_workflow(self, date=None):
+    def run_workflow(self, date=None, config=None):
         blockchains = get_blockchains()
         if blockchains is not None:
             for blockchain in blockchains['blockchain']:
@@ -112,7 +114,7 @@ class MetricCalculationWorkflowManager:
                         if metrics is not None:
                             log_workflow_status(blockchain, subchain, 'start', 'metric', None)
                             try:
-                                self.metric_workflow(date, blockchain, subchain, metrics['metric_name'].tolist())
+                                self.metric_workflow(date, blockchain, subchain, metrics['metric_name'].tolist(), config)
                             except Exception as e:
                                 log_workflow_status(blockchain, subchain, 'fail', 'metric', str(e))
                             finally:

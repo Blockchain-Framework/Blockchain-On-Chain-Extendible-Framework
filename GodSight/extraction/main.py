@@ -26,6 +26,7 @@ def extract_data(date, config):
 
         for blockchain in blockchains:
             subchains = get_subchains(config, blockchain)
+            create_extraction_tables_if_missing(config, subchains)
             for subchain in subchains:
                 id = get_id(config, blockchain, subchain)
                 extract_and_store_data(blockchain, subchain, date, id, config)
@@ -34,24 +35,26 @@ def extract_data(date, config):
         logger.log_error(f"Extraction failed {e}")
 
 
-def extract_data_for_date_range(start_date, end_date, config):
+def extract_data_for_date_range(start_date_str, end_date_str, config):
     try:
         if config is None:
             config = Config()
 
         blockchains = get_blockchains(config)
 
-        # start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
-        # end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
+        start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
 
         # Loop from start_date to end_date, inclusive
         current_date = start_date
         while current_date <= end_date:
+            current_date_str = current_date.strftime("%Y-%m-%d")
             for blockchain in blockchains:
                 subchains = get_subchains(config, blockchain)
+                create_extraction_tables_if_missing(config, subchains)
                 for subchain in subchains:
                     id = get_id(config, blockchain, subchain)
-                    extract_and_store_data(blockchain, subchain, current_date, id, config)
+                    extract_and_store_data(blockchain, subchain, current_date_str, id, config)
             current_date += timedelta(days=1)
 
     except Exception as e:

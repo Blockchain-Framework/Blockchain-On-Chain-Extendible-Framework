@@ -210,11 +210,23 @@ def extract_date_range(start_date, end_date):
 
 
 def compute_date(date):
-    return
+    try:
+        from GodSight.computation.main import compute_data
+
+        config = Config()
+        compute_data(date, config)
+    except Exception as e:
+        logger.log_error(e)
 
 
 def compute_date_range(start_date, end_date):
-    return
+    try:
+        from GodSight.computation.main import compute_data_for_date_range
+
+        config = Config()
+        compute_data_for_date_range(start_date, end_date, config)
+    except Exception as e:
+        logger.log_error(e)
 
 
 def display_info():
