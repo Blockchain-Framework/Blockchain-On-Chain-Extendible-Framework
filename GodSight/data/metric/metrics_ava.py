@@ -2,7 +2,6 @@
 from utils.model.metric import CustomMetric
 import pandas as pd
 
-
 class TransactionPerSecond(CustomMetric):
     def __init__(self):
         # Initialize the base class with metric-specific details
