@@ -33,16 +33,16 @@ class MetricCalculationWorkflowManager:
             base_metric_script_path = r"GodSight/computation/metrics/base/metrics.py"
 
             # Retrieve the necessary data for custom metric calculations
-            trx = get_transactions(blockchain, subchain, date)
-            emit_utxo = get_emitted_utxos(blockchain, subchain, date)
-            consume_utxo = get_consumed_utxos(blockchain, subchain, date)
+            trx = get_transactions(blockchain, subchain, date, config)
+            emit_utxo = get_emitted_utxos(blockchain, subchain, date, config)
+            consume_utxo = get_consumed_utxos(blockchain, subchain, date, config)
 
             # Load metric classes for the specified chain
             custom_metric_blueprints, base_metric_blueprints = load_metrics(custom_metric_script_path,
                                                                             base_metric_script_path, subchain,
                                                                             blockchain, config)
 
-            print(custom_metric_blueprints, base_metric_blueprints)
+            # print(custom_metric_blueprints, base_metric_blueprints)
 
             metric_results = []
 
@@ -77,7 +77,7 @@ class MetricCalculationWorkflowManager:
             # Process BaseMetric instances separately if needed
             for blueprint in base_metric_blueprints:
                 metric_instance = blueprint()
-                metric_value = metric_instance.calculate(blockchain, subchain, date)  # Example signature
+                metric_value = metric_instance.calculate(blockchain, subchain, date, config)  # Example signature
                 print(metric_instance.name, metric_value)
                 logger.log_info(
                     f"Calculated {metric_instance.name} for {blockchain} subchain {subchain}: {metric_value}")
@@ -95,7 +95,7 @@ class MetricCalculationWorkflowManager:
             if metric_results:
                 metrics_df = pd.DataFrame(metric_results)
                 dfs_to_insert = insert_metric_results(metrics_df)
-                batch_insert_dataframes(dfs_to_insert, config.db_url)
+                batch_insert_dataframes(dfs_to_insert, config)
                 logger.log_info(
                     "Metric values successfully inserted into their respective tables in a single transaction.")
 
@@ -106,22 +106,22 @@ class MetricCalculationWorkflowManager:
             raise
 
     def run_workflow(self, date=None, config=None):
-        blockchains = get_blockchains()
+        blockchains = get_blockchains(config)
         if blockchains is not None:
             for blockchain in blockchains['blockchain']:
-                subchains = get_subchains(blockchain)
+                subchains = get_subchains(blockchain, config)
                 if subchains is not None:
                     for subchain in subchains['sub_chain']:
-                        metrics = get_metrics(blockchain, subchain)
+                        metrics = get_metrics(blockchain, subchain,config)
                         if metrics is not None:
-                            log_workflow_status(blockchain, subchain, 'start', 'metric', None)
+                            log_workflow_status(blockchain, subchain, 'start', 'metric', None, config)
                             try:
                                 self.metric_workflow(date, blockchain, subchain, metrics['metric_name'].tolist(),
                                                      config)
                             except Exception as e:
-                                log_workflow_status(blockchain, subchain, 'fail', 'metric', str(e))
+                                log_workflow_status(blockchain, subchain, 'fail', 'metric', str(e), config)
                             finally:
-                                log_workflow_status(blockchain, subchain, 'completed', 'metric', None)
+                                log_workflow_status(blockchain, subchain, 'completed', 'metric', None, config)
 
 
 if __name__ == "__main__":

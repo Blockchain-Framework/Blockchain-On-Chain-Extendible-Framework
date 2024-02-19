@@ -1,5 +1,7 @@
 import pandas as pd
 
+from GodSight.computation.config.config import Config
+
 
 class BaseMetric:
     def __init__(self, name, category, description):
@@ -7,7 +9,7 @@ class BaseMetric:
         self.category = category
         self.description = description
 
-    def calculate(self, blockchain: str, subchain: str, date: str) -> float:
+    def calculate(self, blockchain: str, subchain: str, date: str, config : Config) -> float:
         """
         Override this method to define the metric calculation.
 

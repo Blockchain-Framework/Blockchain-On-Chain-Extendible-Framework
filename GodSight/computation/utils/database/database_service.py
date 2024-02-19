@@ -10,13 +10,13 @@ from ...config import Config
 
 config = Config()
 
-def execute_query(query):
+def execute_query(query, config):
     """
     Execute a database query safely.
     Returns a DataFrame or None if an exception occurs.
     """
     try:
-        return get_query_results(query)
+        return get_query_results(query, config)
     except Exception as error:
         raise
     
@@ -26,7 +26,7 @@ def convert_dict_to_json(x):
     return x
 
 
-def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get("DATABASE_CONNECTION")):
+def append_dataframe_to_sql(table_name, df, config):
     """
     Appends a DataFrame to a SQL table, creating the table if it doesn't exist.
     
@@ -39,7 +39,7 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
     
     try:
         # Create the database engine
-        engine = create_engine(config.db_connection)
+        engine = create_engine(config.db_url)
 
         # Create an inspector
         insp = Inspector.from_engine(engine)
@@ -59,7 +59,7 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
-def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNECTION")):
+def get_query_results(query, config):
     
     """
     Executes a SQL query and returns the results as a DataFrame.
@@ -70,7 +70,7 @@ def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNEC
     """
     try:
         # Create the database engine
-        engine = create_engine(config.db_connection)
+        engine = create_engine(config.db_url)
         # Execute the query and fetch the results
         with engine.connect() as connection:
             results = pd.read_sql_query(query, connection)
@@ -86,8 +86,8 @@ def get_query_results(query, database_connection=os.environ.get("DATABASE_CONNEC
 
 
 
-def batch_insert_dataframes(dfs_to_insert, database_connection=os.environ.get("DATABASE_CONNECTION")):
-    engine = create_engine(database_connection)
+def batch_insert_dataframes(dfs_to_insert, config):
+    engine = create_engine(config.db_url)
     
     # Start a single transaction
     with engine.begin() as connection:
@@ -104,27 +104,27 @@ def batch_insert_dataframes(dfs_to_insert, database_connection=os.environ.get("D
                 raise  # Raising an error to trigger the transaction rollback
 
 
-def get_transactions(blockchain, subchain, date):
+def get_transactions(blockchain, subchain, date, config):
     query = f"SELECT * FROM {subchain}_transactions WHERE date = '{date}'"
-    return get_query_results(query)
+    return get_query_results(query, config)
 
-def get_emitted_utxos(blockchain, subchain,date):
+def get_emitted_utxos(blockchain, subchain,date, config):
     query = f"SELECT * FROM {subchain}_emitted_utxos WHERE date = '{date}'"
-    return get_query_results(query)
+    return get_query_results(query, config)
 
-def get_consumed_utxos(blockchain, subchain, date):
+def get_consumed_utxos(blockchain, subchain, date, config):
     query = f"SELECT * FROM {subchain}_consumed_utxos WHERE date = '{date}'"
-    return get_query_results(query)
+    return get_query_results(query, config)
 
-def get_blockchains():
+def get_blockchains(config):
     query = "SELECT DISTINCT blockchain FROM blockchain_table;"
-    return get_query_results(query)
+    return get_query_results(query, config)
 
-def get_subchains(blockchain):
+def get_subchains(blockchain, config):
     query =f"SELECT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain != 'default'"
-    return get_query_results(query)
+    return get_query_results(query, config)
 
-def get_metrics(blockchain, subchain):
+def get_metrics(blockchain, subchain, config):
     query = f"""
     SELECT m.metric_name 
     FROM metric_table m 
@@ -132,4 +132,4 @@ def get_metrics(blockchain, subchain):
     JOIN blockchain_table b ON cm.blockchain_id = b.id 
     WHERE b.blockchain = '{blockchain}' AND b.sub_chain = '{subchain}';
     """
-    return get_query_results(query)
+    return get_query_results(query, config)
