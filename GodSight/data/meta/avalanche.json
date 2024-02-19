@@ -4,11 +4,26 @@
     "subChains": [
       {
         "name": "x",
-        "startDate": "2024-02-17",
+        "startDate": "2024-02-18",
         "description": "Description of SubChain X",
         "extract_file": "extract_ava",
         "mapper_file": "mapper_ava",
-        "metrics": ["trx_per_day", "total_trxs"]
+        "metrics": ["trx_per_day",
+          "total_transactions",
+          "average_transaction_amount",
+          "avg_trxs_per_hour",
+          "total_blocks",
+          "trx_per_block",
+          "active_addresses",
+          "active_senders",
+          "sum_emitted_utxo_amount",
+          "avg_emitted_utxo_amount",
+          "median_emitted_utxo_amount",
+          "sum_consumed_utxo_amount",
+          "avg_consumed_utxo_amount",
+          "median_consumed_utxo_amount",
+          "large_trx",
+          "whale_address_activity"]
       }
     ],
     "metric_file": "metrics_ava"

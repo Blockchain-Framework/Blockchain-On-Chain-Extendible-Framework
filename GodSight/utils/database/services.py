@@ -36,7 +36,6 @@ def insert_blockchain_metadata(data, config):
 
 def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta, metric_chain_meta, config):
     # Connect to the database using a context manager for better resource management.
-    print(metric_meta)
     try:
         pbar = tqdm(total=100)
         with connect_database(config) as conn, conn.cursor() as cur:

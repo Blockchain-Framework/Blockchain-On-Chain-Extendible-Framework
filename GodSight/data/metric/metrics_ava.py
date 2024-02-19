@@ -1,23 +1,23 @@
 
-from GodSight.utils.model.metric import CustomMetric
+from utils.model.metric import CustomMetric
 import pandas as pd
 
 
-class TransactionPerSecond(CustomMetric):
-    def __init__(self):
-        # Initialize the base class with metric-specific details
-        super().__init__(
-            blockchain="Avalanche",
-            chain="x",
-            name="trx_per_second",
-            transaction_type="transaction",
-            category="Economic Indicators",
-            description="Description"
-        )
+class NetworkEconomyEfficiency(CustomMetric):
 
-    def calculate(self, data: pd.DataFrame) -> float:
-        count = data.shape[0]
-        if count > 0:
-            return count / 86400
-        else:
-            return 0
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='x', name=
+            'network_economy_efficiency', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Network Economy Efficiency')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_value_transacted = data['amountCreated'].replace('', '0').astype(
+            float).sum()
+        total_amount_burned = data['amountBurned'].replace('', '0').astype(
+            float).sum()
+        if total_amount_burned == 0:
+            return None
+        nee = (total_value_transacted / total_amount_burned if
+            total_amount_burned else None)
+        return nee

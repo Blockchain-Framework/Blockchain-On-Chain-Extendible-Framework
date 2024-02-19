@@ -360,15 +360,14 @@ def validate_mapping_with_functions(mapper_config, extracted_data, functions):
             formatted_all_data['transaction'] = pd.DataFrame(format_data_lst)
 
         elif category == 'emit_utxo_mapping':
-            formatted_all_data['emitted'] = pd.DataFrame(format_data_lst)
+            formatted_all_data['emitted_utxo'] = pd.DataFrame(format_data_lst)
 
         elif category == 'consume_utxo_mapping':
-            formatted_all_data['consumed'] = pd.DataFrame(format_data_lst)
+            formatted_all_data['consumed_utxo'] = pd.DataFrame(format_data_lst)
 
     # print("Formatted all data:", formatted_all_data)
     # If all fields are processed without errors
     return True, "Mapping validation passed.", formatted_all_data
-
 
 
 def get_chain_id(lst, chain):
@@ -391,10 +390,11 @@ def load_metrics(script_path, meta_data, metrics, metric_chain_meta):
     spec.loader.exec_module(module)
 
     metric_meta = []
-
     metric_classes = {}
     for attribute_name in dir(module):
+
         attribute = getattr(module, attribute_name)
+
         if isinstance(attribute, type) and issubclass(attribute, CustomMetric) and attribute is not CustomMetric:
             # Instantiate the class
             metric_instance = attribute()
@@ -409,7 +409,7 @@ def load_metrics(script_path, meta_data, metrics, metric_chain_meta):
                 'metric_name': metric_instance.name,
                 'description': metric_instance.description,
                 'category': metric_instance.category,
-                'display_name':metric_instance.display_name,
+                'display_name': metric_instance.display_name,
                 'type': 'custom'
             })
 
@@ -442,7 +442,7 @@ def validate_custom_metrics(metric_classes, test_data):
             try:
                 _ = metric_obj.calculate(data)
             except Exception as e:
-                print(e)
+                logger.log_error(e)
                 return False
 
     return True
@@ -456,7 +456,6 @@ def validate_extract_and_mapper(extraction_path, mapper_path, start_date, pbar):
     extract_validation_passed, extract_validation_message, extract_output, extract_func = validate_extraction_file(
         extraction_path, test_input)
 
-
     if not extract_validation_passed:
         # logger.log_error(extract_validation_message)
         return False, extract_validation_message, None, None, None, pbar
@@ -464,7 +463,6 @@ def validate_extract_and_mapper(extraction_path, mapper_path, start_date, pbar):
     pbar.update(20)
 
     mapper_validation_passed, mapper_validation_message, mappings, mapper_funcs = validate_mapper_file(mapper_path)
-
 
     if not mapper_validation_passed:
         # logger.log_error(mapper_validation_message)

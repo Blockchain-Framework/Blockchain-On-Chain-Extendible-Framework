@@ -196,6 +196,7 @@ def add_blockchain(file_name):
         pbar.update(10)
 
         metric_classes, metric_meta, metric_chain_meta = load_metrics(metric_path, meta_data, metrics, metric_chain_meta)
+
         pbar.update(40)
         metric_validation = validate_custom_metrics(metric_classes, all_test_data)
         pbar.update(40)

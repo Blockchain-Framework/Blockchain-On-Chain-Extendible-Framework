@@ -24,7 +24,7 @@ class CustomMetric:
         self.blockchain = blockchain
         self.chain = chain
         self.name = name
-        self.display_name=display_name
+        self.display_name = display_name
         self.transaction_type = transaction_type  # Options: "transaction", "emitted_utxo", "consumed_utxo"
         self.category = category
         self.description = description
