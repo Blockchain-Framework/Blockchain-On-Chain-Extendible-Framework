@@ -103,6 +103,8 @@ def extract(date):
                     c_utxo_modified['txType'] = txType
                     consumed_utxos.append(c_utxo_modified)
 
+
+
         if 'nextPageToken' in res_data:
             page_token = res_data['nextPageToken']
         else:
