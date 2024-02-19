@@ -1,11 +1,12 @@
 from flask import Blueprint, request, current_app
-from utils.get_metric_model import metric_route_map
+from utils.get_metric_model import metric_route_map, Metric
 from models.response import Response # Import the custom Response
 from utils.json_utils import jsonify  # Import the custom jsonify
 from datetime import datetime, timedelta
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import func
 import logging
- 
+
 metrics_blueprint = Blueprint('metrics', __name__)
 
 def filter_by_date(model, query, start_date, end_date):
@@ -35,12 +36,10 @@ def get_paginated_data(model, query):
     """
     page = request.args.get('page', 1, type=int)
     page_size = request.args.get('page_size', 30, type=int)
-
-    # Correctly using keyword arguments for paginate
+   
     return query.paginate(page=page, per_page=page_size, error_out=False)
-
+    
 def handle_metric_route():
-    print("ggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg")
     """
     Handle the route logic, including validation, querying, and response formatting.
     """
@@ -54,7 +53,7 @@ def handle_metric_route():
         
         model = metric_route_map[metric]
         
-        if blockchain is None or subchain is None or metric is None or time_range is None:
+        if blockchain is None or metric is None or time_range is None:
             raise ValueError("Invalid parameters.")
 
         # Calculate start_date and end_date based on time_range
@@ -67,16 +66,42 @@ def handle_metric_route():
         query = model.query
         # query = query.filter(model.date.between(start_date, end_date))
         
+        metric_details = Metric.query.filter_by(metric_name=metric).first()
+        if metric_details is None:
+            raise ValueError("Invalid metric.")
+        
+        util_data = metric_details.serialize()
         # Add additional filters based on the new parameters
-        query = query.filter_by(blockchain=blockchain, subchain=subchain)
-        print(query)
-        paginated_query = get_paginated_data(model, query)
-        items = paginated_query.items
-        print(items)
-        response = Response(True, [item.serialize() for item in items], len(items))
+        if subchain == 'default':
+            query = query.with_entities(model.date, func.sum(model.value).label('sum_value')) \
+                 .filter(model.blockchain == blockchain) \
+                 .group_by(model.date)
+            items = query.all()
+            serialized_items = []
+            # Iterate over the items returned from the query
+            for item in items:
+                # Each item is expected to be a tuple with the date and the sum_value
+                date, sum_value = item
+                serialized_item = {
+                    'date': date,  # Format the date as a string
+                    'blockchain': blockchain,
+                    'subchain': 'default',  # Since this is an aggregated query, use 'default'
+                    'value': float(sum_value)  # Ensure the value is a float, not a Decimal
+                }
+                # Append the serialized item to the list
+                serialized_items.append(serialized_item)
+                chart_data = serialized_items
+        else:
+            query = query.filter_by(blockchain=blockchain, subchain=subchain)
+            paginated_query = get_paginated_data(model, query)
+            items = paginated_query.items
+            chart_data = [item.serialize() for item in items]
+            
+        response = Response(True, {"chart_data": chart_data, "util_data": util_data}, len(chart_data))
         return jsonify(response.to_dict()), 200
 
     except ValueError as ve:
+        logging.error(f"Invalid parameters: {ve}")
         return jsonify(Response(False, error=str(ve)).to_dict()), 400
     except SQLAlchemyError as e:
         # Log the detailed error message for debugging
@@ -84,6 +109,7 @@ def handle_metric_route():
         return jsonify(Response(False, error="Database error").to_dict()), 500
     except Exception as e:
         # Generic catch for any other unexpected exceptions
+        logging.error(f"An unexpected error occurred: {e}")
         return jsonify(Response(False, error=f"An unexpected error occurred: {str(e)}").to_dict()), 500
 
 # Define individual routes for each metric

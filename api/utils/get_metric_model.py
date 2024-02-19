@@ -1,3 +1,4 @@
+
 from models.metric import (TransactionsPerSecond,
                            TransactionsPerDay,
                             TotalTransactions,
@@ -18,6 +19,8 @@ from models.metric import (TransactionsPerSecond,
                             WhaleAddressActivity,
                             TotalStakedAmount,
                             TotalBurnedAmount)
+
+from models.metric import Metric
 
 metric_route_map = {
     'trx_per_second': TransactionsPerSecond,

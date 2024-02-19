@@ -19,3 +19,8 @@ class ChainMetric(db.Model):
     # ... other fields ...
 
     blockchain = db.relationship('Blockchain', back_populates='metrics')
+
+class MetricTable(db.Model):
+    __tablename__ = 'metric_table'
+    metric_name = db.Column(db.String(255), primary_key=True)
+    display_name = db.Column(db.String(255))
