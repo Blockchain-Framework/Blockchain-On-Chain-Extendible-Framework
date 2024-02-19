@@ -7,6 +7,7 @@ from psycopg2 import sql
 
 logger = Logger("GodSight")
 
+
 def get_all_metrics(config):
     metrics_list = []
     try:
@@ -21,6 +22,25 @@ def get_all_metrics(config):
         logger.log_error(f"Failed to fetch metrics: {e}")
         raise Exception(f"Failed to fetch metrics: {e}")
     return metrics_list
+
+
+def get_base_metrics(config, blockchain, subchain):
+    metrics_list = []
+    try:
+        with connect_database(config) as conn:
+            with conn.cursor() as cur:
+                cur.execute("SELECT DISTINCT metric_table.metric_name FROM metric_table INNER JOIN chain_metric ON "
+                            "metric_table.metric_name=chain_metric.metric_name WHERE chain_metric.blockchain=%s AND "
+                            "chain_metric.sub_chain=%s AND metric_table.type=%s;", (blockchain, subchain, 'basic',))
+                # Fetch all results
+                metrics = cur.fetchall()
+                # Extract metric names from the query result and add to the list
+                metrics_list = [metric[0] for metric in metrics]
+    except Exception as e:
+        logger.log_error(f"Failed to fetch metrics: {e}")
+        raise Exception(f"Failed to fetch metrics: {e}")
+    return metrics_list
+
 
 def create_metric_tables_if_not_exist(metrics_list, config):
     table_creation_query = """

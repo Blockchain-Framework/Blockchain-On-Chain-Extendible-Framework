@@ -1,15 +1,18 @@
 from flask import Blueprint, request, current_app
 from ..utils.get_metric_model import metric_route_map
-from ..models.response import Response # Import the custom Response
+from ..models.response import Response  # Import the custom Response
 from ..utils.json_utils import jsonify  # Import the custom jsonify
 from datetime import datetime, timedelta
 from sqlalchemy.exc import SQLAlchemyError
 import logging
+from ..utils.auth import require_api_key
 from ..models.chain_info import (Blockchain, ChainMetric)
 
 init_blueprint = Blueprint('init', __name__)
 
+
 @init_blueprint.route('/')
+@require_api_key
 def get_selection_data():
     try:
         blockchains = Blockchain.query.all()
@@ -31,5 +34,5 @@ def get_selection_data():
         print(response)
         return jsonify(response.to_dict()), 200
     except Exception as e:
-        # Handle any exceptions
+        logging.error(f"An unexpected error occurred: {str(e)}")
         return jsonify(Response(False, error=f"An unexpected error occurred: {str(e)}").to_dict()), 500

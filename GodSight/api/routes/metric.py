@@ -3,6 +3,7 @@ from ..utils.get_metric_model import metric_route_map
 from ..models.response import Response # Import the custom Response
 from ..utils.json_utils import jsonify  # Import the custom jsonify
 from datetime import datetime, timedelta
+from ..utils.auth import require_api_key
 from sqlalchemy.exc import SQLAlchemyError
 import logging
  
@@ -87,5 +88,6 @@ def handle_metric_route():
 
 # Define individual routes for each metric
 @metrics_blueprint.route('/chart_data')
+@require_api_key
 def get_daily_transaction_count():
     return handle_metric_route()

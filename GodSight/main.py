@@ -2,6 +2,7 @@ import argparse
 import sys
 import os
 import uuid
+from tqdm import tqdm
 from GodSight.config.config import Config
 from GodSight.utils.logs.log import Logger
 
@@ -24,7 +25,6 @@ def start_api():
 
 
 def add_blockchain(file_name):
-
     blockchain_name = None
 
     try:
@@ -71,25 +71,32 @@ def add_blockchain(file_name):
         chains = []
         mapper_data = []
         functions = []
-        metric_meta = []
+        blockchain_metrics = {}
         metric_chain_meta = []
         all_test_data = {}
         for subchain in metadata['subChains']:
-            # logger.log_info(f"check {subchain['name']}")
+
+            logger.log_info(f"checking {metadata['name']} {subchain['name']} data")
+
+            pbar = tqdm(total=100)
 
             extract_file_path = os.path.join(config.extract_path, subchain['extract_file'] + '.py')
             mapper_file_path = os.path.join(config.mapper_path, subchain['mapper_file'] + '.py')
 
-            final_validation, validation_message, funcs, mappings, test_data = validate_extract_and_mapper(
+            final_validation, validation_message, funcs, mappings, test_data, pbar = validate_extract_and_mapper(
                 extract_file_path,
                 mapper_file_path,
-                subchain['startDate'])
+                subchain['startDate'],
+                pbar)
 
             if not final_validation:
+                pbar.close()
                 logger.log_error(validation_message)
                 return
 
             all_test_data[subchain['name']] = test_data
+
+            pbar.update(10)
 
             chain_unique_id = str(uuid.uuid4())
 
@@ -103,6 +110,8 @@ def add_blockchain(file_name):
 
             subchain_mappings = format_config_for_insertion(mappings, metadata['name'], subchain['name'])
 
+            pbar.update(10)
+
             mapper_data.append(subchain_mappings)
 
             functions.append({
@@ -111,13 +120,18 @@ def add_blockchain(file_name):
                 'sources_files': [extract_file_path, mapper_file_path]
             })
 
+            pbar.update(10)
+
             chains.append(subchain['name'])
 
-            chain_basic_metrics = subchain['metrics']
+            chain_basic_metrics = list(set(subchain['metrics']))
 
-            if not all(metric in chain_basic_metrics for metric in metrics):
+            if not all(metric in metrics for metric in chain_basic_metrics):
+                pbar.close()
                 logger.log_error("Unknown Basic Metric Exist")
                 return
+
+            blockchain_metrics[subchain['name']] = chain_basic_metrics
 
             for metric in chain_basic_metrics:
                 metric_chain_meta.append({
@@ -127,8 +141,15 @@ def add_blockchain(file_name):
                     'metric_name': metric
                 })
 
+            pbar.update(10)
+
+            pbar.close()
+
         if 'default' not in chains:
+            logger.log_info(f"Adding {metadata['name']} default meta data -- applying for multi-chain blockchains")
+            pbar = tqdm(total=100)
             chain_unique_id = str(uuid.uuid4())
+            pbar.update(10)
             meta_data.append({
                 'id': chain_unique_id,
                 'blockchain': metadata['name'],
@@ -136,23 +157,61 @@ def add_blockchain(file_name):
                 'start_date': '1900-01-01',
                 'description': 'Default chain: representing whole chains'
             })
+            pbar.update(20)
+
+            common_metrics = set(blockchain_metrics[next(iter(blockchain_metrics))])
+
+            # Iterate over the rest of the lists in the dictionary
+            for key in blockchain_metrics:
+                common_metrics = common_metrics.intersection(blockchain_metrics[key])
+
+            # Convert the set back to a list, if needed
+            common_metric_list = list(common_metrics)
+
+            for metric in common_metric_list:
+                metric_chain_meta.append({
+                    'blockchain_id': chain_unique_id,
+                    'blockchain': metadata['name'],
+                    'sub_chain': 'default',
+                    'metric_name': metric
+                })
+
+            pbar.update(20)
 
             test_data = concatenate_and_fill_dfs(all_test_data)
 
+            pbar.update(50)
+
             all_test_data['default'] = test_data
+            pbar.close()
 
         logger.log_info('extract and mapping validation passed')
 
+        logger.log_info('Checking custom metrics data')
+
+        pbar = tqdm(total=100)
+
         metric_path = os.path.join(config.metric_path, metadata['metric_file'] + '.py')
 
-        metric_classes, metric_meta, metric_chain_meta = load_metrics(metric_path, meta_data, metrics)
+        pbar.update(10)
+
+        metric_classes, metric_meta, metric_chain_meta = load_metrics(metric_path, meta_data, metrics, metric_chain_meta)
+        pbar.update(40)
         metric_validation = validate_custom_metrics(metric_classes, all_test_data)
+        pbar.update(40)
 
         if not metric_validation:
             logger.log_error("Metric Validation is failed.")
             return
 
+        pbar.update(10)
+        pbar.close()
+
+        logger.log_info('Inserting meta data into database')
+
         insert_blockchain_metadata_and_mappings(meta_data, mapper_data, metric_meta, metric_chain_meta, config)
+
+        logger.log_info('Writing files')
 
         output_file_path = 'GodSight/extraction/user_functions'
 
@@ -189,7 +248,6 @@ def add_blockchain(file_name):
 
 
 def extract_date(date):
-
     try:
         from GodSight.extraction.main import extract_data
 

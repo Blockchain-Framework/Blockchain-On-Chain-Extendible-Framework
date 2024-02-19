@@ -75,6 +75,8 @@ def extract_and_store_data(blockchain, subchain, date, id, config):
     except Exception as e:
         logger.log_error(f"An unexpected error occurred while storing transactions: {e}")
         log_workflow_status(blockchain, subchain, 'fail', 'extraction', str(e), config)
+        # TODO: Delete all the data for this date before leaving
+        raise Exception(e)
     finally:
         log_workflow_status(blockchain, subchain, 'end', 'extraction', None, config)
 

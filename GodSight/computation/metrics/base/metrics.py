@@ -61,7 +61,7 @@ class TotalTransactions(BaseMetric):
     
 class AvarageTransactionAmount(BaseMetric):
     def __init__(self):
-        super().__init__(name = 'avarage_transaction_amount', category = "'Economic Indicators'", description = 'Description')
+        super().__init__(name = 'average_transaction_amount', category = "'Economic Indicators'", description = 'Description')
     
     def calculate(self, blockchain: str, subchain: str, date: str) -> float:
         if not subchain or not date:
@@ -216,7 +216,7 @@ class ActiveSenders(BaseMetric):
 
 class SumEmittedUtxoAmount(BaseMetric):
     def __init__(self):
-        super().__init__(name = 'active_senders', category = "'Economic Indicators'", description = 'Description')
+        super().__init__(name = 'sum_emitted_utxo_amount', category = "'Economic Indicators'", description = 'Description')
             
     def calculate(self, blockchain: str, subchain: str, date: str) -> float:
         if not subchain or not date:
@@ -233,7 +233,7 @@ class SumEmittedUtxoAmount(BaseMetric):
         
 class AverageEmittedUtxoAmount(BaseMetric):
     def __init__(self):
-        super().__init__(name = 'avg_emmited_utxo_amount', category = "'Economic Indicators'", description = 'Description')
+        super().__init__(name = 'avg_emitted_utxo_amount', category = "'Economic Indicators'", description = 'Description')
             
     def calculate(self, blockchain: str, subchain: str, date: str) -> float:
         if not subchain or not date:
@@ -249,7 +249,7 @@ class AverageEmittedUtxoAmount(BaseMetric):
             return None
 class MedianEmittedUtxoAmount(BaseMetric):
     def __init__(self):
-        super().__init__(name = 'active_senders', category = "'Economic Indicators'", description = 'Description')
+        super().__init__(name = 'median_emitted_utxo_amount', category = "'Economic Indicators'", description = 'Description')
             
     def calculate(self, blockchain: str, subchain: str, date: str) -> float:
         if not subchain or not date:
@@ -404,7 +404,4 @@ class WhaleAddreessActivity(BaseMetric):
         else:
             return None
 
-if __name__ == "__main__":
-    active_senders = ActiveSenders('Avalanche', 'x', 'active_senders', 'transaction', 'Economic Indicators', 'Description')
-    s = active_senders.calculate('Avalanche', 'x', '2022-01-01')
     

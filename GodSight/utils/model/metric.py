@@ -20,10 +20,11 @@ class BaseMetric:
 
 
 class CustomMetric:
-    def __init__(self, blockchain, chain, name, transaction_type, category, description):
+    def __init__(self, blockchain, chain, name, display_name, transaction_type, category, description):
         self.blockchain = blockchain
         self.chain = chain
         self.name = name
+        self.display_name=display_name
         self.transaction_type = transaction_type  # Options: "transaction", "emitted_utxo", "consumed_utxo"
         self.category = category
         self.description = description

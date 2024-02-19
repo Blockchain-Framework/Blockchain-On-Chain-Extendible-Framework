@@ -39,25 +39,25 @@ def create_extraction_tables_if_missing(config, subchains):
     transaction_table_sql = """
     CREATE TABLE IF NOT EXISTS {table_name} (
         "date" TIMESTAMP WITHOUT TIME ZONE,
-        "txHash" VARCHAR(255) PRIMARY KEY,
-        "blockHash" VARCHAR(255),
+        "txHash" TEXT PRIMARY KEY,
+        "blockHash" TEXT,
         "timestamp" BIGINT,  -- Adjusted to BIGINT to store UNIX timestamp
         "blockHeight" INTEGER,
-        "txType" VARCHAR(50),
+        "txType" TEXT,
         "memo" TEXT,
-        "chainFormat" VARCHAR(50),
+        "chainFormat" TEXT,
         "amountUnlocked" JSONB,  -- Assuming JSON storage for amountUnlocked
         "amountCreated" JSONB,   -- Assuming JSON storage for amountCreated
-        "sourceChain" VARCHAR(255),
-        "destinationChain" VARCHAR(255),
-        "rewardAddresses" TEXT[],  -- Adjust as necessary
+        "sourceChain" TEXT,
+        "destinationChain" TEXT,
+        "rewardAddresses" TEXT,  -- Adjust as necessary
         "estimatedReward" NUMERIC,
         "startTimestamp" BIGINT,  -- Assuming UNIX timestamp storage
         "endTimestamp" BIGINT,    -- Assuming UNIX timestamp storage
         "delegationFeePercent" NUMERIC,
-        "nodeId" VARCHAR(255),
-        "subnetId" VARCHAR(255),
-        "value" NUMERIC,
+        "nodeId" TEXT,
+        "subnetId" TEXT,
+        "value" TEXT,
         "amountStaked" NUMERIC,
         "amountBurned" NUMERIC
     );
@@ -66,18 +66,18 @@ def create_extraction_tables_if_missing(config, subchains):
     utxo_table_sql = """
     CREATE TABLE IF NOT EXISTS {table_name} (
         "date" TIMESTAMP WITHOUT TIME ZONE,
-        "utxoId" VARCHAR(255) PRIMARY KEY,
-        "txHash" VARCHAR(255),
-        "txType" VARCHAR(50),
-        "addresses" TEXT[],
-        "value" NUMERIC,
-        "blockHash" VARCHAR(255),
-        "assetId" VARCHAR(255),
-        "asset_name" VARCHAR(255),
-        "asset_symbol" VARCHAR(50),
-        "denomination" INTEGER,
-        "asset_type" VARCHAR(50),
-        "amount" NUMERIC
+        "utxoId" TEXT,
+        "txHash" TEXT,
+        "txType" TEXT,
+        "addresses" TEXT,
+        "value" TEXT,
+        "blockHash" TEXT,
+        "assetId" TEXT,
+        "asset_name" TEXT,
+        "asset_symbol" TEXT,
+        "denomination" BIGINT,
+        "asset_type" TEXT,
+        "amount" TEXT
     );
     """
 

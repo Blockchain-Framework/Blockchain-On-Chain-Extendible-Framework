@@ -3,6 +3,7 @@ from pathlib import Path
 import importlib.util
 import os
 import sys
+import inspect
 import pandas as pd
 from GodSight.utils.model.config_mapper import model
 from GodSight.utils.model.metric import BaseMetric, CustomMetric
@@ -168,64 +169,10 @@ def validate_extraction_file(relative_path_from_project_root, test_input):
     return True, "Validation passed.", output, extract_func
 
 
-def validate_mapper_file(relative_path_from_project_root):
-    # file_path = os.path.join(os.getcwd(), relative_path_from_project_root, file_name+'.py')
-
-    mapper_funcs_str = []
-
-    if not file_exists(relative_path_from_project_root):
-        return False, "The 'mapper' file is not exist.", None, []
-
-    if not is_python_file(relative_path_from_project_root):
-        return False, "The 'mapper' file is not a python script.", None, []
-
-    mapper_config = load_config_from_file(relative_path_from_project_root)
-
-    if mapper_config is None:
-        return False, "No 'config' found in the mapper module.", None, []
-
-    if not isinstance(model, dict):
-        raise TypeError("model is expected to be a dictionary.")
-
-    # Validate the config structure against the model
-    for category, mappings in model.items():
-        if category not in mapper_config:
-            return False, f"Missing '{category}' in mapper config.", None, []
-
-        for field, _ in mappings.items():
-            if field not in mapper_config[category]:
-                return False, f"Missing '{field}' in '{category}'.", None, []
-
-            config_field = mapper_config[category].get(field)
-            if not config_field:
-                return False, f"Configuration for '{field}' in '{category}' is not defined.", None, []
-
-            if len(config_field) < 2:
-                return False, f"Configuration for '{field}' in '{category}' is not correct.", None, []
-
-            if config_field[1] == "function":
-                if len(config_field) < 3:
-                    return False, f"Configuration for '{field}' in '{category}' is not correct.", None, []
-
-                mapper_funcs_str.append(config_field[2])
-
-    mapper_funcs, msg = load_functions_from_file(relative_path_from_project_root, mapper_funcs_str)
-
-    if mapper_funcs is None:
-        return False, f"'{msg}' is not a function in mapper file.", None, []
-
-    return True, "Mapper validation passed.", mapper_config, mapper_funcs
-
-
 # def validate_mapper_file(relative_path_from_project_root):
+#     # file_path = os.path.join(os.getcwd(), relative_path_from_project_root, file_name+'.py')
 #
 #     mapper_funcs_str = []
-#
-#     model_mapping = {
-#         'trx_mapping': GeneralTransactionModel,
-#         'emit_utxo_mapping': GeneralUTXOModel,
-#         'consume_utxo_mapping': GeneralUTXOModel,
-#     }
 #
 #     if not file_exists(relative_path_from_project_root):
 #         return False, "The 'mapper' file is not exist.", None, []
@@ -238,29 +185,30 @@ def validate_mapper_file(relative_path_from_project_root):
 #     if mapper_config is None:
 #         return False, "No 'config' found in the mapper module.", None, []
 #
-#     if not isinstance(mapper_config, dict):
+#     if not isinstance(model, dict):
 #         raise TypeError("model is expected to be a dictionary.")
 #
-#     for mapping_name, model_class in model_mapping.items():
-#         mapping = mapper_config.get(mapping_name)
-#         if not mapping:
-#             return False, f"Mapping {mapping_name} not found in config.", None, []
+#     # Validate the config structure against the model
+#     for category, mappings in model.items():
+#         if category not in mapper_config:
+#             return False, f"Missing '{category}' in mapper config.", None, []
 #
-#         for field, details in mapping.items():
+#         for field, _ in mappings.items():
+#             if field not in mapper_config[category]:
+#                 return False, f"Missing '{field}' in '{category}'.", None, []
 #
-#             if len(details) < 2:
-#                 return False, f"Configuration for '{field}' in '{mapping_name}' is not correct.", None, []
+#             config_field = mapper_config[category].get(field)
+#             if not config_field:
+#                 return False, f"Configuration for '{field}' in '{category}' is not defined.", None, []
 #
-#             model_field_name = details[0]
+#             if len(config_field) < 2:
+#                 return False, f"Configuration for '{field}' in '{category}' is not correct.", None, []
 #
-#             if not hasattr(model_class, model_field_name):
-#                 raise AttributeError(
-#                     f"Field {model_field_name} in mapping {mapping_name} does not exist in {model_class.__name__}.")
+#             if config_field[1] == "function":
+#                 if len(config_field) < 3:
+#                     return False, f"Configuration for '{field}' in '{category}' is not correct.", None, []
 #
-#             if details[1] == "function":
-#                 if len(details) < 3:
-#                     return False, f"Configuration for '{field}' in '{mapping_name}' is not correct.", None, []
-#                 mapper_funcs_str.append(details[2])
+#                 mapper_funcs_str.append(config_field[2])
 #
 #     mapper_funcs, msg = load_functions_from_file(relative_path_from_project_root, mapper_funcs_str)
 #
@@ -268,6 +216,71 @@ def validate_mapper_file(relative_path_from_project_root):
 #         return False, f"'{msg}' is not a function in mapper file.", None, []
 #
 #     return True, "Mapper validation passed.", mapper_config, mapper_funcs
+
+
+def validate_mapper_file(relative_path_from_project_root):
+    mapper_funcs_str = []
+
+    # Define the expected fields for each model
+    trx_fields = [
+        'txHash', 'blockHash', 'timestamp', 'blockHeight', 'txType', 'memo',
+        'chainFormat', 'amountUnlocked', 'amountCreated', 'sourceChain',
+        'destinationChain', 'rewardAddresses', 'estimatedReward',
+        'startTimestamp', 'endTimestamp', 'delegationFeePercent', 'nodeId',
+        'subnetId', 'value', 'amountStaked', 'amountBurned'
+    ]
+
+    utxo_fields = [
+        'utxoId', 'txHash', 'txType', 'addresses', 'value', 'blockHash',
+        'assetId', 'asset_name', 'symbol', 'denomination', 'asset_type', 'amount'
+    ]
+
+    model_fields_mapping = {
+        'trx_mapping': trx_fields,
+        'emit_utxo_mapping': utxo_fields,
+        'consume_utxo_mapping': utxo_fields,
+    }
+
+    # Assuming file_exists and is_python_file are implemented elsewhere
+    if not file_exists(relative_path_from_project_root):
+        return False, "The 'mapper' file does not exist.", None, []
+
+    if not is_python_file(relative_path_from_project_root):
+        return False, "The 'mapper' file is not a python script.", None, []
+
+    # Assuming load_config_from_file is implemented elsewhere
+    mapper_config = load_config_from_file(relative_path_from_project_root)
+
+    if mapper_config is None:
+        return False, "No 'config' found in the mapper module.", None, []
+
+    if not isinstance(mapper_config, dict):
+        return False, "Config is expected to be a dictionary.", None, []
+
+    for mapping_name, expected_fields in model_fields_mapping.items():
+        mapping = mapper_config.get(mapping_name)
+        if not mapping:
+            return False, f"Mapping '{mapping_name}' not found in config.", None, []
+
+        for field, details in mapping.items():
+            if len(details) < 2:
+                return False, f"Configuration for '{field}' in '{mapping_name}' is not correct.", None, []
+
+            if field not in expected_fields:
+                return False, f"Field '{field}' in mapping '{mapping_name}' does not exist in the expected fields list.", None, []
+
+            if details[1] == "function":
+                if len(details) < 3:
+                    return False, f"Configuration for '{field}' in '{mapping_name}' is missing function details.", None, []
+                mapper_funcs_str.append(details[2])
+
+    # Assuming load_functions_from_file is implemented elsewhere
+    mapper_funcs, msg = load_functions_from_file(relative_path_from_project_root, mapper_funcs_str)
+
+    if mapper_funcs is None:
+        return False, f"Problem loading functions: '{msg}'.", None, []
+
+    return True, "Mapper validation passed.", mapper_config, mapper_funcs
 
 
 def validate_mapping_with_functions(mapper_config, extracted_data, functions):
@@ -281,61 +294,64 @@ def validate_mapping_with_functions(mapper_config, extracted_data, functions):
     :return: Boolean indicating whether the mapping is valid, and an error message if not.
     """
 
-    formatted_all_data = {
-    }
+    formatted_all_data = {}
+
+    # print("Length of extracted_data:", len(extracted_data))
 
     for category, mappings in mapper_config.items():
+        # print("Processing category:", category)
 
         if category == 'trx_mapping':
             data = extracted_data[0]
-            if data:
-                test_data = data[:3]
-            else:
-                continue
+            # print("Data for trx_mapping:", data)
 
         elif category == 'emit_utxo_mapping':
             data = extracted_data[1]
-            if data:
-                test_data = data[:3]
-            else:
-                continue
+            # print("Data for emit_utxo_mapping:", data)
 
         elif category == 'consume_utxo_mapping':
             data = extracted_data[2]
-            if data:
-                test_data = data[:3]
-            else:
-                continue
+            # print("Data for consume_utxo_mapping:", data)
 
         else:
+            # print("Invalid category found in mapper config:", category)
             return False, f"Invalid category in mapper config"
+
+        if data:
+            test_data = data[:3]
+            # print(f"Sample data for {category}:", test_data)
+        else:
+            # print(f"No data available for {category}, skipping.")
+            continue
 
         format_data_lst = []
         for test in test_data:
             format_data = {}
             for field, mapping_details in mappings.items():
-                # TODO: if field is an function then field is not exist is okay
                 mapping_field = mapping_details[0]
                 mapping_type = mapping_details[1]
-                if (mapping_field not in test) and mapping_type == "feature":
-                    return False, f"Field '{field}' not present in sample data."
+                # print(f"Processing field '{field}' with type '{mapping_type}'")
 
-                if mapping_type == "feature":
+                if (mapping_field not in test) and mapping_type == "feature":
+                    format_data[field] = None
+
+                elif mapping_type == "feature":
                     format_data[field] = test[mapping_field]
+                    # print(f"Formatted data for field '{field}':", format_data[field])
 
                 elif mapping_type == "function":
                     function_name = mapping_details[2]
                     if function_name not in functions:
                         return False, f"Function '{function_name}' required for mapping '{field}' is not loaded."
 
-                    # Attempt to apply the function to the field value from the sample data
                     try:
-                        # Here, we assume the functions take the field value and return a processed value
+                        # Assuming the functions take the field value and return a processed value
                         result = functions[function_name](test)
-
                         format_data[field] = result
+                        # print(f"Result from function '{function_name}' for field '{field}':", result)
 
                     except Exception as e:
+                        # print(f"Error applying function '{function_name}' to field '{field}': {e}")
                         return False, f"Error applying function '{function_name}' to field '{field}': {e}"
 
             format_data_lst.append(format_data)
@@ -349,8 +365,10 @@ def validate_mapping_with_functions(mapper_config, extracted_data, functions):
         elif category == 'consume_utxo_mapping':
             formatted_all_data['consumed'] = pd.DataFrame(format_data_lst)
 
+    # print("Formatted all data:", formatted_all_data)
     # If all fields are processed without errors
     return True, "Mapping validation passed.", formatted_all_data
+
 
 
 def get_chain_id(lst, chain):
@@ -359,7 +377,7 @@ def get_chain_id(lst, chain):
             return chain_data['id']
 
 
-def load_metrics(script_path, meta_data, metrics):
+def load_metrics(script_path, meta_data, metrics, metric_chain_meta):
     """
     Load metric classes from a script and validate them using test data.
 
@@ -373,16 +391,6 @@ def load_metrics(script_path, meta_data, metrics):
     spec.loader.exec_module(module)
 
     metric_meta = []
-    metric_chain_meta = []
-
-    for chain_data in meta_data:
-        for basic_metric in metrics:
-            metric_chain_meta.append({
-                'blockchain_id': chain_data['id'],
-                'blockchain': chain_data['blockchain'],
-                'sub_chain': chain_data['subchain'],
-                'metric_name': basic_metric
-            })
 
     metric_classes = {}
     for attribute_name in dir(module):
@@ -401,6 +409,7 @@ def load_metrics(script_path, meta_data, metrics):
                 'metric_name': metric_instance.name,
                 'description': metric_instance.description,
                 'category': metric_instance.category,
+                'display_name':metric_instance.display_name,
                 'type': 'custom'
             })
 
@@ -439,7 +448,7 @@ def validate_custom_metrics(metric_classes, test_data):
     return True
 
 
-def validate_extract_and_mapper(extraction_path, mapper_path, start_date):
+def validate_extract_and_mapper(extraction_path, mapper_path, start_date, pbar):
     final_validation = False
 
     test_input = start_date
@@ -447,22 +456,29 @@ def validate_extract_and_mapper(extraction_path, mapper_path, start_date):
     extract_validation_passed, extract_validation_message, extract_output, extract_func = validate_extraction_file(
         extraction_path, test_input)
 
-    mapper_validation_passed, mapper_validation_message, mappings, mapper_funcs = validate_mapper_file(mapper_path)
 
     if not extract_validation_passed:
         # logger.log_error(extract_validation_message)
-        return False, extract_validation_message, None, None, None
+        return False, extract_validation_message, None, None, None, pbar
+
+    pbar.update(20)
+
+    mapper_validation_passed, mapper_validation_message, mappings, mapper_funcs = validate_mapper_file(mapper_path)
+
 
     if not mapper_validation_passed:
         # logger.log_error(mapper_validation_message)
-        return False, mapper_validation_message, None, None, None
+        return False, mapper_validation_message, None, None, None, pbar
+
+    pbar.update(20)
 
     if extract_validation_passed and mapper_validation_passed:
         final_validation, validation_message, formatted_test_data = validate_mapping_with_functions(mappings,
                                                                                                     extract_output,
                                                                                                     mapper_funcs)
+        pbar.update(20)
 
     funcs = mapper_funcs
     funcs['extract'] = extract_func
 
-    return final_validation, validation_message, funcs, mappings, formatted_test_data
+    return final_validation, validation_message, funcs, mappings, formatted_test_data, pbar

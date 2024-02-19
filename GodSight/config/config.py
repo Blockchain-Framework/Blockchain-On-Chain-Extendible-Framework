@@ -22,6 +22,8 @@ class Config:
         self.api_host = os.getenv('API_HOST')
         self.api_port = os.getenv('API_PORT')
 
+        self.secret_api_key = os.getenv('SECRET_API_KEY')
+
         self.env_path = dotenv_path
 
     def __str__(self):
