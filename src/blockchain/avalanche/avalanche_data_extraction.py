@@ -501,6 +501,7 @@ def extract_p_chain_data(last_day):
     return current_date
 
 
+
 def calculate_p_transaction_value(amounts):
     total_value = sum(int(asset['amount']) for asset in amounts) / 10**9  # Convert to AVAX
     return total_value
