@@ -23,6 +23,7 @@ def append_dataframe_to_sql(table_name, df, database_connection = os.environ.get
     :param df: DataFrame to be appended.
     :param database_connection: Database connection string.
     """
+    database_connection= "postgresql://postgres:root@localhost:5432/onchain_test3"
     for col in df.columns:
         df[col] = df[col].apply(convert_dict_to_json)
     

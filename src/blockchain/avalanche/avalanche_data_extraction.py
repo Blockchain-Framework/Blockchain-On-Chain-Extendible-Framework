@@ -271,7 +271,7 @@ def extract_c_chain_data(last_day):
             avalanche_tx = Avalanche_C_Model(
                 txHash=txHash,
                 blockHash=blockHash,
-                blockHeight=tx.get("blockHeight"),
+                blockHeight=tx.get("blockHeight",0),
                 txType=txType,
                 timestamp=timestamp,
                 sourceChain=tx.get("sourceChain"),
@@ -410,7 +410,7 @@ def extract_p_chain_data(last_day):
                 df_emitted_utxos['date'] = current_date
                 df_consumed_utxos = pd.DataFrame(consumed_utxos)
                 df_consumed_utxos['date'] = current_date
-                
+                print(df_trx)
                 append_dataframe_to_sql('p_transactions', df_trx)
                 append_dataframe_to_sql('p_emitted_utxos', df_emitted_utxos)
                 append_dataframe_to_sql('p_consumed_utxos', df_consumed_utxos)
@@ -436,16 +436,16 @@ def extract_p_chain_data(last_day):
                 txHash=tx.get("txHash"),
                 txType=tx.get("txType"),
                 blockTimestamp=timestamp,
-                blockNumber=tx.get("blockNumber"),
+                blockHeight=tx.get("blockNumber",0),
                 blockHash=tx.get("blockHash"),
                 sourceChain = tx.get("sourceChain",''),
                 destinationChain =  tx.get("destinationChain",''),
                 memo=tx.get("memo"),
                 rewardAddresses = tx.get("rewardAddresses",''),
-                estimatedReward = tx.get("estimatedReward",''),
-                startTimestamp = tx.get("startTimestamp",''),
-                endTimestamp = tx.get("endTimestamp",''),
-                delegationFeePercent = tx.get("delegationFeePercent",''),
+                estimatedReward = tx.get("estimatedReward",0),
+                startTimestamp = tx.get("startTimestamp",0),
+                endTimestamp = tx.get("endTimestamp",0),
+                delegationFeePercent = tx.get("delegationFeePercent",0),
                 nodeId=tx.get("nodeId",''),
                 subnetId=tx.get("subnetId",''),
                 value = tx.get("value",''),
@@ -530,11 +530,11 @@ def calculate_p_transaction_value(amounts):
 
 
 if __name__ == "__main__":
-    extract_x_chain_data("2024-01-17")
-    print("finished x")
+    # extract_x_chain_data("2024-01-17")
+    # print("finished x")
+    #
+    # extract_c_chain_data("2024-01-17")
+    # print("finished c")
     
-    extract_c_chain_data("2024-01-17")
-    print("finished c")
-    
-    extract_p_chain_data("2024-01-17")
+    extract_p_chain_data("2024-02-11")
     print("finished p")

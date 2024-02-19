@@ -23,10 +23,10 @@ class Avalanche_C_Model(GeneralBlockchainModel):
         self.amountCreated = amountCreated
 
 class Avalanche_P_Model(GeneralBlockchainModel):
-    def __init__(self, txHash, txType, blockTimestamp, blockNumber, blockHash, memo, sourceChain, destinationChain, rewardAddresses, estimatedReward, startTimestamp, endTimestamp, delegationFeePercent, nodeId, subnetId, value, amountStaked, amountBurned):
+    def __init__(self, txHash, txType, blockTimestamp, blockHeight, blockHash, memo, sourceChain, destinationChain, rewardAddresses, estimatedReward, startTimestamp, endTimestamp, delegationFeePercent, nodeId, subnetId, value, amountStaked, amountBurned):
         super().__init__(txHash, blockHash, blockTimestamp, value)
         self.txType = txType
-        self.blockNumber = blockNumber
+        self.blockHeight = blockHeight
         self.memo = memo
         self.nodeId = nodeId
         self.subnetId = subnetId
