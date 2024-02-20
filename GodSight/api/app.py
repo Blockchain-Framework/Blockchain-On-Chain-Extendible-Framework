@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 import sys
 import os
+from flasgger import Swagger
 
 from .database.database import db
 from .routes.metric import metrics_blueprint
@@ -15,6 +16,8 @@ load_dotenv()
 def create_app(config=None):
     app = Flask(__name__)
     CORS(app)
+    # Configure app
+    Swagger(app)
 
     if config:
         app.config['SQLALCHEMY_DATABASE_URI'] = f"postgresql://{config.db_user}:{config.db_password}@{config.db_host}:{config.db_port}/{config.db_name}"
