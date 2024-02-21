@@ -1,5 +1,5 @@
 from flask_sqlalchemy import SQLAlchemy
-from database import db
+from ..database.database import db
 
 # models.py
 class Blockchain(db.Model):

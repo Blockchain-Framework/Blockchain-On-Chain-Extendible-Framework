@@ -63,6 +63,7 @@ setup(
         'Flask-SQLAlchemy==3.1.1',
         'Flask-Limiter',
         'tqdm',
+        'flasgger',
     ],
     entry_points={
         'console_scripts': [
