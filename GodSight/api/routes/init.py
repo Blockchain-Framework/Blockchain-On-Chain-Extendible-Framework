@@ -1,11 +1,11 @@
 from flask import Blueprint, request, current_app
-from utils.get_metric_model import metric_route_map
-from models.response import Response # Import the custom Response
-from utils.json_utils import jsonify  # Import the custom jsonify
+from ..utils.get_metric_model import metric_route_map
+from ..models.response import Response # Import the custom Response
+from ..utils.json_utils import jsonify  # Import the custom jsonify
 from datetime import datetime, timedelta
 from sqlalchemy.exc import SQLAlchemyError
 import logging
-from models.chain_info import (Blockchain, ChainMetric)
+from ..models.chain_info import (Blockchain, ChainMetric)
 
 init_blueprint = Blueprint('init', __name__)
 
