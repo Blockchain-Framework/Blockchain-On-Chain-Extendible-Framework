@@ -4,19 +4,19 @@ import sys
 import logging
 import os
 
-from utils.database.database_service import get_query_results, append_dataframe_to_sql
+from GodSight.computation.utils.database.database_service import get_query_results, append_dataframe_to_sql
 
 # Set up basic logging
 logging.basicConfig(level=logging.INFO)
 
 
-def execute_query(query):
+def execute_query(query, config):
     """
     Execute a database query safely.
     Returns a DataFrame or None if an exception occurs.
     """
     try:
-        return get_query_results(query)
+        return get_query_results(query, config)
     except (Exception, psycopg2.DatabaseError) as error:
         logging.error(f"Database error: {error}")
         return None
@@ -27,7 +27,7 @@ def key_mapper(key):
         return func
     return decorator
 
-def add_data_to_database(table, date, blockchain, subChain, value):
+def add_data_to_database(table, date, blockchain, subChain, value, config):
     result_df = pd.DataFrame({
         'date': [date],
         'blockchain': [blockchain],
@@ -36,7 +36,7 @@ def add_data_to_database(table, date, blockchain, subChain, value):
     })
 
     # Insert result into database
-    append_dataframe_to_sql(table, result_df)
+    append_dataframe_to_sql(table, result_df, config)
     
 
 #ALL CHAINS SPECIFIC

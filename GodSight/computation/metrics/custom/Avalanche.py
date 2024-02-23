@@ -1,51 +1,451 @@
 import pandas as pd
-from utils.model.metric import CustomMetric
+from GodSight.computation.utils.model.metric import CustomMetric
 
-
-class TransactionPerSecond(CustomMetric):
-
-    def __init__(self):
-        super().__init__(blockchain='Avalanche', chain='x', name=
-        'trx_per_second', transaction_type='transaction', category=
-                         'Economic Indicators', description='Description')
-
-    def calculate(self, data: pd.DataFrame) -> float:
-        count = data.shape[0]
-        if count > 0:
-            return count / 86400
-        else:
-            return 0
-
-
-class TransactionPerSecond(CustomMetric):
+class Total_stacked_Amount(CustomMetric):
 
     def __init__(self):
-        super().__init__(blockchain='Avalanche', chain='x', name=
-            'trx_per_second', transaction_type='transaction', category=
-            'Economic Indicators', description='Description')
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_stacked_amount', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Total Stacked Amount')
 
     def calculate(self, data: pd.DataFrame) ->float:
-        count = data.shape[0]
-        if count > 0:
-            return count / 86400
+        total_staked = data['amountStaked'].sum()
+        if total_staked > 0:
+            return total_staked
         else:
-            return 0
+            return None
 
 
-
-
-class TransactionPerSecond(CustomMetric):
+class TotalBurnedAmount(CustomMetric):
 
     def __init__(self):
-        super().__init__(blockchain='Avalanche', chain='x', name=
-            'trx_per_second', transaction_type='transaction', category=
-            'Economic Indicators', description='Description')
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_burned_amount', transaction_type='transaction', category
+            ='Economic Indicators', description='Description', display_name
+            ='Total Burned Amount')
 
     def calculate(self, data: pd.DataFrame) ->float:
-        count = data.shape[0]
-        if count > 0:
-            return count / 86400
+        total_burned = data['amountBurned'].sum()
+        if total_burned > 0:
+            return total_burned
         else:
-            return 0
+            return None
+
+
+class stackingDynamicIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_dynamics_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Dynamics Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_amount_burned = data['amountBurned'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        avg_delegation_fee_percent = data['delegationFeePercent'].replace('',
+            '0').astype(float).mean()
+        if total_amount_burned == 0:
+            return None
+        sdi = (total_amount_staked * total_estimated_reward /
+            total_amount_burned * avg_delegation_fee_percent)
+        return sdi
+
+
+class StakingEngagementIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_engagement_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Engagement Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        if total_amount_staked == 0:
+            return None
+        sei = (total_estimated_reward / total_amount_staked if
+            total_amount_staked else 0)
+        return sei
+
+
+
+
+class Total_stacked_Amount(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_stacked_amount', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Total Stacked Amount')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_staked = data['amountStaked'].sum()
+        if total_staked > 0:
+            return total_staked
+        else:
+            return None
+
+
+class TotalBurnedAmount(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_burned_amount', transaction_type='transaction', category
+            ='Economic Indicators', description='Description', display_name
+            ='Total Burned Amount')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_burned = data['amountBurned'].sum()
+        if total_burned > 0:
+            return total_burned
+        else:
+            return None
+
+
+class stackingDynamicIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_dynamics_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Dynamics Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_amount_burned = data['amountBurned'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        avg_delegation_fee_percent = data['delegationFeePercent'].replace('',
+            '0').astype(float).mean()
+        if total_amount_burned == 0:
+            return None
+        sdi = (total_amount_staked * total_estimated_reward /
+            total_amount_burned * avg_delegation_fee_percent)
+        return sdi
+
+
+class StakingEngagementIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_engagement_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Engagement Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        if total_amount_staked == 0:
+            return None
+        sei = (total_estimated_reward / total_amount_staked if
+            total_amount_staked else 0)
+        return sei
+
+
+
+
+class Total_stacked_Amount(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_stacked_amount', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Total Stacked Amount')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_staked = data['amountStaked'].sum()
+        if total_staked > 0:
+            return total_staked
+        else:
+            return None
+
+
+class TotalBurnedAmount(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_burned_amount', transaction_type='transaction', category
+            ='Economic Indicators', description='Description', display_name
+            ='Total Burned Amount')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_burned = data['amountBurned'].sum()
+        if total_burned > 0:
+            return total_burned
+        else:
+            return None
+
+
+class stackingDynamicIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_dynamics_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Dynamics Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_amount_burned = data['amountBurned'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        avg_delegation_fee_percent = data['delegationFeePercent'].replace('',
+            '0').astype(float).mean()
+        if total_amount_burned == 0:
+            return None
+        sdi = (total_amount_staked * total_estimated_reward /
+            total_amount_burned * avg_delegation_fee_percent)
+        return sdi
+
+
+class StakingEngagementIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_engagement_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Engagement Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        if total_amount_staked == 0:
+            return None
+        sei = (total_estimated_reward / total_amount_staked if
+            total_amount_staked else 0)
+        return sei
+
+
+
+
+class Total_stacked_Amount(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_stacked_amount', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Total Stacked Amount')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_staked = data['amountStaked'].sum()
+        if total_staked > 0:
+            return total_staked
+        else:
+            return None
+
+
+class TotalBurnedAmount(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_burned_amount', transaction_type='transaction', category
+            ='Economic Indicators', description='Description', display_name
+            ='Total Burned Amount')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_burned = data['amountBurned'].sum()
+        if total_burned > 0:
+            return total_burned
+        else:
+            return None
+
+
+class stackingDynamicIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_dynamics_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Dynamics Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_amount_burned = data['amountBurned'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        avg_delegation_fee_percent = data['delegationFeePercent'].replace('',
+            '0').astype(float).mean()
+        if total_amount_burned == 0:
+            return None
+        sdi = (total_amount_staked * total_estimated_reward /
+            total_amount_burned * avg_delegation_fee_percent)
+        return sdi
+
+
+class StakingEngagementIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_engagement_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Engagement Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        if total_amount_staked == 0:
+            return None
+        sei = (total_estimated_reward / total_amount_staked if
+            total_amount_staked else 0)
+        return sei
+
+
+
+
+class Total_stacked_Amount(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_stacked_amount', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Total Stacked Amount')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_staked = data['amountStaked'].sum()
+        if total_staked > 0:
+            return total_staked
+        else:
+            return None
+
+
+class TotalBurnedAmount(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_burned_amount', transaction_type='transaction', category
+            ='Economic Indicators', description='Description', display_name
+            ='Total Burned Amount')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_burned = data['amountBurned'].sum()
+        if total_burned > 0:
+            return total_burned
+        else:
+            return None
+
+
+class stackingDynamicIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_dynamics_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Dynamics Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_amount_burned = data['amountBurned'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        avg_delegation_fee_percent = data['delegationFeePercent'].replace('',
+            '0').astype(float).mean()
+        if total_amount_burned == 0:
+            return None
+        sdi = (total_amount_staked * total_estimated_reward /
+            total_amount_burned * avg_delegation_fee_percent)
+        return sdi
+
+
+class StakingEngagementIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_engagement_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Engagement Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        if total_amount_staked == 0:
+            return None
+        sei = (total_estimated_reward / total_amount_staked if
+            total_amount_staked else 0)
+        return sei
+
+
+
+
+class Total_stacked_Amount(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_stacked_amount', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Total Stacked Amount')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_staked = data['amountStaked'].sum()
+        if total_staked > 0:
+            return total_staked
+        else:
+            return None
+
+
+class TotalBurnedAmount(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'total_burned_amount', transaction_type='transaction', category
+            ='Economic Indicators', description='Description', display_name
+            ='Total Burned Amount')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_burned = data['amountBurned'].sum()
+        if total_burned > 0:
+            return total_burned
+        else:
+            return None
+
+
+class stackingDynamicIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_dynamics_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Dynamics Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_amount_burned = data['amountBurned'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        avg_delegation_fee_percent = data['delegationFeePercent'].replace('',
+            '0').astype(float).mean()
+        if total_amount_burned == 0:
+            return None
+        sdi = (total_amount_staked * total_estimated_reward /
+            total_amount_burned * avg_delegation_fee_percent)
+        return sdi
+
+
+class StakingEngagementIndex(CustomMetric):
+
+    def __init__(self):
+        super().__init__(blockchain='Avalanche', chain='p', name=
+            'staking_engagement_index', transaction_type='transaction',
+            category='Economic Indicators', description='Description',
+            display_name='Staking Engagement Index')
+
+    def calculate(self, data: pd.DataFrame) ->float:
+        total_amount_staked = data['amountStaked'].sum()
+        total_estimated_reward = data['estimatedReward'].replace('', '0'
+            ).astype(float).sum()
+        if total_amount_staked == 0:
+            return None
+        sei = (total_estimated_reward / total_amount_staked if
+            total_amount_staked else 0)
+        return sei
 
 

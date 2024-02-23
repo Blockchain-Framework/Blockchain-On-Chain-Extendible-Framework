@@ -1,3 +1,4 @@
+from tqdm import tqdm
 from .db import connect_database
 from GodSight.utils.logs.log import Logger
 
@@ -34,8 +35,9 @@ def insert_blockchain_metadata(data, config):
 
 
 def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta, metric_chain_meta, config):
-    # Connect to the database using a context manager for better resource management
+    # Connect to the database using a context manager for better resource management.
     try:
+        pbar = tqdm(total=100)
         with connect_database(config) as conn, conn.cursor() as cur:
             # Insert metadata for temp
             insert_stmt_meta = """
@@ -48,6 +50,8 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta
             ]
             cur.executemany(insert_stmt_meta, meta_values)
 
+            pbar.update(20)
+
             # Insert mappings for each table
             for mapping in mapping_data:
                 for table, entries in mapping.items():
@@ -57,11 +61,15 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta
                     """
                     cur.executemany(insert_stmt_mapping, entries)
 
+            pbar.update(30)
+
             insert_stmt_metric_meta = """
                 INSERT INTO metric_table (metric_name, description, category, type)
                 VALUES (%(metric_name)s, %(description)s, %(category)s, %(type)s)
             """
             cur.executemany(insert_stmt_metric_meta, metric_meta)
+
+            pbar.update(20)
 
             insert_stmt_metric = """
                 INSERT INTO chain_metric (blockchain_id, blockchain, sub_chain, metric_name)
@@ -69,7 +77,12 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta
             """
             cur.executemany(insert_stmt_metric, metric_chain_meta)
 
+            pbar.update(20)
+
             conn.commit()
+
+            pbar.update(10)
+            pbar.close()
 
     except Exception as e:
         # Assuming logger is configured and available globally or passed as an argument

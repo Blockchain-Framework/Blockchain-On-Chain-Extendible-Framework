@@ -1,7 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from ..database.database import db
 
-
 # models.py
 class Blockchain(db.Model):
     __tablename__ = 'blockchain_table'
@@ -12,7 +11,6 @@ class Blockchain(db.Model):
     # ... other fields ...
 
     metrics = db.relationship('ChainMetric', back_populates='blockchain')
-
 
 class ChainMetric(db.Model):
     __tablename__ = 'chain_metric'

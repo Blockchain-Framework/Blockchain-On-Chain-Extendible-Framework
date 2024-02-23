@@ -1,4 +1,4 @@
-Below is a template for your `README.md` file written in Markdown format, tailored for your GodSight framework. This template includes instructions on installation, setting up the `.env` file, and using the framework's commands.
+Below is an updated version of your `README.md` file in Markdown format, now including the title 'GodSight' and the developer's name and GitHub profile link as requested:
 
 ```markdown
 # GodSight
@@ -57,6 +57,8 @@ EXTRACT_PATH=path/to/extract
 MAPPER_PATH=path/to/mapper
 META_PATH=path/to/meta
 METRIC_PATH=path/to/metric
+API_HOST=localhost
+API_PORT=5000
 ```
 
 Replace the placeholders with your actual database configuration and paths.
@@ -99,10 +101,13 @@ To check the current version of the GodSight framework installed, run:
 GodSight --version
 ```
 
+## Developers
+
+- Dilusha - [GitHub Profile](https://github.com/Dilusha-Madushan)
+
 ## Support
 
 For support and further inquiries, please contact [your email or support channel].
-
 ```
 
-Make sure to replace placeholders like `[your email or support channel]` with actual contact information or support channels you have for your project. This README provides a basic guide for users to get started with your framework, including installation, configuration, and basic usage commands.
+Please ensure to replace `[your email or support channel]` with the actual contact information or support channel details for your project. This README provides a comprehensive starting point for users to install, configure, and begin using your GodSight framework.

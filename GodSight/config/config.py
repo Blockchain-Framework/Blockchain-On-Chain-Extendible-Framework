@@ -12,6 +12,8 @@ class Config:
         self.db_password = os.getenv('DB_PASSWORD')
         self.db_port = os.getenv('DB_PORT')
 
+        self.db_url = os.getenv('DB_URL')
+
         self.extract_path = os.getenv('EXTRACT_PATH')
         self.mapper_path = os.getenv('MAPPER_PATH')
         self.meta_path = os.getenv('META_PATH')
@@ -19,6 +21,8 @@ class Config:
 
         self.api_host = os.getenv('API_HOST')
         self.api_port = os.getenv('API_PORT')
+
+        self.secret_api_key = os.getenv('SECRET_API_KEY')
 
         self.env_path = dotenv_path
 

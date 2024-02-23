@@ -1,5 +1,5 @@
-from utils.scripts.model import GeneralTransactionModel
-from utils.scripts.model import GeneralUTXOModel
+from GodSight.extraction.utils.scripts.model import GeneralTransactionModel
+from GodSight.extraction.utils.scripts.model import GeneralUTXOModel
 
 
 # Mapping of function names to actual functions for dynamic invocation

@@ -18,27 +18,33 @@ class MetricBase(db.Model):
         }
 
 
+class Metric(db.Model):
+    __tablename__ = 'metric_table'
+    metric_name = db.Column(db.String, primary_key=True)
+    description = db.Column(db.String)
+    display_name = db.Column(db.String)
+
+    def serialize(self):
+        return {
+            'metric_name': self.metric_name,
+            'description': self.description,
+            'display_name': self.display_name
+        }
+
+
 class TransactionsPerDay(MetricBase):
     __tablename__ = 'trx_per_day'
 
 
-class TransactionsPerSecond(MetricBase):
-    __tablename__ = 'trx_per_second'
-
-
 class TotalTransactions(MetricBase):
-    __tablename__ = 'total_trxs'
+    __tablename__ = 'total_transactions'
 
 
 class AverageTransactionAmount(MetricBase):
-    __tablename__ = 'avg_trx_amount'
+    __tablename__ = 'average_transaction_amount'
 
 
-class CumulativeNumberOfTransactions(MetricBase):
-    __tablename__ = 'cumulative_number_of_trx'
-
-
-class AverageTransactionsPerHour(MetricBase):
+class AvgTrxsPerHour(MetricBase):
     __tablename__ = 'avg_trxs_per_hour'
 
 
@@ -46,8 +52,8 @@ class TotalBlocks(MetricBase):
     __tablename__ = 'total_blocks'
 
 
-class AverageTransactionsPerBlock(MetricBase):
-    __tablename__ = 'avg_tx_per_block'
+class TrxPerBlock(MetricBase):
+    __tablename__ = 'trx_per_block'
 
 
 class ActiveAddresses(MetricBase):
@@ -62,12 +68,12 @@ class SumEmittedUtxoAmount(MetricBase):
     __tablename__ = 'sum_emitted_utxo_amount'
 
 
-class AvgEmmitedUtxoAmount(MetricBase):
-    __tablename__ = 'avg_emmited_utxo_amount'
+class AvgEmittedUtxoAmount(MetricBase):
+    __tablename__ = 'avg_emitted_utxo_amount'
 
 
-class MedianEmmitedUtxoValue(MetricBase):
-    __tablename__ = 'median_emmited_utxo_amount'
+class MedianEmittedUtxoAmount(MetricBase):
+    __tablename__ = 'median_emitted_utxo_amount'
 
 
 class SumConsumedUtxoAmount(MetricBase):
@@ -82,17 +88,9 @@ class MedianConsumedUtxoAmount(MetricBase):
     __tablename__ = 'median_consumed_utxo_amount'
 
 
-class LargeTransactionMonitoring(MetricBase):
+class LargeTrx(MetricBase):
     __tablename__ = 'large_trx'
 
 
 class WhaleAddressActivity(MetricBase):
     __tablename__ = 'whale_address_activity'
-
-
-class TotalStakedAmount(MetricBase):
-    __tablename__ = 'total_staked_amount'
-
-
-class TotalBurnedAmount(MetricBase):
-    __tablename__ = 'total_burned_amount'

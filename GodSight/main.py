@@ -2,6 +2,7 @@ import argparse
 import sys
 import os
 import uuid
+from tqdm import tqdm
 from GodSight.config.config import Config
 from GodSight.utils.logs.log import Logger
 
@@ -24,22 +25,21 @@ def start_api():
 
 
 def add_blockchain(file_name):
-
-    from GodSight.utils.database.db import test_connection, initialize_database
-    from GodSight.utils.database.services import check_blockchain_exists, insert_blockchain_metadata_and_mappings, \
-        delete_blockchain_data, get_all_metrics
-
-    from GodSight.utils.handler.fileReader import read_blockchain_metadata
-    from GodSight.utils.handler.filerWriter import write_functions_to_file, write_metric_classes_to_script, \
-        extract_and_write_class_definitions
-    from GodSight.utils.handler.helper import format_config_for_insertion, copy_file, delete_files_in_directory, \
-        concatenate_and_fill_dfs
-    from GodSight.utils.handler.validate import validate_metadata, validate_extract_and_mapper, load_metrics, \
-        validate_custom_metrics
-
     blockchain_name = None
 
     try:
+
+        from GodSight.utils.database.db import test_connection, initialize_database
+        from GodSight.utils.database.services import check_blockchain_exists, insert_blockchain_metadata_and_mappings, \
+            delete_blockchain_data, get_all_metrics
+
+        from GodSight.utils.handler.fileReader import read_blockchain_metadata
+        from GodSight.utils.handler.filerWriter import write_functions_to_file, write_metric_classes_to_script, \
+            extract_and_write_class_definitions
+        from GodSight.utils.handler.helper import format_config_for_insertion, copy_file, delete_files_in_directory, \
+            concatenate_and_fill_dfs
+        from GodSight.utils.handler.validate import validate_metadata, validate_extract_and_mapper, load_metrics, \
+            validate_custom_metrics
 
         config = Config()
 
@@ -71,25 +71,32 @@ def add_blockchain(file_name):
         chains = []
         mapper_data = []
         functions = []
-        metric_meta = []
+        blockchain_metrics = {}
         metric_chain_meta = []
         all_test_data = {}
         for subchain in metadata['subChains']:
-            # logger.log_info(f"check {subchain['name']}")
+
+            logger.log_info(f"checking {metadata['name']} {subchain['name']} data")
+
+            pbar = tqdm(total=100)
 
             extract_file_path = os.path.join(config.extract_path, subchain['extract_file'] + '.py')
             mapper_file_path = os.path.join(config.mapper_path, subchain['mapper_file'] + '.py')
 
-            final_validation, validation_message, funcs, mappings, test_data = validate_extract_and_mapper(
+            final_validation, validation_message, funcs, mappings, test_data, pbar = validate_extract_and_mapper(
                 extract_file_path,
                 mapper_file_path,
-                subchain['startDate'])
+                subchain['startDate'],
+                pbar)
 
             if not final_validation:
+                pbar.close()
                 logger.log_error(validation_message)
                 return
 
             all_test_data[subchain['name']] = test_data
+
+            pbar.update(10)
 
             chain_unique_id = str(uuid.uuid4())
 
@@ -103,6 +110,8 @@ def add_blockchain(file_name):
 
             subchain_mappings = format_config_for_insertion(mappings, metadata['name'], subchain['name'])
 
+            pbar.update(10)
+
             mapper_data.append(subchain_mappings)
 
             functions.append({
@@ -111,13 +120,18 @@ def add_blockchain(file_name):
                 'sources_files': [extract_file_path, mapper_file_path]
             })
 
+            pbar.update(10)
+
             chains.append(subchain['name'])
 
-            chain_basic_metrics = subchain['metrics']
+            chain_basic_metrics = list(set(subchain['metrics']))
 
-            if not all(metric in chain_basic_metrics for metric in metrics):
+            if not all(metric in metrics for metric in chain_basic_metrics):
+                pbar.close()
                 logger.log_error("Unknown Basic Metric Exist")
                 return
+
+            blockchain_metrics[subchain['name']] = chain_basic_metrics
 
             for metric in chain_basic_metrics:
                 metric_chain_meta.append({
@@ -127,8 +141,15 @@ def add_blockchain(file_name):
                     'metric_name': metric
                 })
 
+            pbar.update(10)
+
+            pbar.close()
+
         if 'default' not in chains:
+            logger.log_info(f"Adding {metadata['name']} default meta data -- applying for multi-chain blockchains")
+            pbar = tqdm(total=100)
             chain_unique_id = str(uuid.uuid4())
+            pbar.update(10)
             meta_data.append({
                 'id': chain_unique_id,
                 'blockchain': metadata['name'],
@@ -136,29 +157,68 @@ def add_blockchain(file_name):
                 'start_date': '1900-01-01',
                 'description': 'Default chain: representing whole chains'
             })
+            pbar.update(20)
+
+            common_metrics = set(blockchain_metrics[next(iter(blockchain_metrics))])
+
+            # Iterate over the rest of the lists in the dictionary
+            for key in blockchain_metrics:
+                common_metrics = common_metrics.intersection(blockchain_metrics[key])
+
+            # Convert the set back to a list, if needed
+            common_metric_list = list(common_metrics)
+
+            for metric in common_metric_list:
+                metric_chain_meta.append({
+                    'blockchain_id': chain_unique_id,
+                    'blockchain': metadata['name'],
+                    'sub_chain': 'default',
+                    'metric_name': metric
+                })
+
+            pbar.update(20)
 
             test_data = concatenate_and_fill_dfs(all_test_data)
 
+            pbar.update(50)
+
             all_test_data['default'] = test_data
+            pbar.close()
 
         logger.log_info('extract and mapping validation passed')
 
+        logger.log_info('Checking custom metrics data')
+
+        pbar = tqdm(total=100)
+
         metric_path = os.path.join(config.metric_path, metadata['metric_file'] + '.py')
 
-        metric_classes, metric_meta, metric_chain_meta = load_metrics(metric_path, meta_data, metrics)
+        pbar.update(10)
+
+        metric_classes, metric_meta, metric_chain_meta = load_metrics(metric_path, meta_data, metrics, metric_chain_meta)
+
+        pbar.update(40)
         metric_validation = validate_custom_metrics(metric_classes, all_test_data)
+        pbar.update(40)
 
         if not metric_validation:
             logger.log_error("Metric Validation is failed.")
             return
 
+        pbar.update(10)
+        pbar.close()
+
+        logger.log_info('Inserting meta data into database')
+
         insert_blockchain_metadata_and_mappings(meta_data, mapper_data, metric_meta, metric_chain_meta, config)
+
+        logger.log_info('Writing files')
 
         output_file_path = 'GodSight/extraction/user_functions'
 
         extract_imports = [
-            "from utils.scripts.utils.time_utils import convert_to_gmt_timestamp",
-            "from utils.scripts.utils.http_utils import fetch_transactions"
+            "from GodSight.extraction.utils.scripts.utils.time_utils import convert_to_gmt_timestamp",
+            "from GodSight.extraction.utils.scripts.utils.http_utils import fetch_transactions"
         ]
 
         if write_functions_to_file(functions, output_file_path, extract_imports):
@@ -169,7 +229,7 @@ def add_blockchain(file_name):
 
         metric_imports = [
             "import pandas as pd",
-            "from utils.model.metric import CustomMetric"
+            "from GodSight.computation.utils.model.metric import CustomMetric"
         ]
 
         output_file_path = 'GodSight/computation/metrics/custom/'
@@ -185,6 +245,46 @@ def add_blockchain(file_name):
     except Exception as e:
         if blockchain_name is not None:
             delete_blockchain_data(blockchain_name, config)
+        logger.log_error(e)
+
+
+def extract_date(date):
+    try:
+        from GodSight.extraction.main import extract_data
+
+        config = Config()
+        extract_data(date, config)
+    except Exception as e:
+        logger.log_error(e)
+
+
+def extract_date_range(start_date, end_date):
+    try:
+        from GodSight.extraction.main import extract_data_for_date_range
+
+        config = Config()
+        extract_data_for_date_range(start_date, end_date, config)
+    except Exception as e:
+        logger.log_error(e)
+
+
+def compute_date(date):
+    try:
+        from GodSight.computation.main import compute_data
+
+        config = Config()
+        compute_data(date, config)
+    except Exception as e:
+        logger.log_error(e)
+
+
+def compute_date_range(start_date, end_date):
+    try:
+        from GodSight.computation.main import compute_data_for_date_range
+
+        config = Config()
+        compute_data_for_date_range(start_date, end_date, config)
+    except Exception as e:
         logger.log_error(e)
 
 
@@ -208,13 +308,11 @@ def print_logo():
 
 
 def main():
-    # Main parser
     parser = argparse.ArgumentParser(description="GodSight Framework CLI")
-    parser.add_argument('--version', action='version', version='GodSight 1.0.0', help="Show the version number and exit")
-
-    # Subparsers for commands
+    parser.add_argument('--version', action='version', version='GodSight 1.0.0',
+                        help="Show the version number and exit")
     subparsers = parser.add_subparsers(dest='command', help='sub-command help')
-    subparsers.required = True  # Makes sure at least one sub-command is provided
+    subparsers.required = True
 
     # Sub-command: add-blockchain
     parser_add = subparsers.add_parser('add-blockchain', help='Add a blockchain file')
@@ -226,6 +324,16 @@ def main():
     # Sub-command: start
     parser_start = subparsers.add_parser('start', help='Start a specific service')
     parser_start.add_argument('service', help='The service to start (e.g., "api")')
+
+    # Sub-command: extract
+    parser_extract = subparsers.add_parser('extract', help='Extract data for a specific date or date range')
+    parser_extract.add_argument('dates', nargs='+',
+                                help='Date or date range for extraction (YYYY/MM/DD [start_date end_date])')
+
+    # Sub-command: compute
+    parser_compute = subparsers.add_parser('compute', help='Compute data for a specific date or date range')
+    parser_compute.add_argument('dates', nargs='+',
+                                help='Date or date range for computation (YYYY/MM/DD [start_date end_date])')
 
     args = parser.parse_args()
 
@@ -241,9 +349,23 @@ def main():
             sys.exit(1)
     elif args.command == 'info':
         display_info()
+    elif args.command == 'extract':
+        if len(args.dates) == 1:
+            extract_date(args.dates[0])
+        elif len(args.dates) == 2:
+            extract_date_range(args.dates[0], args.dates[1])
+        else:
+            print("Invalid number of dates provided for extraction.")
+            sys.exit(1)
+    elif args.command == 'compute':
+        if len(args.dates) == 1:
+            compute_date(args.dates[0])
+        elif len(args.dates) == 2:
+            compute_date_range(args.dates[0], args.dates[1])
+        else:
+            print("Invalid number of dates provided for computation.")
+            sys.exit(1)
     else:
-        # This block might be unnecessary because argparse will handle unknown commands
-        # and display the help message automatically.
         parser.print_help()
         sys.exit(1)
 
