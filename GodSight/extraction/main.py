@@ -1,4 +1,5 @@
-from GodSight.extraction.utils.database.services import create_extraction_tables_if_missing, get_blockchains, get_subchains, get_id
+from GodSight.extraction.utils.database.services import create_extraction_tables_if_missing, get_blockchains, \
+    get_subchains, get_chain_id, Is_original_subchain
 from .workflow import extract_and_store_data
 from .config import Config
 import argparse
@@ -28,11 +29,15 @@ def extract_data(date, config):
             subchains = get_subchains(config, blockchain)
             create_extraction_tables_if_missing(config, subchains)
             for subchain in subchains:
-                id = get_id(config, blockchain, subchain)
+                if subchain == 'default':
+                    is_original = Is_original_subchain(config, blockchain, subchain)
+                    if not is_original: continue
+                id = get_chain_id(config, blockchain, subchain)
                 extract_and_store_data(blockchain, subchain, date, id, config)
 
     except Exception as e:
         logger.log_error(f"Extraction failed {e}")
+        raise(e)
 
 
 def extract_data_for_date_range(start_date_str, end_date_str, config):
@@ -53,7 +58,7 @@ def extract_data_for_date_range(start_date_str, end_date_str, config):
                 subchains = get_subchains(config, blockchain)
                 create_extraction_tables_if_missing(config, subchains)
                 for subchain in subchains:
-                    id = get_id(config, blockchain, subchain)
+                    id = get_chain_id(config, blockchain, subchain)
                     extract_and_store_data(blockchain, subchain, current_date_str, id, config)
             current_date += timedelta(days=1)
 
@@ -72,7 +77,7 @@ def process(config):
     for date in args.dates:
         for blockchain in blockchains:
             for subchain in subchains:
-                id = get_id(config, blockchain, subchain)
+                id = get_chain_id(config, blockchain, subchain)
                 extract_and_store_data(blockchain, subchain, date, id, config)
 
 

@@ -124,12 +124,22 @@ def get_subchains(blockchain, config):
     query =f"SELECT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain != 'default'"
     return get_query_results(query, config)
 
-def get_metrics(blockchain, subchain, config):
+def get_subchain_metrics(blockchain, subchain, config):
     query = f"""
     SELECT m.metric_name 
     FROM metric_table m 
     JOIN chain_metric cm ON m.metric_name = cm.metric_name 
     JOIN blockchain_table b ON cm.blockchain_id = b.id 
     WHERE b.blockchain = '{blockchain}' AND b.sub_chain = '{subchain}';
+    """
+    return get_query_results(query, config)
+
+def get_chain_basic_metrics(blockchain, config):
+    query = f"""
+    SELECT m.metric_name, m.grouping_type
+    FROM metric_table m 
+    JOIN chain_metric cm ON m.metric_name = cm.metric_name 
+    JOIN blockchain_table b ON cm.blockchain_id = b.id 
+    WHERE b.blockchain = '{blockchain}' AND m.type = 'basic';
     """
     return get_query_results(query, config)

@@ -116,7 +116,7 @@ def get_subchains(config, blockchain):
     return subchains
 
 
-def get_id(config, blockchain, subchain):
+def get_chain_id(config, blockchain, subchain):
     try:
         with connect_database(config) as conn:
             with conn.cursor() as cur:
@@ -138,3 +138,30 @@ def delete_existing_records(chain, current_date, config):
             for table in tables:
                 cur.execute(f"DELETE FROM {table} WHERE date = %s", (current_date,))
         conn.commit()
+
+def check_subchain_last_extracted_date(config, blockchain_name, subchain_name):
+    conn = connect_database(config)
+    if conn is not None:
+        with conn.cursor() as cur:
+            cur.execute("SELECT timestasmp FROM workflow_meta_table WHERE chain = %s AND subchain = %s AND task = %s AND status = %s ORDER BY timestasmp DESC LIMIT 1", (blockchain_name, subchain_name, 'extraction', 'success',))
+            result = cur.fetchone() is not None
+            return result
+    return False
+
+def get_subchain_start_date(config, blockchain_name, subchain_name):
+    conn = connect_database(config)
+    if conn is not None:
+        with conn.cursor() as cur:
+            cur.execute("SELECT start_date FROM blockchain_table WHERE blockchain = %s AND sub_chain = %s", (blockchain_name, subchain_name,))
+            result = cur.fetchone() is not None
+            return result
+    return False
+
+def Is_original_subchain(config, blockchain_name, subchain_name):
+    conn = connect_database(config)
+    if conn is not None:
+        with conn.cursor() as cur:
+            cur.execute("SELECT original FROM blockchain_table WHERE blockchain = %s AND sub_chain = %s", (blockchain_name, subchain_name,))
+            result = cur.fetchone() is not None
+            return result
+    return False

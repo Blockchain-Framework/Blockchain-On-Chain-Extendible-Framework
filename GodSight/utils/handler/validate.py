@@ -410,7 +410,8 @@ def load_metrics(script_path, meta_data, metrics, metric_chain_meta):
                 'description': metric_instance.description,
                 'category': metric_instance.category,
                 'display_name': metric_instance.display_name,
-                'type': 'custom'
+                'type': 'custom',
+                'grouping_type': None
             })
 
             chain = metric_instance.chain
