@@ -45,27 +45,36 @@ CREATE TABLE IF NOT EXISTS feature_mappings (
     PRIMARY KEY (id, blockchain, sub_chain, sourceField)
 );
 
---CREATE TABLE IF NOT EXISTS emitted_utxos_feature_mappings (
---    id SERIAL,
---    blockchain VARCHAR(255) NOT NULL,
---	sub_chain VARCHAR(255) NOT NULL,
---    sourceField VARCHAR(255) NOT NULL,
---    targetField VARCHAR(255) NOT NULL,
---    type VARCHAR(50) NOT NULL, -- 'feature' or 'function'
---    info VARCHAR(255), -- Function name or NULL
---    PRIMARY KEY (id, blockchain, sub_chain, sourceField)
---);
---
---CREATE TABLE IF NOT EXISTS consumed_utxos_feature_mappings (
---    id SERIAL,
---    blockchain VARCHAR(255) NOT NULL,
---	sub_chain VARCHAR(255) NOT NULL,
---    sourceField VARCHAR(255) NOT NULL,
---    targetField VARCHAR(255) NOT NULL,
---    type VARCHAR(50) NOT NULL, -- 'feature' or 'function'
---    info VARCHAR(255), -- Function name or NULL
---    PRIMARY KEY (id, blockchain, sub_chain, sourceField)
---);
+CREATE TABLE IF NOT EXISTS emitted_utxos_feature_mappings (
+    id SERIAL,
+    blockchain VARCHAR(255) NOT NULL,
+	sub_chain VARCHAR(255) NOT NULL,
+    sourceField VARCHAR(255) NOT NULL,
+    targetField VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- 'feature' or 'function'
+    info VARCHAR(255), -- Function name or NULL
+    PRIMARY KEY (id, blockchain, sub_chain, sourceField)
+);
+
+CREATE TABLE IF NOT EXISTS consumed_utxos_feature_mappings (
+    id SERIAL,
+    blockchain VARCHAR(255) NOT NULL,
+	sub_chain VARCHAR(255) NOT NULL,
+    sourceField VARCHAR(255) NOT NULL,
+    targetField VARCHAR(255) NOT NULL,
+    type VARCHAR(50) NOT NULL, -- 'feature' or 'function'
+    info VARCHAR(255), -- Function name or NULL
+    PRIMARY KEY (id, blockchain, sub_chain, sourceField)
+);
+
+CREATE TABLE IF NOT EXISTS metrics_data (
+    date DATE NOT NULL,
+    blockchain VARCHAR(255) NOT NULL,
+    subchain VARCHAR(255) NOT NULL,
+    metric VARCHAR(255) NOT NULL,
+    value FLOAT NOT NULL
+);
+
 
 
 DO $$

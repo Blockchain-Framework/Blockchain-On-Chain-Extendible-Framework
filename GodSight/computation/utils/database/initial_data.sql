@@ -25,6 +25,15 @@ CREATE TABLE chain_metric (
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE metrics_data (
+    date DATE NOT NULL,
+    blockchain VARCHAR(255) NOT NULL,
+    subchain VARCHAR(255) NOT NULL,
+    metric VARCHAR(255) NOT NULL,
+    value FLOAT NOT NULL
+);
+
+
 INSERT INTO blockchain_table (blockchain, sub_chain, start_date) VALUES
 ('Avalanche', 'x', '2024-01-19'),
 ('Avalanche', 'c', '2024-01-19'),
