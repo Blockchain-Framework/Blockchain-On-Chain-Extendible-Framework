@@ -1,6 +1,7 @@
 from GodSight.extraction.utils.scripts.model import GeneralTransactionModel
 from GodSight.extraction.utils.scripts.model import GeneralUTXOModel
 
+from GodSight.extraction.utils.scripts.model import GeneralTransaction
 
 # Mapping of function names to actual functions for dynamic invocation
 def data_mapper(config, raw_trxs, raw_emitted_utxos, raw_consumed_utxos):

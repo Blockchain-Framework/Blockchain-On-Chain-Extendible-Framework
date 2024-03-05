@@ -61,6 +61,7 @@ class MetricCalculationWorkflowManager:
                     continue
 
                 # Calculate the metric
+                #Todo : get last calculated date then calculate the metrics from that daste to given date if there is no last date get the last date from block chain (start date)
                 metric_value = metric_instance.calculate(data)  # Pass the correct data
                 logger.log_info(
                     f"Calculated {metric_instance.name} for {blockchain} subchain {subchain}: {metric_value}")
@@ -77,6 +78,8 @@ class MetricCalculationWorkflowManager:
             # Process BaseMetric instances separately if needed
             for blueprint in base_metric_blueprints:
                 metric_instance = blueprint()
+                #Todo : get last calculated date then calculate the metrics from that daste to given date if there is no last date get the last date from block chain (start date)
+
                 metric_value = metric_instance.calculate(blockchain, subchain, date, config)  # Example signature
                 print(metric_instance.name, metric_value)
                 logger.log_info(
