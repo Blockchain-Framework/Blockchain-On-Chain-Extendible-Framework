@@ -22,9 +22,9 @@ def insert_blockchain_metadata(data, config):
             with conn.cursor() as cur:
                 # Example insertion, adjust according to your schema
                 cur.execute(
-                    "INSERT INTO blockchain_table (blockchain, sub_chain, start_date, description) VALUES (%s, %s, "
-                    "%s, %s)",
-                    data['blockchain'], data['sub_chain'], data['start_date'], data['description'])
+                    "INSERT INTO blockchain_table (blockchain, sub_chain, original, start_date, description) VALUES (%s, %s, "
+                    "%s, %s, %s)",
+                    data['blockchain'], data['sub_chain'], data['original'], data['start_date'], data['description'])
                 conn.commit()
 
                 # Additional logic for subChains and storing extract.py and mapper.py goes here
@@ -41,11 +41,11 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta
         with connect_database(config) as conn, conn.cursor() as cur:
             # Insert metadata for temp
             insert_stmt_meta = """
-                INSERT INTO blockchain_table (id, blockchain, sub_chain, start_date, description)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO blockchain_table (id, blockchain, sub_chain, original, start_date, description)
+                VALUES (%s, %s, %s, %s, %s, %s)
             """
             meta_values = [
-                (data['id'], data['blockchain'], data['subchain'], data['start_date'], data['description'])
+                (data['id'], data['blockchain'], data['subchain'], data['original'], data['start_date'], data['description'])
                 for data in meta_data
             ]
             cur.executemany(insert_stmt_meta, meta_values)

@@ -1,5 +1,6 @@
 import psycopg2
 from ...logs.log import Logger
+import duckdb
 
 logger = Logger("GodSight")
 
@@ -62,3 +63,8 @@ def initialize_database(config):
     except Exception as e:
         logger.log_error(f"Database failed: {e}")
         raise Exception(e)
+
+def initialize_duck_db():
+    # Create an in-memory DuckDB instance
+    return duckdb.connect(database=':memory:', read_only=False)
+

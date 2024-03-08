@@ -2,7 +2,7 @@ CREATE TABLE IF NOT EXISTS blockchain_table (
     id UUID NOT NULL,
     blockchain VARCHAR(255) NOT NULL,
     sub_chain VARCHAR(255) NOT NULL,
-    original BOOL NOT NULL
+    original BOOL NOT NULL,
     start_date DATE NOT NULL,
     description VARCHAR(255) NULL,
     create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -33,8 +33,7 @@ CREATE TABLE IF NOT EXISTS chain_metric (
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
-CREATE TABLE IF NOT EXISTS feature_mappings (
+CREATE TABLE IF NOT EXISTS transactions_feature_mappings (
     id SERIAL,
     blockchain VARCHAR(255) NOT NULL,
 	sub_chain VARCHAR(255) NOT NULL,
@@ -75,7 +74,33 @@ CREATE TABLE IF NOT EXISTS metrics_data (
     value FLOAT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS workflow_meta_table (
+    id SERIAL PRIMARY KEY,
+    chain VARCHAR(255),
+    subchain VARCHAR(255),
+    status VARCHAR(255),
+    task VARCHAR(255),
+    error VARCHAR(255),
+    timestamp TIMESTAMP
+);
 
+CREATE TABLE IF NOT EXISTS transaction_model (
+    field_name VARCHAR(64) PRIMARY KEY,
+    data_type VARCHAR(64),
+    description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS utxo_model (
+    field_name VARCHAR(64) PRIMARY KEY,
+    data_type VARCHAR(64),
+    description TEXT
+);
+
+CREATE TABLE IF NOT EXISTS general_model (
+    field_name VARCHAR(64) PRIMARY KEY,
+    data_type VARCHAR(64),
+    description TEXT
+);
 
 DO $$
 BEGIN
@@ -101,10 +126,118 @@ BEGIN
     END IF;
 END $$;
 
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM transaction_model LIMIT 1) THEN
+    INSERT INTO transaction_model (field_name, data_type, description) VALUES
+        ('tx_hash', 'VARCHAR(64)', 'The hash of the transaction'),
+        ('block_hash', 'VARCHAR(64)', 'The hash of the block containing the transaction'),
+        ('timestamp', 'BIGINT', 'The timestamp of the transaction'),
+        ('block_height', 'BIGINT', 'The height of the block containing the transaction'),
+        ('tx_type', 'VARCHAR(64)', 'The type of the transaction'),
+        ('memo', 'TEXT', 'A memo or note associated with the transaction'),
+        ('node_id', 'VARCHAR(64)', 'The identifier of the node where the transaction was processed'),
+        ('chain_format', 'VARCHAR(64)', 'The format of the blockchain (e.g., account-based, UTXO-based)'),
+        ('gas_price', 'NUMERIC', 'The price of gas for the transaction (for account-based blockchains)'),
+        ('amount_created', 'NUMERIC', 'The amount of tokens created in the transaction'),
+        ('source_chain', 'VARCHAR(64)', 'The source chain for cross-chain or multi-chain transactions'),
+        ('destination_chain', 'VARCHAR(64)', 'The destination chain for cross-chain or multi-chain transactions'),
+        ('subnet_id', 'VARCHAR(64)', 'The identifier of the subnet for multi-chain ecosystems'),
+        ('amount_staked', 'NUMERIC', 'The amount of tokens staked in the transaction (for PoS blockchains)'),
+        ('estimated_reward', 'NUMERIC', 'The estimated reward for staking or delegation'),
+        ('start_timestamp', 'BIGINT', 'The start timestamp for staking or delegation period'),
+        ('end_timestamp', 'BIGINT', 'The end timestamp for staking or delegation period'),
+        ('delegation_fee_percent', 'NUMERIC', 'The fee percentage for delegation'),
+        ('amount_burned', 'NUMERIC', 'The amount of tokens burned in the transaction'),
+        ('contract_address', 'VARCHAR(64)', 'The address of the smart contract involved in the transaction'),
+        ('function_signature', 'VARCHAR(64)', 'The signature of the function called in the smart contract'),
+        ('input_data', 'TEXT', 'The input data for the function call'),
+        ('output_data', 'TEXT', 'The output data from the function call'),
+        ('proposal_id', 'VARCHAR(64)', 'The identifier of the on-chain governance proposal'),
+        ('vote_option', 'VARCHAR(64)', 'The vote option chosen for the governance proposal'),
+        ('voting_power', 'NUMERIC', 'The voting power associated with the vote'),
+        ('is_private', 'BOOLEAN', 'Indicates whether the transaction is private or shielded'),
+        ('privacy_type', 'VARCHAR(64)', 'The type of privacy mechanism used (e.g., zk-SNARKs, ring signatures)'),
+        ('fee_amount', 'NUMERIC', 'The amount of fees paid for the transaction'),
+        ('fee_token', 'VARCHAR(64)', 'The token used to pay the transaction fees'),
+        ('sender_address', 'VARCHAR(64)', 'The address of the sender of the transaction'),
+        ('recipient_address', 'VARCHAR(64)', 'The address of the recipient of the transaction'),
+        ('block_producer', 'VARCHAR(64)', 'The identifier of the block producer'),
+        ('block_producer_reward', 'NUMERIC', 'The reward received by the block producer'),
+        ('amount_unlocked', 'NUMERIC', 'The amount of tokens unlocked in the transaction (for UTXO-based blockchains)'),
+        ('reward_addresses', 'TEXT', 'The addresses receiving mining rewards (for UTXO-based blockchains)');
+    END IF;
+END $$;
 
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM utxo_model LIMIT 1) THEN
+    INSERT INTO utxo_model (field_name, data_type, description) VALUES
+        ('utxo_id', 'VARCHAR(64)', 'The unique identifier of the UTXO'),
+        ('tx_hash', 'VARCHAR(64)', 'The hash of the transaction that created the UTXO'),
+        ('tx_type', 'VARCHAR(64)', 'The type of the transaction that created the UTXO'),
+        ('addresses', 'TEXT', 'The addresses associated with the UTXO'),
+        ('value', 'NUMERIC', 'The value of the UTXO'),
+        ('block_hash', 'VARCHAR(64)', 'The hash of the block containing the transaction that created the UTXO'),
+        ('asset_id', 'VARCHAR(64)', 'The identifier of the asset associated with the UTXO'),
+        ('asset_name', 'VARCHAR(64)', 'The name of the asset associated with the UTXO'),
+        ('asset_symbol', 'VARCHAR(64)', 'The symbol of the asset associated with the UTXO'),
+        ('denomination', 'NUMERIC', 'The denomination of the asset associated with the UTXO'),
+        ('asset_type', 'VARCHAR(64)', 'The type of the asset associated with the UTXO'),
+        ('amount', 'NUMERIC', 'The amount of the asset associated with the UTXO');
+    END IF;
+END $$;
 
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM general_model LIMIT 1) THEN
+    INSERT INTO general_model (field_name, data_type, description) VALUES
+        ('tx_hash', 'VARCHAR(64)', 'The hash of the transaction'),
+        ('block_hash', 'VARCHAR(64)', 'The hash of the block containing the transaction'),
+        ('timestamp', 'BIGINT', 'The timestamp of the transaction'),
+        ('block_height', 'BIGINT', 'The height of the block containing the transaction'),
+        ('tx_type', 'VARCHAR(64)', 'The type of the transaction'),
+        ('memo', 'TEXT', 'A memo or note associated with the transaction'),
+        ('node_id', 'VARCHAR(64)', 'The identifier of the node where the transaction was processed'),
+        ('chain_format', 'VARCHAR(64)', 'The format of the blockchain (e.g., account-based, UTXO-based)'),
+        ('gas_price', 'NUMERIC', 'The price of gas for the transaction (for account-based blockchains)'),
+        ('amount_created', 'NUMERIC', 'The amount of tokens created in the transaction'),
+        ('source_chain', 'VARCHAR(64)', 'The source chain for cross-chain or multi-chain transactions'),
+        ('destination_chain', 'VARCHAR(64)', 'The destination chain for cross-chain or multi-chain transactions'),
+        ('subnet_id', 'VARCHAR(64)', 'The identifier of the subnet for multi-chain ecosystems'),
+        ('amount_staked', 'NUMERIC', 'The amount of tokens staked in the transaction (for PoS blockchains)'),
+        ('estimated_reward', 'NUMERIC', 'The estimated reward for staking or delegation'),
+        ('start_timestamp', 'BIGINT', 'The start timestamp for staking or delegation period'),
+        ('end_timestamp', 'BIGINT', 'The end timestamp for staking or delegation period'),
+        ('delegation_fee_percent', 'NUMERIC', 'The fee percentage for delegation'),
+        ('amount_burned', 'NUMERIC', 'The amount of tokens burned in the transaction'),
+        ('contract_address', 'VARCHAR(64)', 'The address of the smart contract involved in the transaction'),
+        ('function_signature', 'VARCHAR(64)', 'The signature of the function called in the smart contract'),
+        ('input_data', 'TEXT', 'The input data for the function call'),
+        ('output_data', 'TEXT', 'The output data from the function call'),
+        ('proposal_id', 'VARCHAR(64)', 'The identifier of the on-chain governance proposal'),
+        ('vote_option', 'VARCHAR(64)', 'The vote option chosen for the governance proposal'),
+        ('voting_power', 'NUMERIC', 'The voting power associated with the vote'),
+        ('is_private', 'BOOLEAN', 'Indicates whether the transaction is private or shielded'),
+        ('privacy_type', 'VARCHAR(64)', 'The type of privacy mechanism used (e.g., zk-SNARKs, ring signatures)'),
+        ('fee_amount', 'NUMERIC', 'The amount of fees paid for the transaction'),
+        ('fee_token', 'VARCHAR(64)', 'The token used to pay the transaction fees'),
+        ('sender_address', 'VARCHAR(64)', 'The address of the sender of the transaction'),
+        ('recipient_address', 'VARCHAR(64)', 'The address of the recipient of the transaction'),
+        ('block_producer', 'VARCHAR(64)', 'The identifier of the block producer'),
+        ('block_producer_reward', 'NUMERIC', 'The reward received by the block producer'),
+        ('amount_unlocked', 'NUMERIC', 'The amount of tokens unlocked in the transaction (for UTXO-based blockchains)'),
+        ('reward_addresses', 'TEXT', 'The addresses receiving mining rewards (for UTXO-based blockchains)'),
+        ('input_address', 'TEXT', 'The addresses of the transaction inputs'),
+        ('input_amount', 'NUMERIC', 'The amount of the transaction inputs'),
+        ('output_address', 'TEXT', 'The addresses of the transaction outputs'),
+        ('output_amount', 'NUMERIC', 'The amount of the transaction outputs'),
 
-
-
-
-
+        ('utxo_count', 'BIGINT', 'The number of UTXOs associated with the transaction'),
+        ('utxo_amount_mean', 'NUMERIC', 'The mean amount of the UTXOs associated with the transaction'),
+        ('utxo_amount_median', 'NUMERIC', 'The median amount of the UTXOs associated with the transaction'),
+        ('utxo_amount_min', 'NUMERIC', 'The minimum amount of the UTXOs associated with the transaction'),
+        ('utxo_amount_max', 'NUMERIC', 'The maximum amount of the UTXOs associated with the transaction'),
+        ('utxo_amount_std_dev', 'NUMERIC', 'The standard deviation of the amounts of the UTXOs associated with the transaction');
+    END IF;
+END $$;

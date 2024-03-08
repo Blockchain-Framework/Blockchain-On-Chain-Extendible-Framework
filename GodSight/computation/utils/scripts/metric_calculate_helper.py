@@ -72,3 +72,17 @@ def insert_metric_results(metrics_df):
         dfs_to_insert.append(row_df)
 
     return dfs_to_insert
+
+
+def calculate_utxo_stats(utxos):
+    stats = {}
+    amount_col = 'amount' if 'amount' in utxos.columns else 'value'
+
+    stats['utxo_count'] = len(utxos)
+    stats['amount_mean'] = utxos[amount_col].mean()
+    stats['amount_median'] = utxos[amount_col].median()
+    stats['amount_min'] = utxos[amount_col].min()
+    stats['amount_max'] = utxos[amount_col].max()
+    stats['amount_std_dev'] = utxos[amount_col].std()
+
+    return stats

@@ -4,6 +4,8 @@ from sqlalchemy import MetaData, Table, Column, String, Integer, Float
 from sqlalchemy.exc import NoSuchTableError
 import psycopg2
 from psycopg2 import sql
+from psycopg2.extras import execute_batch
+
 import pandas as pd
 
 logger = Logger("GodSight")
@@ -115,7 +117,6 @@ def get_subchains(config, blockchain):
         raise Exception(f"Failed to fetch subchains: {e}")
     return subchains
 
-
 def get_chain_id(config, blockchain, subchain):
     try:
         with connect_database(config) as conn:
@@ -130,7 +131,6 @@ def get_chain_id(config, blockchain, subchain):
         raise Exception(f"Failed to fetch id: {e}")
     return id_result
 
-
 def delete_existing_records(chain, current_date, config):
     tables = [f'{chain}_transactions', f'{chain}_emitted_utxos', f'{chain}_consumed_utxos']
     with connect_database(config) as conn:
@@ -143,7 +143,7 @@ def check_subchain_last_extracted_date(config, blockchain_name, subchain_name):
     conn = connect_database(config)
     if conn is not None:
         with conn.cursor() as cur:
-            cur.execute("SELECT timestasmp FROM workflow_meta_table WHERE chain = %s AND subchain = %s AND task = %s AND status = %s ORDER BY timestasmp DESC LIMIT 1", (blockchain_name, subchain_name, 'extraction', 'success',))
+            cur.execute("SELECT timestamp FROM workflow_meta_table WHERE chain = %s AND subchain = %s AND task = %s AND status = %s ORDER BY timestamp DESC LIMIT 1", (blockchain_name, subchain_name, 'extraction', 'success',))
             result = cur.fetchone() is not None
             return result
     return False
@@ -165,3 +165,43 @@ def Is_original_subchain(config, blockchain_name, subchain_name):
             result = cur.fetchone() is not None
             return result
     return False
+
+def store_final_trxs(final_trxs, table_name, config):
+    """
+    Append a list of dictionaries to a PostgreSQL table.
+
+    :param final_trxs: List of dictionaries containing transaction data.
+    :param table_name: Name of the table to append data to.
+    :param connection_info: Dictionary containing PostgreSQL connection parameters.
+    """
+    # Establish connection to the PostgreSQL database
+    conn = connect_database(config)
+    cursor = conn.cursor()
+
+    # Prepare INSERT statement
+    # Assumes all dictionaries in final_trxs have the same keys
+    columns = final_trxs[0].keys()
+    columns_str = ', '.join(columns)  # column names
+    values_str = ', '.join([f'%({c})s' for c in columns])  # placeholders
+    insert_query = f'INSERT INTO {table_name} ({columns_str}) VALUES ({values_str})'
+
+    # Execute batch insert
+    try:
+        execute_batch(cursor, insert_query, final_trxs)
+        conn.commit()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
+def load_model_fields(table_name, config):
+    conn = connect_database(config)
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}'")
+    fields = {row[0]: row[1] for row in cursor.fetchall()}
+    cursor.close()
+    return fields
+
+

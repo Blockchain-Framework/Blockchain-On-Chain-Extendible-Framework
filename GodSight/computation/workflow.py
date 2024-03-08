@@ -14,10 +14,10 @@ sys.path.append(current_dir)
 
 from .config import Config
 from GodSight.computation.utils.database.database_service import get_transactions, get_emitted_utxos, \
-    get_consumed_utxos, get_blockchains, get_subchains, get_subchain_metrics, get_chain_basic_metrics
+    get_consumed_utxos, get_blockchains, get_subchains, get_subchain_metrics, get_chain_basic_metrics, get_general_data, load_model_fields
 from GodSight.computation.utils.scripts.utils import log_workflow_status
 from GodSight.computation.utils.scripts.metric_calculate_helper import load_metrics, insert_metric_results, \
-    load_custom_metrics
+    load_custom_metrics, calculate_utxo_stats
 from GodSight.computation.utils.database.database_service import batch_insert_dataframes
 from GodSight.computation.utils.database.services import Is_original_subchain, check_metric_last_computed_date, \
     get_subchain_start_date, insert_blockchain_metrics
@@ -52,6 +52,8 @@ class MetricCalculationWorkflowManager:
                                                                             blockchain, config)
 
             # print(custom_metric_blueprints, base_metric_blueprints)
+            transaction_model_fields = load_model_fields(config, 'transaction_model')
+            utxo_model_fields = load_model_fields(config, 'utxo_model')
 
             # Process CustomMetric instances
             for blueprint in custom_metric_blueprints:
@@ -75,40 +77,27 @@ class MetricCalculationWorkflowManager:
                 while current_loop_date <= end_date:
                     date = current_loop_date.strftime("%Y-%m-%d")
 
-                    if metric_instance.transaction_type == "transaction":
-                        subchains_data = get_transactions(blockchain, subchain, date, config)
+                    # Get the combined data as a DataFrame
+                    general_data = get_general_data(blockchain, subchain, date, config)
 
-                        trx = pd.concat(subchains_data, axis=0, sort=False).reset_index(drop=True)
+                    # Calculate UTXO stats
+                    input_utxo_stats = calculate_utxo_stats(general_data[general_data[f'e_{utxo_model_fields.keys()[0]}'].notnull()])
+                    output_utxo_stats = calculate_utxo_stats(general_data[general_data[f'c_{utxo_model_fields.keys()[0]}'].notnull()])
 
-                        trx_numerical_cols = trx.select_dtypes(include=[np.number]).columns
-                        trx[trx_numerical_cols] = trx[trx_numerical_cols].fillna(0)
+                    # Add UTXO stats to the general data
+                    for stat, value in input_utxo_stats.items():
+                        general_data[f'input_{stat}'] = value
 
-                        data = trx
-
-                    elif metric_instance.transaction_type == "emitted_utxo":
-                        subchains_data = get_emitted_utxos(blockchain, subchain, date, config)
-
-                        emit_utxo = pd.concat(subchains_data, axis=0, sort=False).reset_index(drop=True)
-
-                        emit_utxo_numerical_cols = emit_utxo.select_dtypes(include=[np.number]).columns
-                        emit_utxo[emit_utxo_numerical_cols] = emit_utxo[emit_utxo_numerical_cols].fillna(0)
-
-                        data = emit_utxo
-                    elif metric_instance.transaction_type == "consumed_utxo":
-                        subchains_data = get_consumed_utxos(blockchain, subchain, date, config)
-
-                        consume_utxo = pd.concat(subchains_data, axis=0, sort=False).reset_index(drop=True)
-
-                        consume_utxo_numerical_cols = consume_utxo.select_dtypes(include=[np.number]).columns
-                        consume_utxo[consume_utxo_numerical_cols] = consume_utxo[consume_utxo_numerical_cols].fillna(0)
-
-                        data = consume_utxo
-                    else:
-                        logger.log_warning(f"Unknown transaction type for metric: {metric_instance.name}")
-                        break
+                    for stat, value in output_utxo_stats.items():
+                        general_data[f'output_{stat}'] = value
 
                     # Calculate the metric
-                    metric_value = metric_instance.calculate(data)  # Pass the correct data
+                    metric_value = metric_instance.calculate(general_data)
+                    logger.log_info(
+                        f"Calculated {metric_instance.name} for {blockchain} subchain {subchain}: {metric_value}")
+
+                    # Calculate the metric
+                    metric_value = metric_instance.calculate(general_data)  # Pass the correct data
                     logger.log_info(
                         f"Calculated {metric_instance.name} for {blockchain} subchain {subchain}: {metric_value}")
 

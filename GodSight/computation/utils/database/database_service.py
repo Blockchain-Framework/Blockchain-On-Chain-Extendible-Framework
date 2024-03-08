@@ -143,3 +143,47 @@ def get_chain_basic_metrics(blockchain, config):
     WHERE b.blockchain = '{blockchain}' AND m.type = 'basic';
     """
     return get_query_results(query, config)
+
+def load_model_fields(config, table_name):
+    query = f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}'"
+    return get_query_results(query, config)
+
+def get_general_data(blockchain, subchain, date, config):
+    # Load the model fields from the database
+    transaction_model_fields = load_model_fields(config, 'transaction_model')
+    utxo_model_fields = load_model_fields(config, 'utxo_model')
+
+    # Construct the SELECT statement with all the required fields
+    transaction_fields = ', '.join([f"t.{field}" for field in transaction_model_fields.keys()])
+
+    emit_utxo_fields = ', '.join([
+        f"(SELECT COUNT(*) FROM {subchain}_emitted_utxos WHERE txHash = t.txHash) AS input_utxo_count",
+        f"(SELECT AVG(amount) FROM {subchain}_emitted_utxos WHERE txHash = t.txHash) AS input_utxo_amount_mean",
+        f"(SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount) FROM {subchain}_emitted_utxos WHERE txHash = t.txHash) AS input_utxo_amount_median",
+        f"(SELECT MIN(amount) FROM {subchain}_emitted_utxos WHERE txHash = t.txHash) AS input_utxo_amount_min",
+        f"(SELECT MAX(amount) FROM {subchain}_emitted_utxos WHERE txHash = t.txHash) AS input_utxo_amount_max",
+        f"(SELECT STDDEV_POP(amount) FROM {subchain}_emitted_utxos WHERE txHash = t.txHash) AS input_utxo_amount_std_dev"
+    ])
+
+    consume_utxo_fields = ', '.join([
+        f"(SELECT COUNT(*) FROM {subchain}_consumed_utxos WHERE txHash = t.txHash) AS output_utxo_count",
+        f"(SELECT AVG(amount) FROM {subchain}_consumed_utxos WHERE txHash = t.txHash) AS output_utxo_amount_mean",
+        f"(SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount) FROM {subchain}_consumed_utxos WHERE txHash = t.txHash) AS output_utxo_amount_median",
+        f"(SELECT MIN(amount) FROM {subchain}_consumed_utxos WHERE txHash = t.txHash) AS output_utxo_amount_min",
+        f"(SELECT MAX(amount) FROM {subchain}_consumed_utxos WHERE txHash = t.txHash) AS output_utxo_amount_max",
+        f"(SELECT STDDEV_POP(amount) FROM {subchain}_consumed_utxos WHERE txHash = t.txHash) AS output_utxo_amount_std_dev"
+    ])
+
+    query = f"""
+        SELECT {transaction_fields}, {emit_utxo_fields}, {consume_utxo_fields}
+        FROM {subchain}_transactions t
+        WHERE t.date = '{date}'
+    """
+
+    # Execute the query and fetch the results
+    results = get_query_results(query, config)
+
+    # Create a DataFrame from the results
+    general_data = pd.DataFrame(results)
+
+    return general_data
