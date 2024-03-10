@@ -144,6 +144,24 @@ def get_all_metrics(config):
     return metrics_list
 
 
+def check_metrics_and_grouping_type(config):
+    try:
+        with connect_database(config) as conn:
+            with conn.cursor() as cur:
+                # Fetch metric_name and grouping_type
+                cur.execute("SELECT metric_name, grouping_type FROM metric_table WHERE type == 'basic'")
+                queried_metrics = cur.fetchall()
+
+                # Convert queried data into a dict for easier lookup
+                metrics_dict = {metric_name: grouping_type for metric_name, grouping_type in queried_metrics}
+
+                return metrics_dict
+
+    except Exception as e:
+        logger.error(f"Failed to process metrics: {e}")
+        raise Exception(f"Failed to process metrics: {e}")
+
+
 def fetch_model_data(config):
     model_data = {
         'trx_mapping': [],

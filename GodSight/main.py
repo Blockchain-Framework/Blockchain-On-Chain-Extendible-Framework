@@ -5,6 +5,7 @@ import uuid
 from datetime import datetime
 from tqdm import tqdm
 from GodSight.config.config import Config
+from GodSight.utils.database.services import check_metrics_and_grouping_type
 from GodSight.utils.logs.log import Logger
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -170,6 +171,24 @@ def add_blockchain(file_name):
                 'description': 'Default chain: representing whole chains',
                 'original': False
             })
+
+            unique_metrics = set()
+            for subchain, metrics in blockchain_metrics.items():
+                unique_metrics.update(metrics)
+
+            sys_base_metrics = check_metrics_and_grouping_type(config)
+
+            allowed_agg = ['SUM']
+
+            for metric in unique_metrics:
+                if sys_base_metrics.get(metric) in allowed_agg:
+                    metric_chain_meta.append({
+                        'blockchain_id': chain_unique_id,
+                        'blockchain': metadata['name'],
+                        'sub_chain': 'default',
+                        'metric_name': metric
+                    })
+
             # pbar.update(20)
 
             # common_metrics = set(blockchain_metrics[next(iter(blockchain_metrics))])
