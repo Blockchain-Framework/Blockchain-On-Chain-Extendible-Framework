@@ -45,7 +45,8 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta
                 VALUES (%s, %s, %s, %s, %s, %s)
             """
             meta_values = [
-                (data['id'], data['blockchain'], data['subchain'], data['original'], data['start_date'], data['description'])
+                (data['id'], data['blockchain'], data['subchain'], data['original'], data['start_date'],
+                 data['description'])
                 for data in meta_data
             ]
             cur.executemany(insert_stmt_meta, meta_values)
@@ -114,7 +115,7 @@ def delete_blockchain_data(blockchain, config):
                 WHERE blockchain = %s;
             """
             cur.execute(delete_stmt_blockchain, (blockchain,))
-            
+
             delete_stmt_metrics = """
                             DELETE FROM metric_table;
                         """
@@ -142,3 +143,31 @@ def get_all_metrics(config):
         raise Exception(f"Failed to fetch metrics: {e}")
     return metrics_list
 
+
+def fetch_model_data(config):
+    model_data = {
+        'trx_mapping': [],
+        'emit_utxo_mapping': [],
+        'consume_utxo_mapping': []
+    }
+    try:
+        with connect_database(config) as conn:
+            with conn.cursor() as cur:
+                # Fetch transaction_model data
+                cur.execute("SELECT field_name FROM transaction_model")
+                trx_fields = cur.fetchall()
+                for field in trx_fields:
+                    model_data['trx_mapping'].append(field[0])
+
+                # Fetch utxo_model data
+                cur.execute("SELECT field_name FROM utxo_model")
+                utxo_fields = cur.fetchall()
+                for field in utxo_fields:
+                    model_data['emit_utxo_mapping'].append(field[0])
+                    model_data['consume_utxo_mapping'].append(field[0])
+
+    except Exception as e:
+        logger.log_error(f"Failed to fetch model data: {e}")
+        raise Exception(f"Failed to fetch model data: {e}")
+
+    return model_data

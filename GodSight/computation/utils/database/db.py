@@ -44,7 +44,7 @@ def initialize_database(config):
     try:
         conn = connect_database(config)
 
-        path = config.sql_path + 'data.sql'
+        path = config.sql_path + '.data.sql'
 
         # Read SQL commands from the data.sql file
         with open(path, 'r') as file:

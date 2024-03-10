@@ -2,10 +2,12 @@ import pandas as pd
 from sqlalchemy import create_engine
 import json
 import os
+from psycopg2.extras import execute_values
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy import create_engine, exc
 from GodSight.extraction.logs.log import Logger
+from GodSight.extraction.utils.database.db import connect_database
 
 logger = Logger("GodSight")
 
@@ -14,6 +16,12 @@ def convert_dict_to_json(x):
     if isinstance(x, dict) or (isinstance(x, list) and all(isinstance(elem, dict) for elem in x)):
         return json.dumps(x)
     return x
+
+
+def serialize_for_sql(value):
+    if isinstance(value, dict):
+        return json.dumps(value)  # Serialize dict to JSON string
+    return value
 
 
 def append_dataframe_to_sql(table_name, df, config):
@@ -94,3 +102,55 @@ def batch_insert_dataframes(dfs_to_insert, config):
             except Exception as e:
                 logger.log_error(f"An unexpected error occurred during batch insertion into {table_name}: {e}")
                 raise  # Raising an error to trigger the transaction rollback
+
+
+def store_all_extracted_data(blockchain, subchain, date, transformed_trxs, transformed_emitted_utxos,
+                             transformed_consumed_utxos, config):
+    # Connect to the database
+    try:
+        with connect_database(config) as conn:
+            with conn.cursor() as cursor:
+                # Disable autocommit for transaction
+                conn.autocommit = False
+
+                # Define a generic function to insert data
+                def insert_data(transformed_data, data_type):
+                    if not transformed_data:
+                        return  # Skip if no data
+
+                    # Define the table name based on the data type
+                    table_mapping = {
+                        'transactions': 'transaction_data',
+                        'emitted_utxos': 'emitted_utxo_data',
+                        'consumed_utxos': 'consumed_utxo_data'
+                    }
+                    table_name = table_mapping[data_type]
+
+                    # Prepare the SQL query for inserting data
+                    columns = transformed_data[0].keys()
+                    sql = (f"INSERT INTO {table_name} ({', '.join(columns)}, date, blockchain, sub_chain) VALUES %s ON "
+                           f"CONFLICT DO NOTHING")
+
+                    # Prepare data tuples for insertion, including the current_date
+                    values = [
+                        tuple(serialize_for_sql(item) for item in row.values()) + (date, blockchain, subchain)
+                        for row in transformed_data
+                    ]
+
+                    # Execute the bulk insert with execute_values for efficiency
+                    execute_values(cursor, sql, values)
+
+                # Insert data for each type
+                insert_data(transformed_trxs, 'transactions')
+                insert_data(transformed_emitted_utxos, 'emitted_utxos')
+                insert_data(transformed_consumed_utxos, 'consumed_utxos')
+
+                # Commit the transaction
+                conn.commit()
+                print("Successfully inserted all data")
+
+    except Exception as e:
+        # Rollback in case of error
+        conn.rollback()
+        print(f"Failed to store data: {e}")
+        raise (e)

@@ -11,7 +11,7 @@ class Total_stacked_Amount(CustomMetric):
                          display_name='Total Stacked Amount')
 
     def calculate(self, data: pd.DataFrame) -> float:
-        total_staked = data['amountStaked'].sum()
+        total_staked = data['amount_staked'].sum()
         if total_staked > 0:
             return total_staked
         else:
@@ -27,7 +27,7 @@ class TotalBurnedAmount(CustomMetric):
                          display_name='Total Burned Amount')
 
     def calculate(self, data: pd.DataFrame) -> float:
-        total_burned = data['amountBurned'].sum()
+        total_burned = data['amount_burned'].sum()
         if total_burned > 0:
             return total_burned
         else:
@@ -43,11 +43,11 @@ class stackingDynamicIndex(CustomMetric):
                          display_name='Staking Dynamics Index')
 
     def calculate(self, data: pd.DataFrame) -> float:
-        total_amount_staked = data['amountStaked'].sum()
-        total_amount_burned = data['amountBurned'].sum()
-        total_estimated_reward = data['estimatedReward'].replace('', '0'
+        total_amount_staked = data['amount_staked'].sum()
+        total_amount_burned = data['amount_burned'].sum()
+        total_estimated_reward = data['estimated_reward'].replace('', '0'
                                                                  ).astype(float).sum()
-        avg_delegation_fee_percent = data['delegationFeePercent'].replace('',
+        avg_delegation_fee_percent = data['delegation_fee_percent'].replace('',
                                                                           '0').astype(float).mean()
         if total_amount_burned == 0:
             return None
@@ -65,8 +65,8 @@ class StakingEngagementIndex(CustomMetric):
                          display_name='Staking Engagement Index')
 
     def calculate(self, data: pd.DataFrame) -> float:
-        total_amount_staked = data['amountStaked'].sum()
-        total_estimated_reward = data['estimatedReward'].replace('', '0'
+        total_amount_staked = data['amount_staked'].sum()
+        total_estimated_reward = data['estimated_reward'].replace('', '0'
                                                                  ).astype(float).sum()
         if total_amount_staked == 0:
             return None

@@ -14,11 +14,16 @@ logger = Logger("GodSight")
 
 
 def start_api():
+    from GodSight.utils.database.db import test_connection, initialize_database
     from GodSight.api.app import create_app
 
     logger.log_info("Starting the GodSight API server...")
 
     config = Config()
+
+    test_connection(config)
+    logger.log_info(f"Database is connected")
+    initialize_database(config)
 
     app = create_app(config)
     app.run(host=config.api_host, port=config.api_port,
@@ -89,7 +94,8 @@ def add_blockchain(file_name):
                 extract_file_path,
                 mapper_file_path,
                 subchain['startDate'],
-                pbar)
+                pbar,
+                config)
 
             if not final_validation:
                 pbar.close()
@@ -257,9 +263,15 @@ def add_blockchain(file_name):
 
 def extract_date(date):
     try:
+        from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.extraction.main import extract_data
 
         config = Config()
+
+        test_connection(config)
+        logger.log_info(f"Database is connected")
+        initialize_database(config)
+
         extract_data(date, config)
     except Exception as e:
         logger.log_error(e)
@@ -267,9 +279,15 @@ def extract_date(date):
 
 def extract_date_range(start_date, end_date):
     try:
+        from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.extraction.main import extract_data_for_date_range
 
         config = Config()
+
+        test_connection(config)
+        logger.log_info(f"Database is connected")
+        initialize_database(config)
+
         extract_data_for_date_range(start_date, end_date, config)
     except Exception as e:
         logger.log_error(e)
@@ -277,9 +295,15 @@ def extract_date_range(start_date, end_date):
 
 def compute_date(date):
     try:
+        from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.computation.main import compute_data
 
         config = Config()
+
+        test_connection(config)
+        logger.log_info(f"Database is connected")
+        initialize_database(config)
+
         compute_data(date, config)
     except Exception as e:
         logger.log_error(e)
@@ -287,9 +311,15 @@ def compute_date(date):
 
 def compute_date_range(start_date, end_date):
     try:
+        from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.computation.main import compute_data_for_date_range
 
         config = Config()
+
+        test_connection(config)
+        logger.log_info(f"Database is connected")
+        initialize_database(config)
+
         compute_data_for_date_range(start_date, end_date, config)
     except Exception as e:
         logger.log_error(e)

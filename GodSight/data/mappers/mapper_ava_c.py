@@ -1,24 +1,24 @@
 config = {
     'trx_mapping': {
-        'txHash': ('txHash', "feature"),
-        'blockHash': ('blockHash', "feature"),
-        'blockHeight': ('blockHeight', "feature"),
-        'txType': ('txType', "feature"),
+        'tx_hash': ('txHash', "feature"),
+        'block_hash': ('blockHash', "feature"),
+        'block_height': ('blockHeight', "feature"),
+        'tx_type': ('txType', "feature"),
         'timestamp': ('timestamp', "feature"),
-        'sourceChain': ('sourceChain', "feature"),
-        'destinationChain': ('destinationChain', "feature"),
+        'source_chain': ('sourceChain', "feature"),
+        'destination_chain': ('destinationChain', "feature"),
         'memo': ('memo', "feature"),
-        'amountUnlocked': ('amount_unlocked', "function", "calculate_amount_unlocked"),
-        'amountCreated': ('amount_created', "function", "calculate_amount_created")
+        'amount_unlocked': ('amount_unlocked', "function", "calculate_amount_unlocked"),
+        'amount_created': ('amount_created', "function", "calculate_amount_created")
     },
 
     'emit_utxo_mapping': {
         'addresses': ('addresses', "function", 'getAddress'),
-        'txHash': ('txHash', "feature"),
-        'txType': ('txType', "feature"),
-        'assetId': ('assetId', "function", 'getAssetId'),
+        'tx_hash': ('txHash', "feature"),
+        'tx_type': ('txType', "feature"),
+        'asset_id': ('assetId', "function", 'getAssetId'),
         'asset_name': ('asset_name', "function", 'getAssetName'),
-        'symbol': ('symbol', "function", 'getSymbol'),
+        'asset_symbol': ('symbol', "function", 'getSymbol'),
         'denomination': ('denomination', "function", 'getDenomination'),
         'asset_type': ('asset_type', "function", 'getAsset_type'),
         'amount': ('amount', "function", 'getAmount')
@@ -26,13 +26,13 @@ config = {
 
     'consume_utxo_mapping': {
         'addresses': ('addresses', "function", 'getAddress'),
-        'utxoId': ('utxoId', "feature"),
-        'txHash': ('txHash', "feature"),
-        'txType': ('txType', "feature"),
-        'blockHash': ('blockHash', "feature"),
-        'assetId': ('assetId', "function", 'getAssetId'),
+        'utxo_id': ('utxoId', "feature"),
+        'tx_hash': ('txHash', "feature"),
+        'tx_type': ('txType', "feature"),
+        'block_hash': ('blockHash', "feature"),
+        'asset_id': ('assetId', "function", 'getAssetId'),
         'asset_name': ('asset_name', "function", 'getAssetName'),
-        'symbol': ('symbol', "function", 'getSymbol'),
+        'asset_symbol': ('symbol', "function", 'getSymbol'),
         'denomination': ('denomination', "function", 'getDenomination'),
         'asset_type': ('asset_type', "function", 'getAsset_type'),
         'amount': ('amount', "function", 'getAmount')

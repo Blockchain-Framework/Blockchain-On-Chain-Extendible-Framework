@@ -35,8 +35,8 @@ def load_metric_classes(type_, script_path, metric_base_class, target_subchain,
                     metric_instances.append(attribute)
     return metric_instances
 
-def load_custom_metrics(custom_metric_script_path, target_blockchain, config):
-    custom_metric_instances = load_metric_classes('custom', custom_metric_script_path, CustomMetric, 'default',
+def load_custom_metrics(custom_metric_script_path, target_blockchain, target_subchain, config):
+    custom_metric_instances = load_metric_classes('custom', custom_metric_script_path, CustomMetric, target_subchain,
                                                   target_blockchain, config)
 
     return custom_metric_instances

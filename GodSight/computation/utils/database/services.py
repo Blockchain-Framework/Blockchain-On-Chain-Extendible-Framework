@@ -69,19 +69,21 @@ def check_metric_last_computed_date(config, blockchain_name, subchain_name, metr
     conn = connect_database(config)
     if conn is not None:
         with conn.cursor() as cur:
-            cur.execute("SELECT date FROM metric_data WHERE blockchain = %s AND subchain = %s AND metric = %s ORDER BY timestasmp DESC LIMIT 1", (blockchain_name, subchain_name, metric_name,))
-            result = cur.fetchone() is not None
-            return result
-    return False
+            cur.execute("SELECT date FROM metrics_data WHERE blockchain = %s AND subchain = %s AND metric = %s ORDER BY date DESC LIMIT 1", (blockchain_name, subchain_name, metric_name,))
+            result = cur.fetchone()
+            if result:
+                return result[0]
+    return None
 
 def get_subchain_start_date(config, blockchain_name, subchain_name):
     conn = connect_database(config)
     if conn is not None:
         with conn.cursor() as cur:
             cur.execute("SELECT start_date FROM blockchain_table WHERE blockchain = %s AND sub_chain = %s", (blockchain_name, subchain_name,))
-            result = cur.fetchone() is not None
-            return result
-    return False
+            result = cur.fetchone()
+            if result:
+                return result[0]
+    return None
 
 def Is_original_subchain(config, blockchain_name, subchain_name):
     conn = connect_database(config)
@@ -99,10 +101,12 @@ def insert_blockchain_metrics(data_list, config):
         try:
             with conn.cursor() as cur:
                 # Prepare the SQL command
-                insert_query = "INSERT INTO metric_data (date, blockchain, subchain, metric, value) VALUES (%s, %s, %s, %s)"
+                insert_query = "INSERT INTO metrics_data (date, blockchain, subchain, metric, value) VALUES (%s, %s, %s, %s, %s)"
 
-                insert_values = [(data['date'], data['blockchain'], data['subchain'], data['metric'], data['value']) for
-                                 data in data_list]
+                insert_values = [
+                    (data['date'], data['blockchain'], data['subchain'], data['metric'], float(data['value']) if data['value'] is not None else 0.0)
+                    for data in data_list
+                ]
 
                 # Execute the query for multiple inserts
                 cur.executemany(insert_query, insert_values)
@@ -110,7 +114,7 @@ def insert_blockchain_metrics(data_list, config):
         except Exception as e:
             logger.log_error(f"Failed to insert blockchain metric data: {e}")
             conn.rollback()  # Rollback in case of error
-            raise Exception(e)
         finally:
             conn.close()
+
 

@@ -14,7 +14,8 @@ sys.path.append(current_dir)
 
 from .config import Config
 from GodSight.computation.utils.database.database_service import get_transactions, get_emitted_utxos, \
-    get_consumed_utxos, get_blockchains, get_subchains, get_subchain_metrics, get_chain_basic_metrics, get_general_data, load_model_fields
+    get_consumed_utxos, get_blockchains, get_subchains, get_subchain_metrics, get_chain_basic_metrics, get_general_data, \
+    load_model_fields
 from GodSight.computation.utils.scripts.utils import log_workflow_status
 from GodSight.computation.utils.scripts.metric_calculate_helper import load_metrics, insert_metric_results, \
     load_custom_metrics, calculate_utxo_stats
@@ -32,6 +33,7 @@ logger = Logger("GodSight")
 class MetricCalculationWorkflowManager:
 
     def metric_workflow(self, end_date, blockchain, subchain, config):
+        global data
         try:
             logger.log_info(f"Computing metrics for {blockchain} subchain {subchain}...")
             # Assuming the environment variable or some config holds the paths
@@ -51,9 +53,7 @@ class MetricCalculationWorkflowManager:
                                                                             base_metric_script_path, subchain,
                                                                             blockchain, config)
 
-            # print(custom_metric_blueprints, base_metric_blueprints)
-            transaction_model_fields = load_model_fields(config, 'transaction_model')
-            utxo_model_fields = load_model_fields(config, 'utxo_model')
+            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
 
             # Process CustomMetric instances
             for blueprint in custom_metric_blueprints:
@@ -61,14 +61,14 @@ class MetricCalculationWorkflowManager:
 
                 metric_name = metric_instance.name
 
-                last_computed_date = check_metric_last_computed_date(blockchain, 'default', metric_name)
+                metric_type = metric_instance.transaction_type
+
+                last_computed_date = check_metric_last_computed_date(config, blockchain, subchain, metric_name)
 
                 if last_computed_date is None:
-                    start_date = get_subchain_start_date(config, blockchain, 'default')
+                    start_date = get_subchain_start_date(config, blockchain, subchain)
                 else:
                     start_date = last_computed_date
-
-                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
 
                 if end_date < start_date:
                     continue
@@ -77,27 +77,22 @@ class MetricCalculationWorkflowManager:
                 while current_loop_date <= end_date:
                     date = current_loop_date.strftime("%Y-%m-%d")
 
-                    # Get the combined data as a DataFrame
-                    general_data = get_general_data(blockchain, subchain, date, config)
+                    if metric_type == 'transaction':
 
-                    # Calculate UTXO stats
-                    input_utxo_stats = calculate_utxo_stats(general_data[general_data[f'e_{utxo_model_fields.keys()[0]}'].notnull()])
-                    output_utxo_stats = calculate_utxo_stats(general_data[general_data[f'c_{utxo_model_fields.keys()[0]}'].notnull()])
+                        # Get the combined data as a DataFrame
+                        data = get_general_data(blockchain, subchain, date, config)
 
-                    # Add UTXO stats to the general data
-                    for stat, value in input_utxo_stats.items():
-                        general_data[f'input_{stat}'] = value
+                    elif metric_type == 'emitted':
+                        data = get_emitted_utxos(blockchain, subchain, date, config)
 
-                    for stat, value in output_utxo_stats.items():
-                        general_data[f'output_{stat}'] = value
+                    elif metric_type == 'consumed':
+                        data = get_consumed_utxos(blockchain, subchain, date, config)
 
-                    # Calculate the metric
-                    metric_value = metric_instance.calculate(general_data)
-                    logger.log_info(
-                        f"Calculated {metric_instance.name} for {blockchain} subchain {subchain}: {metric_value}")
+                    else:
+                        pass
 
                     # Calculate the metric
-                    metric_value = metric_instance.calculate(general_data)  # Pass the correct data
+                    metric_value = metric_instance.calculate(data)
                     logger.log_info(
                         f"Calculated {metric_instance.name} for {blockchain} subchain {subchain}: {metric_value}")
 
@@ -118,14 +113,12 @@ class MetricCalculationWorkflowManager:
 
                 metric_name = metric_instance.name
 
-                last_computed_date = check_metric_last_computed_date(blockchain, 'default', metric_name)
+                last_computed_date = check_metric_last_computed_date(config, blockchain, subchain, metric_name)
 
                 if last_computed_date is None:
-                    start_date = get_subchain_start_date(config, blockchain, 'default')
+                    start_date = get_subchain_start_date(config, blockchain, subchain)
                 else:
                     start_date = last_computed_date
-
-                end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
 
                 if end_date < start_date:
                     continue
@@ -135,7 +128,7 @@ class MetricCalculationWorkflowManager:
                     date = current_loop_date.strftime("%Y-%m-%d")
 
                     metric_value = metric_instance.calculate(blockchain, subchain, date, config)  # Example signature
-                    print(metric_instance.name, metric_value)
+                    # print(metric_instance.name, metric_value)
                     logger.log_info(
                         f"Calculated {metric_instance.name} for {blockchain} subchain {subchain}: {metric_value}")
 
@@ -150,45 +143,23 @@ class MetricCalculationWorkflowManager:
 
                     current_loop_date += timedelta(days=1)
 
-            # Convert collected metric results into a DataFrame and proceed as before
-            # if metric_results:
-            #     metrics_df = pd.DataFrame(metric_results)
-            #     dfs_to_insert = insert_metric_results(metrics_df)
-            #     batch_insert_dataframes(dfs_to_insert, config)
-            #     logger.log_info(
-            #         "Metric values successfully inserted into their respective tables in a single transaction.")
-            #
-            # logger.log_info("Workflow completed successfully.")
-
             return basic_metric_results, custom_metric_results
 
         except Exception as e:
             logger.log_error(f"An error occurred during the workflow for {blockchain} subchain {subchain}: {e}")
 
-    def user_defined_metric_for_whole_blockchain(self, blockchain, subchains, basic_metric_names, computed_data, end_date, config):
+    def user_defined_metric_for_whole_blockchain(self, blockchain, subchains, basic_metric_names,
+                                                 end_date, config):
 
         # basic_metric_results = []
         custom_metric_results = []
 
-        # for metric_name, group_type in basic_metric_names:
-        #     data = []
-        #     for metric_record in computed_data:
-        #         if metric_record['metric'] == metric_name:
-        #             data.append(metric_record['value'])
-        #     if group_type == 'sum':
-        #         result = sum(data)
-        #         basic_metric_results.append({
-        #             'date': date,
-        #             'blockchain': blockchain,
-        #             'subchain': 'default',
-        #             'metric': metric_name,
-        #             'value': result
-        #         })
-
         custom_metric_script_path = f"GodSight/computation/metrics/custom/{blockchain}.py"
 
-        custom_metric_blueprints, base_metric_blueprints = load_custom_metrics(custom_metric_script_path, blockchain,
+        custom_metric_blueprints = load_custom_metrics(custom_metric_script_path, blockchain, 'default',
                                                                                config)
+
+        end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
 
         # Process CustomMetric instances
         for blueprint in custom_metric_blueprints:
@@ -196,14 +167,12 @@ class MetricCalculationWorkflowManager:
 
             metric_name = metric_instance.name
 
-            last_computed_date = check_metric_last_computed_date(blockchain, 'default', metric_name)
+            last_computed_date = check_metric_last_computed_date(config, blockchain, 'default', metric_name)
 
             if last_computed_date is None:
                 start_date = get_subchain_start_date(config, blockchain, 'default')
             else:
                 start_date = last_computed_date
-
-            end_date = datetime.strptime(end_date, "%Y-%m-%d").date()
 
             if end_date < start_date:
                 continue
@@ -215,11 +184,12 @@ class MetricCalculationWorkflowManager:
                 if metric_instance.transaction_type == "transaction":
                     subchains_data = []
                     for subchain in subchains:
-                        sub_trx = get_transactions(blockchain, subchain, date, config)
+                        print(subchain)
+                        sub_trx = get_general_data(blockchain, subchain, date, config)
 
                         subchains_data.append(sub_trx)
 
-                    trx = pd.concat(subchains_data, axis=0,sort=False).reset_index(drop=True)
+                    trx = pd.concat(subchains_data, axis=0, sort=False).reset_index(drop=True)
 
                     trx_numerical_cols = trx.select_dtypes(include=[np.number]).columns
                     trx[trx_numerical_cols] = trx[trx_numerical_cols].fillna(0)
@@ -299,7 +269,8 @@ class MetricCalculationWorkflowManager:
                                 log_workflow_status(blockchain, subchain, 'success', 'metric', None, config)
                 if 'default' not in subchains:
                     all_metric_names = get_chain_basic_metrics(blockchain, config)
-                    custom = self.user_defined_metric_for_whole_blockchain(blockchain, all_metric_names, all_basic_metrics,
+                    custom = self.user_defined_metric_for_whole_blockchain(blockchain, all_metric_names,
+                                                                           all_basic_metrics,
                                                                            date, config)
                     all_custom_metrics.extend(custom)
 
@@ -309,9 +280,7 @@ class MetricCalculationWorkflowManager:
                     if all_metrics:
                         insert_blockchain_metrics(all_metrics, config)
                 except Exception as e:
-                    raise(e)
-
-
+                    raise (e)
 
 
 if __name__ == "__main__":

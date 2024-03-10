@@ -14,7 +14,7 @@ class TransactionPerSecond(BaseMetric):
         if not subchain or not date:
             raise
 
-        query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
+        query = f"SELECT COUNT(*) FROM transaction_data WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'"
         results = execute_query(query, config)
         if results is not None and not results.empty:
             count = results.iloc[0]['count']
@@ -33,7 +33,7 @@ class TransactionPerDay(BaseMetric):
         if not subchain or not date:
             raise
 
-        query = f"SELECT COUNT(*) FROM {subchain}_transactions WHERE date = '{date}'"
+        query = f"SELECT COUNT(*) FROM transaction_data WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'"
         results = execute_query(query, config)
         
         if results is not None and not results.empty:
@@ -50,8 +50,8 @@ class TotalTransactions(BaseMetric):
 
         query = f"""
         SELECT SUM(CAST(amount AS NUMERIC)) as count
-        FROM {subchain}_consumed_utxos
-        WHERE date = '{date}'
+        FROM consumed_utxo_data
+        WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
         """
         results = execute_query(query, config)
         
@@ -70,8 +70,8 @@ class AvarageTransactionAmount(BaseMetric):
         # Query for the sum of transaction amounts and count of transactions
         query = f"""
         SELECT SUM(CAST(amount AS NUMERIC)) as total_amount, COUNT(*) as trx_count
-        FROM {subchain}_consumed_utxos
-        WHERE date = '{date}'
+        FROM consumed_utxo_data
+        WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
         """
         results = execute_query(query, config)
 
@@ -100,8 +100,8 @@ class AverageTransactionPerHour(BaseMetric):
         # Query for the count of transactions
         query = f"""
         SELECT COUNT(*) as trx_count
-        FROM {subchain}_transactions
-        WHERE date = '{date}'
+        FROM transaction_data
+        WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
         """
         results = execute_query(query, config)
 
@@ -121,7 +121,7 @@ class TotalBlocks(BaseMetric):
         if not subchain:
             return 0
 
-        query =  f"SELECT COUNT(DISTINCT \"blockHash\") FROM {subchain}_transactions"
+        query =  f"SELECT COUNT(DISTINCT \"block_hash\") FROM transaction_data WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'"
         results = execute_query(query, config)
         
         if results is not None and not results.empty:
@@ -140,10 +140,10 @@ class TransactionPerBlock(BaseMetric):
         query = f"""
         SELECT AVG(tx_count) as avg_tx_per_block
         FROM (
-            SELECT \"blockHash\", COUNT(*) as tx_count
-            FROM {subchain}_transactions
-            WHERE date = '{date}'
-            GROUP BY \"blockHash\"
+            SELECT \"block_hash\", COUNT(*) as tx_count
+            FROM transaction_data
+            WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
+            GROUP BY \"block_hash\"
         ) as block_transactions
         """
         results = execute_query(query, config)
@@ -164,9 +164,9 @@ class ActiveAddresses(BaseMetric):
 
         query = f"""
         SELECT COUNT(DISTINCT addresses) FROM (
-            SELECT addresses FROM {subchain}_emitted_utxos WHERE date = '{date}'
+            SELECT addresses FROM emitted_utxo_data WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
             UNION
-            SELECT addresses FROM {subchain}_consumed_utxos WHERE date = '{date}'
+            SELECT addresses FROM consumed_utxo_data WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
         ) AS active_addresses
         """
         results = execute_query(query, config)
@@ -187,7 +187,7 @@ class ActiveSenders(BaseMetric):
             return 0
 
         query = f"""
-        SELECT COUNT(DISTINCT addresses) FROM {subchain}_emitted_utxos WHERE date = '{date}'
+        SELECT COUNT(DISTINCT addresses) FROM emitted_utxo_data WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
         """ 
         results = execute_query(query, config)
         
@@ -223,7 +223,7 @@ class SumEmittedUtxoAmount(BaseMetric):
         if not subchain or not date:
             return 0
 
-        query = f"SELECT SUM(CAST(amount AS NUMERIC)) FROM {subchain}_emitted_utxos WHERE date = '{date}'"
+        query = f"SELECT SUM(CAST(amount AS NUMERIC)) FROM emitted_utxo_data WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'"
         results = execute_query(query, config)
         
         if results is not None and not results.empty:
@@ -240,7 +240,7 @@ class AverageEmittedUtxoAmount(BaseMetric):
         if not subchain or not date:
             return 0
 
-        query = f"SELECT AVG(CAST(amount AS NUMERIC)) FROM {subchain}_emitted_utxos WHERE date = '{date}'"
+        query = f"SELECT AVG(CAST(amount AS NUMERIC)) FROM emitted_utxo_data WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'"
         results = execute_query(query, config)
         
         if results is not None and not results.empty:
@@ -258,8 +258,8 @@ class MedianEmittedUtxoAmount(BaseMetric):
 
         query = f"""
         SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(amount AS NUMERIC)) 
-        FROM {subchain}_emitted_utxos 
-        WHERE date = '{date}'
+        FROM emitted_utxo_data 
+        WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
         """
         results = execute_query(query, config)
         
@@ -277,7 +277,7 @@ class SumConsumedUtxoAmount(BaseMetric):
             return 0
 
         # Assuming 'consumed_table' refers to a table where UTXOs are consumed in the subchain transactions
-        query = f"SELECT SUM(CAST(amount AS NUMERIC)) FROM {subchain}_consumed_utxos WHERE date = '{date}'"
+        query = f"SELECT SUM(CAST(amount AS NUMERIC)) FROM consumed_utxo_data WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'"
         results = execute_query(query, config)
         
         if results is not None and not results.empty:
@@ -294,7 +294,7 @@ class AverageConsumedUtxoAmount(BaseMetric):
             return 0
 
         # Assuming 'table' refers to a table that tracks consumed UTXOs in the subchain transactions
-        query = f"SELECT AVG(CAST(amount AS NUMERIC)) FROM {subchain}_consumed_utxos WHERE date = '{date}'"
+        query = f"SELECT AVG(CAST(amount AS NUMERIC)) FROM consumed_utxo_data WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'"
         results = execute_query(query, config)
         
         if results is not None and not results.empty:
@@ -314,8 +314,8 @@ class MedianConsumedUtxoAmount(BaseMetric):
         # Assuming 'table' refers to a table that tracks consumed UTXOs in the subchain transactions
         query = f"""
         SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(amount AS NUMERIC)) 
-        FROM {subchain}_consumed_utxos 
-        WHERE date = '{date}'
+        FROM consumed_utxo_data
+        WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
         """
         results = execute_query(query, config)
         
@@ -337,24 +337,24 @@ class LargeTransactions(BaseMetric):
         # Assuming that emitted_table and consumed_table are both part of the same subchain transactions
         query = f"""
         WITH emitted AS (
-            SELECT \"txHash\", SUM(CAST(amount AS NUMERIC)) as total_emitted
-            FROM {subchain}_emitted_utxos
-            WHERE date = '{date}'
-            GROUP BY \"txHash\"
+            SELECT \"tx_hash\", SUM(CAST(amount AS NUMERIC)) as total_emitted
+            FROM emitted_utxo_data
+            WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
+            GROUP BY \"tx_hash\"
             HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
         ),
         consumed AS (
-            SELECT \"txHash\", SUM(CAST(amount AS NUMERIC)) as total_consumed
-            FROM {subchain}_consumed_utxos
-            WHERE date = '{date}'
-            GROUP BY \"txHash\"
+            SELECT \"tx_hash\", SUM(CAST(amount AS NUMERIC)) as total_consumed
+            FROM consumed_utxo_data
+            WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
+            GROUP BY \"tx_hash\"
             HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
         )
-        SELECT COUNT(DISTINCT \"txHash\") as large_transactions_count
+        SELECT COUNT(DISTINCT \"tx_hash\") as large_transactions_count
         FROM (
-            SELECT \"txHash\" FROM emitted
+            SELECT \"tx_hash\" FROM emitted
             UNION
-            SELECT \"txHash\" FROM consumed
+            SELECT \"tx_hash\" FROM consumed
         ) as combined
         """
         results = execute_query(query, config)
@@ -377,24 +377,24 @@ class WhaleAddreessActivity(BaseMetric):
         # Assuming that emitted_table and consumed_table are both part of the same subchain transactions
         query = f"""
         WITH whale_emitted AS (
-            SELECT \"txHash\"
-            FROM {subchain}_emitted_utxos
-            WHERE date = '{date}'
-            GROUP BY \"txHash\"
+            SELECT \"tx_hash\"
+            FROM emitted_utxo_data
+            WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
+            GROUP BY \"tx_hash\"
             HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
         ),
         whale_consumed AS (
-            SELECT \"txHash\"
-            FROM {subchain}_consumed_utxos
-            WHERE date = '{date}'
-            GROUP BY \"txHash\"
+            SELECT \"tx_hash\"
+            FROM consumed_utxo_data
+            WHERE date = '{date}' AND blockchain = '{blockchain}' AND sub_chain = '{subchain}'
+            GROUP BY \"tx_hash\"
             HAVING SUM(CAST(amount AS NUMERIC)) > {threshold}
         )
-        SELECT COUNT(DISTINCT \"txHash\") as whale_transactions_count
+        SELECT COUNT(DISTINCT \"tx_hash\") as whale_transactions_count
         FROM (
-            SELECT \"txHash\" FROM whale_emitted
+            SELECT \"tx_hash\" FROM whale_emitted
             UNION
-            SELECT \"txHash\" FROM whale_consumed
+            SELECT \"tx_hash\" FROM whale_consumed
         ) as combined_whale_transactions
         """
         results = execute_query(query, config)

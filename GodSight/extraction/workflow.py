@@ -1,3 +1,4 @@
+from GodSight.extraction.utils.database.database_service import store_all_extracted_data
 from GodSight.extraction.utils.database.services import check_subchain_last_extracted_date, get_subchain_start_date
 from GodSight.extraction.utils.scripts.utils.log_utils import log_workflow_status
 
@@ -8,7 +9,7 @@ from .logs.log import Logger
 logger = Logger("GodSight")
 
 # Assuming the necessary imports are correctly set up
-from GodSight.extraction.utils.scripts.mappers import data_mapper
+from GodSight.extraction.utils.scripts.mappers import data_mapper, transform_data
 from GodSight.extraction.utils.scripts.extraction_helper import store_data, dataframe_to_mapping_dict, \
     extract_function_names, get_function, load_functions_from_file, get_transaction_mappings, get_emitted_utxo_mappings, \
     get_consumed_utxo_mappings
@@ -89,19 +90,28 @@ def extract_and_store_data(blockchain, subchain, end_date, id, config):
 
             logger.log_info(f"Transaction extraction finished for {blockchain} {subchain}  date:{date}")
 
+            print(1)
+
             # Map and store data
-            trxs, emitted_utxos, consumed_utxos = data_mapper(config_, trxs, emitted_utxos, consumed_utxos)
+            # trxs, emitted_utxos, consumed_utxos = data_mapper(config_, trxs, emitted_utxos, consumed_utxos, config)
+
+            transformed_trxs, transformed_emitted_utxos, transformed_consumed_utxos= transform_data(blockchain, subchain, trxs, emitted_utxos, consumed_utxos, functions, config)
+
+            print(2)
 
             logger.log_info(f"Started storing transactions for {blockchain} {subchain} on date: {date}")
-            store_data(subchain, date, trxs, emitted_utxos, consumed_utxos, config)
+            # store_data(subchain, date, trxs, emitted_utxos, consumed_utxos, config)
+            store_all_extracted_data(blockchain, subchain, date, transformed_trxs, transformed_emitted_utxos,
+                                     transformed_consumed_utxos, config)
             logger.log_info(f"Finished storing transactions for {blockchain} {subchain} on date: {date}")
+
+            log_workflow_status(blockchain, subchain, 'success', 'extraction', None, config)
+
         except Exception as e:
             logger.log_error(f"An unexpected error occurred while storing transactions: {e}")
             log_workflow_status(blockchain, subchain, 'fail', 'extraction', str(e), config)
             # TODO: Delete all the data for this date before leaving
             raise Exception(e)
-        finally:
-            log_workflow_status(blockchain, subchain, 'success', 'extraction', None, config)
 
         current_loop_date += timedelta(days=1)
 

@@ -54,7 +54,7 @@ def handle_metric_route():
         metric = request.args.get('metric')
         time_range = request.args.get('timeRange')
 
-        print(blockchain, subchain, metric, time_range)
+        # print(blockchain, subchain, metric, time_range)
 
         model = metric_route_map[metric]
 
