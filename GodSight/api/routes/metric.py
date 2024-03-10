@@ -1,5 +1,5 @@
 from flask import Blueprint, request, current_app
-from ..utils.get_metric_model import MetricsData, Metric
+from ..utils.get_metric_model import MetricsData, Metric, Blockchain
 from ..models.response import Response # Import the custom Response
 from ..utils.json_utils import jsonify  # Import the custom jsonify
 from datetime import datetime, timedelta
@@ -77,21 +77,37 @@ def handle_metric_route():
         )
 
         if subchain == 'default':
-            query = query.with_entities(MetricsData.date, func.sum(MetricsData.value).label('sum_value')) \
-                .group_by(MetricsData.date)
-            items = query.all()
-            serialized_items = []
-            for item in items:
-                date, sum_value = item
-                serialized_item = {
-                    'date': date,
-                    'blockchain': blockchain,
-                    'subchain': 'default',
-                    'metric': metric_name,
-                    'value': float(sum_value)
-                }
-                serialized_items.append(serialized_item)
-            chart_data = serialized_items
+            blockchain_data = Blockchain.query.filter_by(blockchain=blockchain, sub_chain='default').first()
+            if blockchain_data:
+                if blockchain_data.original:
+                    chart_data = "It's original"
+                else:
+                    query = query.with_entities(MetricsData.date, func.sum(MetricsData.value).label('sum_value')) \
+                        .group_by(MetricsData.date)
+                    # metric_grouping_type = Metric.query.filter_by(metric_name=metric_name).first().grouping_type
+                    # if metric_grouping_type == 'sum':
+                    #     query = query.with_entities(MetricsData.date, func.sum(MetricsData.value).label('sum_value')) \
+                    #         .group_by(MetricsData.date)
+                    # elif metric_grouping_type == 'avg':
+                    #     query = query.with_entities(MetricsData.date, func.avg(MetricsData.value).label('avg_value')) \
+                    #         .group_by(MetricsData.date)
+                    # Add other grouping types as needed
+
+                    items = query.all()
+                    serialized_items = []
+                    for item in items:
+                        date, agg_value = item
+                        serialized_item = {
+                            'date': date,
+                            'blockchain': blockchain,
+                            'subchain': 'default',
+                            'metric': metric_name,
+                            'value': float(agg_value)
+                        }
+                        serialized_items.append(serialized_item)
+                    chart_data = serialized_items
+            else:
+                raise ValueError("Invalid blockchain or subchain combination.")
         else:
             query = query.filter(MetricsData.subchain == subchain)
             paginated_query = get_paginated_data(MetricsData, query)

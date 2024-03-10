@@ -31,5 +31,6 @@ def get_selection_data():
         print(response)
         return jsonify(response.to_dict()), 200
     except Exception as e:
-        # Handle any exceptions
+        # Handle any exception
+        print(e)
         return jsonify(Response(False, error=f"An unexpected error occurred: {str(e)}").to_dict()), 500
