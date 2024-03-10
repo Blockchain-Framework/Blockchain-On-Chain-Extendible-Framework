@@ -1,5 +1,4 @@
 from flask import Blueprint, request, current_app
-from ..utils.get_metric_model import metric_route_map
 from ..models.response import Response # Import the custom Response
 from ..utils.json_utils import jsonify  # Import the custom jsonify
 from datetime import datetime, timedelta
@@ -11,6 +10,7 @@ init_blueprint = Blueprint('init', __name__)
 
 @init_blueprint.route('/')
 def get_selection_data():
+    print("got request for init")
     try:
         blockchains = Blockchain.query.all()
         blockchain_data = {}
