@@ -76,14 +76,6 @@ def extract_and_store_data(blockchain, subchain, end_date, id, config):
             functions_file_path = os.path.join('GodSight/extraction/user_functions', str(id) + '.py')
             functions = load_functions_from_file(functions_file_path, all_function_names)
 
-            # Prepare config for data mapper
-            config_ = [
-                transaction_feature_mapping,
-                emit_utxo_mapping,
-                consume_utxo_mapping,
-                functions
-            ]
-
             # Extract data using the extract function
             extract = get_function(functions_file_path, 'extract')
             trxs, emitted_utxos, consumed_utxos = extract(date)

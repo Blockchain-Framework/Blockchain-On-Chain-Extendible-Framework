@@ -149,7 +149,7 @@ def check_metrics_and_grouping_type(config):
         with connect_database(config) as conn:
             with conn.cursor() as cur:
                 # Fetch metric_name and grouping_type
-                cur.execute("SELECT metric_name, grouping_type FROM metric_table WHERE type == 'basic'")
+                cur.execute("SELECT metric_name, grouping_type FROM metric_table WHERE type = 'basic'")
                 queried_metrics = cur.fetchall()
 
                 # Convert queried data into a dict for easier lookup
@@ -158,7 +158,7 @@ def check_metrics_and_grouping_type(config):
                 return metrics_dict
 
     except Exception as e:
-        logger.error(f"Failed to process metrics: {e}")
+        logger.log_error(f"Failed to process metrics: {e}")
         raise Exception(f"Failed to process metrics: {e}")
 
 

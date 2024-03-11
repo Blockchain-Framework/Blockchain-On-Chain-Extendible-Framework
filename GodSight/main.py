@@ -178,7 +178,7 @@ def add_blockchain(file_name):
 
             sys_base_metrics = check_metrics_and_grouping_type(config)
 
-            allowed_agg = ['SUM']
+            allowed_agg = ['sum']
 
             for metric in unique_metrics:
                 if sys_base_metrics.get(metric) in allowed_agg:
