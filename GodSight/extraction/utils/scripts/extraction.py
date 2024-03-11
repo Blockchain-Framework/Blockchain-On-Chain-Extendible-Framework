@@ -196,7 +196,7 @@ if __name__ == "__main__":
     
     x_url = "https://glacier-api.avax.network/v1/networks/mainnet/blockchains/x-chain/transactions"
     
-    day = "2024-02-05"
+    day = "2024-03-07"
 
     trxs, emitted_utxos, consumed_utxos = extract_avalanche_data(day)
     

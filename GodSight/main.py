@@ -2,8 +2,10 @@ import argparse
 import sys
 import os
 import uuid
+from datetime import datetime
 from tqdm import tqdm
 from GodSight.config.config import Config
+from GodSight.utils.database.services import check_metrics_and_grouping_type
 from GodSight.utils.logs.log import Logger
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -13,11 +15,16 @@ logger = Logger("GodSight")
 
 
 def start_api():
+    from GodSight.utils.database.db import test_connection, initialize_database
     from GodSight.api.app import create_app
 
     logger.log_info("Starting the GodSight API server...")
 
     config = Config()
+
+    test_connection(config)
+    logger.log_info(f"Database is connected")
+    initialize_database(config)
 
     app = create_app(config)
     app.run(host=config.api_host, port=config.api_port,
@@ -74,6 +81,7 @@ def add_blockchain(file_name):
         blockchain_metrics = {}
         metric_chain_meta = []
         all_test_data = {}
+        blockchain_start_date = datetime.strptime('1900-01-01', "%Y-%m-%d").date()
         for subchain in metadata['subChains']:
 
             logger.log_info(f"checking {metadata['name']} {subchain['name']} data")
@@ -87,7 +95,8 @@ def add_blockchain(file_name):
                 extract_file_path,
                 mapper_file_path,
                 subchain['startDate'],
-                pbar)
+                pbar,
+                config)
 
             if not final_validation:
                 pbar.close()
@@ -105,8 +114,12 @@ def add_blockchain(file_name):
                 'blockchain': metadata['name'],
                 'subchain': subchain['name'],
                 'start_date': subchain['startDate'],
-                'description': subchain['description']
+                'description': subchain['description'],
+                'original': True
             })
+
+            if blockchain_start_date < datetime.strptime(subchain['startDate'], "%Y-%m-%d").date():
+                blockchain_start_date = datetime.strptime(subchain['startDate'], "%Y-%m-%d").date()
 
             subchain_mappings = format_config_for_insertion(mappings, metadata['name'], subchain['name'])
 
@@ -147,43 +160,62 @@ def add_blockchain(file_name):
 
         if 'default' not in chains:
             logger.log_info(f"Adding {metadata['name']} default meta data -- applying for multi-chain blockchains")
-            pbar = tqdm(total=100)
+            # pbar = tqdm(total=100)
             chain_unique_id = str(uuid.uuid4())
-            pbar.update(10)
+            # pbar.update(10)
             meta_data.append({
                 'id': chain_unique_id,
                 'blockchain': metadata['name'],
                 'subchain': 'default',
-                'start_date': '1900-01-01',
-                'description': 'Default chain: representing whole chains'
+                'start_date': blockchain_start_date.strftime("%Y-%m-%d"),
+                'description': 'Default chain: representing whole chains',
+                'original': False
             })
-            pbar.update(20)
 
-            common_metrics = set(blockchain_metrics[next(iter(blockchain_metrics))])
+            unique_metrics = set()
+            for subchain, metrics in blockchain_metrics.items():
+                unique_metrics.update(metrics)
 
-            # Iterate over the rest of the lists in the dictionary
-            for key in blockchain_metrics:
-                common_metrics = common_metrics.intersection(blockchain_metrics[key])
+            sys_base_metrics = check_metrics_and_grouping_type(config)
 
-            # Convert the set back to a list, if needed
-            common_metric_list = list(common_metrics)
+            allowed_agg = ['sum']
 
-            for metric in common_metric_list:
-                metric_chain_meta.append({
-                    'blockchain_id': chain_unique_id,
-                    'blockchain': metadata['name'],
-                    'sub_chain': 'default',
-                    'metric_name': metric
-                })
+            for metric in unique_metrics:
+                if sys_base_metrics.get(metric) in allowed_agg:
+                    metric_chain_meta.append({
+                        'blockchain_id': chain_unique_id,
+                        'blockchain': metadata['name'],
+                        'sub_chain': 'default',
+                        'metric_name': metric
+                    })
 
-            pbar.update(20)
+            # pbar.update(20)
+
+            # common_metrics = set(blockchain_metrics[next(iter(blockchain_metrics))])
+            #
+            # # Iterate over the rest of the lists in the dictionary
+            # for key in blockchain_metrics:
+            #     common_metrics = common_metrics.intersection(blockchain_metrics[key])
+            #
+            # # Convert the set back to a list, if needed
+            # common_metric_list = list(common_metrics)
+            #
+            # for metric in common_metric_list:
+            #     metric_chain_meta.append({
+            #         'blockchain_id': chain_unique_id,
+            #         'blockchain': metadata['name'],
+            #         'sub_chain': 'default',
+            #         'metric_name': metric
+            #     })
+
+            # pbar.update(20)
 
             test_data = concatenate_and_fill_dfs(all_test_data)
 
-            pbar.update(50)
+            # pbar.update(50)
 
             all_test_data['default'] = test_data
-            pbar.close()
+            # pbar.close()
 
         logger.log_info('extract and mapping validation passed')
 
@@ -250,9 +282,15 @@ def add_blockchain(file_name):
 
 def extract_date(date):
     try:
+        from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.extraction.main import extract_data
 
         config = Config()
+
+        test_connection(config)
+        logger.log_info(f"Database is connected")
+        initialize_database(config)
+
         extract_data(date, config)
     except Exception as e:
         logger.log_error(e)
@@ -260,9 +298,15 @@ def extract_date(date):
 
 def extract_date_range(start_date, end_date):
     try:
+        from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.extraction.main import extract_data_for_date_range
 
         config = Config()
+
+        test_connection(config)
+        logger.log_info(f"Database is connected")
+        initialize_database(config)
+
         extract_data_for_date_range(start_date, end_date, config)
     except Exception as e:
         logger.log_error(e)
@@ -270,9 +314,15 @@ def extract_date_range(start_date, end_date):
 
 def compute_date(date):
     try:
+        from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.computation.main import compute_data
 
         config = Config()
+
+        test_connection(config)
+        logger.log_info(f"Database is connected")
+        initialize_database(config)
+
         compute_data(date, config)
     except Exception as e:
         logger.log_error(e)
@@ -280,9 +330,15 @@ def compute_date(date):
 
 def compute_date_range(start_date, end_date):
     try:
+        from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.computation.main import compute_data_for_date_range
 
         config = Config()
+
+        test_connection(config)
+        logger.log_info(f"Database is connected")
+        initialize_database(config)
+
         compute_data_for_date_range(start_date, end_date, config)
     except Exception as e:
         logger.log_error(e)

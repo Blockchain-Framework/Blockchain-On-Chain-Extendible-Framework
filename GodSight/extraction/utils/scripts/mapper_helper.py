@@ -21,6 +21,5 @@ def insert_feature_mapping_to_df(blockchain, subchain, mapping):
             'type': type,
             'info': info or None  # Ensure None is used if info is not provided
         })
-    
     df = pd.DataFrame(data)
     return df

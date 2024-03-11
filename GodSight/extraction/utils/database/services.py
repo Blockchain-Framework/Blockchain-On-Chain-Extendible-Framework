@@ -4,6 +4,8 @@ from sqlalchemy import MetaData, Table, Column, String, Integer, Float
 from sqlalchemy.exc import NoSuchTableError
 import psycopg2
 from psycopg2 import sql
+from psycopg2.extras import execute_batch
+
 import pandas as pd
 
 logger = Logger("GodSight")
@@ -106,7 +108,7 @@ def get_subchains(config, blockchain):
         with connect_database(config) as conn:
             with conn.cursor() as cur:
                 cur.execute(
-                    "SELECT DISTINCT sub_chain FROM blockchain_table WHERE blockchain = %s and sub_chain != 'default'",
+                    "SELECT DISTINCT sub_chain FROM blockchain_table WHERE blockchain = %s and original = true",
                     (blockchain,))
                 subchains = cur.fetchall()
                 subchains = [subchain[0] for subchain in subchains]
@@ -116,7 +118,7 @@ def get_subchains(config, blockchain):
     return subchains
 
 
-def get_id(config, blockchain, subchain):
+def get_chain_id(config, blockchain, subchain):
     try:
         with connect_database(config) as conn:
             with conn.cursor() as cur:
@@ -138,3 +140,171 @@ def delete_existing_records(chain, current_date, config):
             for table in tables:
                 cur.execute(f"DELETE FROM {table} WHERE date = %s", (current_date,))
         conn.commit()
+
+
+def check_subchain_last_extracted_date(config, blockchain_name, subchain_name):
+    conn = connect_database(config)
+    if conn is not None:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT timestamp FROM workflow_meta_table WHERE chain = %s AND subchain = %s AND task = %s AND status = %s ORDER BY timestamp DESC LIMIT 1",
+                (blockchain_name, subchain_name, 'extraction', 'success',))
+            result = cur.fetchone()
+            if result:
+                return result[0]
+    return None
+
+
+def get_subchain_start_date(config, blockchain_name, subchain_name):
+    conn = connect_database(config)
+    if conn is not None:
+        with conn.cursor() as cur:
+            cur.execute("SELECT start_date FROM blockchain_table WHERE blockchain = %s AND sub_chain = %s",
+                        (blockchain_name, subchain_name,))
+            result = cur.fetchone()
+            if result:
+                return result[0]  # Assuming result[0] is a date object
+    return None
+
+
+def Is_original_subchain(config, blockchain_name, subchain_name):
+    conn = connect_database(config)
+    if conn is not None:
+        with conn.cursor() as cur:
+            cur.execute("SELECT original FROM blockchain_table WHERE blockchain = %s AND sub_chain = %s",
+                        (blockchain_name, subchain_name,))
+            result = cur.fetchone() is not None
+            return result
+    return False
+
+
+def store_final_trxs(final_trxs, table_name, config):
+    """
+    Append a list of dictionaries to a PostgreSQL table.
+
+    :param final_trxs: List of dictionaries containing transaction data.
+    :param table_name: Name of the table to append data to.
+    :param connection_info: Dictionary containing PostgreSQL connection parameters.
+    """
+    # Establish connection to the PostgreSQL database
+    conn = connect_database(config)
+    cursor = conn.cursor()
+
+    # Prepare INSERT statement
+    # Assumes all dictionaries in final_trxs have the same keys
+    columns = final_trxs[0].keys()
+    columns_str = ', '.join(columns)  # column names
+    values_str = ', '.join([f'%({c})s' for c in columns])  # placeholders
+    insert_query = f'INSERT INTO {table_name} ({columns_str}) VALUES ({values_str})'
+
+    # Execute batch insert
+    try:
+        execute_batch(cursor, insert_query, final_trxs)
+        conn.commit()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        conn.rollback()
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def load_model_fields(table_name, config):
+    conn = connect_database(config)
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}'")
+    fields = {row[0]: row[1] for row in cursor.fetchall()}
+    cursor.close()
+    return fields
+
+
+def fetch_model_data(config):
+    model_data = {
+        'trx_mapping': [],
+        'emit_utxo_mapping': [],
+        'consume_utxo_mapping': []
+    }
+    try:
+        with connect_database(config) as conn:
+            with conn.cursor() as cur:
+                # Fetch transaction_model data
+                cur.execute("SELECT field_name FROM transaction_model")
+                trx_fields = cur.fetchall()
+                for field in trx_fields:
+                    model_data['trx_mapping'].append(field[0])
+
+                # Fetch utxo_model data
+                cur.execute("SELECT field_name FROM utxo_model")
+                utxo_fields = cur.fetchall()
+                for field in utxo_fields:
+                    model_data['emit_utxo_mapping'].append(field[0])
+                    model_data['consume_utxo_mapping'].append(field[0])
+
+    except Exception as e:
+        logger.log_error(f"Failed to fetch model data: {e}")
+        raise Exception(f"Failed to fetch model data: {e}")
+
+    return model_data
+
+
+def fetch_feature_mappings(config, blockchain, sub_chain):
+    output = {
+        'transaction_mappings': [],
+        'emitted_mappings': [],
+        'consumed_mappings': []
+    }
+
+    try:
+        with connect_database(config) as conn:
+            with conn.cursor() as cur:
+                # Transactions feature mappings
+                cur.execute("""
+                    SELECT sourceField, targetField, type, info 
+                    FROM transactions_feature_mappings 
+                    WHERE blockchain = %s AND sub_chain = %s
+                """, (blockchain, sub_chain))
+                transactions_data = cur.fetchall()
+                for data in transactions_data:
+                    output['transaction_mappings'].append({
+                        'sourceField': data[0],
+                        'targetField': data[1],
+                        'type': data[2],
+                        'info': data[3]
+                    })
+
+                # Emitted UTXOs feature mappings
+                cur.execute("""
+                    SELECT sourceField, targetField, type, info 
+                    FROM emitted_utxos_feature_mappings 
+                    WHERE blockchain = %s AND sub_chain = %s
+                """, (blockchain, sub_chain))
+                emitted_data = cur.fetchall()
+                for data in emitted_data:
+                    output['emitted_mappings'].append({
+                        'sourceField': data[0],
+                        'targetField': data[1],
+                        'type': data[2],
+                        'info': data[3]
+                    })
+
+                # Consumed UTXOs feature mappings
+                cur.execute("""
+                    SELECT sourceField, targetField, type, info 
+                    FROM consumed_utxos_feature_mappings 
+                    WHERE blockchain = %s AND sub_chain = %s
+                """, (blockchain, sub_chain))
+                consumed_data = cur.fetchall()
+                for data in consumed_data:
+                    output['consumed_mappings'].append({
+                        'sourceField': data[0],
+                        'targetField': data[1],
+                        'type': data[2],
+                        'info': data[3]
+                    })
+
+    except Exception as e:
+        logger.log_error(f"Failed to fetch feature mappings: {e}")
+        raise Exception(f"Failed to fetch feature mappings: {e}")
+
+    return output
+

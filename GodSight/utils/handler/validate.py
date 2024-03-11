@@ -5,6 +5,8 @@ import os
 import sys
 import inspect
 import pandas as pd
+
+from GodSight.utils.database.services import fetch_model_data
 from GodSight.utils.model.config_mapper import model
 from GodSight.utils.model.metric import BaseMetric, CustomMetric
 from GodSight.utils.handler.http import fetch_transactions
@@ -218,28 +220,30 @@ def validate_extraction_file(relative_path_from_project_root, test_input):
 #     return True, "Mapper validation passed.", mapper_config, mapper_funcs
 
 
-def validate_mapper_file(relative_path_from_project_root):
+def validate_mapper_file(relative_path_from_project_root, config):
     mapper_funcs_str = []
 
     # Define the expected fields for each model
-    trx_fields = [
-        'txHash', 'blockHash', 'timestamp', 'blockHeight', 'txType', 'memo',
-        'chainFormat', 'amountUnlocked', 'amountCreated', 'sourceChain',
-        'destinationChain', 'rewardAddresses', 'estimatedReward',
-        'startTimestamp', 'endTimestamp', 'delegationFeePercent', 'nodeId',
-        'subnetId', 'value', 'amountStaked', 'amountBurned'
-    ]
+    # trx_fields = [
+    #     'txHash', 'blockHash', 'timestamp', 'blockHeight', 'txType', 'memo',
+    #     'chainFormat', 'amountUnlocked', 'amountCreated', 'sourceChain',
+    #     'destinationChain', 'rewardAddresses', 'estimatedReward',
+    #     'startTimestamp', 'endTimestamp', 'delegationFeePercent', 'nodeId',
+    #     'subnetId', 'value', 'amountStaked', 'amountBurned'
+    # ]
+    #
+    # utxo_fields = [
+    #     'utxoId', 'txHash', 'txType', 'addresses', 'value', 'blockHash',
+    #     'assetId', 'asset_name', 'symbol', 'denomination', 'asset_type', 'amount'
+    # ]
+    #
+    # model_fields_mapping = {
+    #     'trx_mapping': trx_fields,
+    #     'emit_utxo_mapping': utxo_fields,
+    #     'consume_utxo_mapping': utxo_fields,
+    # }
 
-    utxo_fields = [
-        'utxoId', 'txHash', 'txType', 'addresses', 'value', 'blockHash',
-        'assetId', 'asset_name', 'symbol', 'denomination', 'asset_type', 'amount'
-    ]
-
-    model_fields_mapping = {
-        'trx_mapping': trx_fields,
-        'emit_utxo_mapping': utxo_fields,
-        'consume_utxo_mapping': utxo_fields,
-    }
+    model_fields_mapping = fetch_model_data(config)
 
     # Assuming file_exists and is_python_file are implemented elsewhere
     if not file_exists(relative_path_from_project_root):
@@ -410,7 +414,8 @@ def load_metrics(script_path, meta_data, metrics, metric_chain_meta):
                 'description': metric_instance.description,
                 'category': metric_instance.category,
                 'display_name': metric_instance.display_name,
-                'type': 'custom'
+                'type': 'custom',
+                'grouping_type': None
             })
 
             chain = metric_instance.chain
@@ -448,7 +453,7 @@ def validate_custom_metrics(metric_classes, test_data):
     return True
 
 
-def validate_extract_and_mapper(extraction_path, mapper_path, start_date, pbar):
+def validate_extract_and_mapper(extraction_path, mapper_path, start_date, pbar, config):
     final_validation = False
 
     test_input = start_date
@@ -462,7 +467,7 @@ def validate_extract_and_mapper(extraction_path, mapper_path, start_date, pbar):
 
     pbar.update(20)
 
-    mapper_validation_passed, mapper_validation_message, mappings, mapper_funcs = validate_mapper_file(mapper_path)
+    mapper_validation_passed, mapper_validation_message, mappings, mapper_funcs = validate_mapper_file(mapper_path, config)
 
     if not mapper_validation_passed:
         # logger.log_error(mapper_validation_message)

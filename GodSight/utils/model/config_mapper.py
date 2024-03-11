@@ -36,3 +36,33 @@ model = {
         'amount': "function"
     }
 }
+
+
+output = {
+    'transaction_mappings': [
+        {
+            'sourceField': 'value',
+            'targetField': 'value',
+            'type': 'value',
+            'info': 'value'
+        },
+    ],
+
+    'emitted_mappings': [
+{
+            'sourceField': 'value',
+            'targetField': 'value',
+            'type': 'value',
+            'info': 'value'
+        },
+    ],
+
+    'consumed_mappings': [
+        {
+                    'sourceField': 'value',
+                    'targetField': 'value',
+                    'type': 'value',
+                    'info': 'value'
+                },
+        ]
+}

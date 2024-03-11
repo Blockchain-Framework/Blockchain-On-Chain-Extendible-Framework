@@ -25,10 +25,19 @@ CREATE TABLE chain_metric (
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE metrics_data (
+    date DATE NOT NULL,
+    blockchain VARCHAR(255) NOT NULL,
+    subchain VARCHAR(255) NOT NULL,
+    metric VARCHAR(255) NOT NULL,
+    value FLOAT NOT NULL
+);
+
+
 INSERT INTO blockchain_table (blockchain, sub_chain, start_date) VALUES
-('Avalanche', 'x', '2024-01-19'),
-('Avalanche', 'c', '2024-01-19'),
-('Avalanche', 'p', '2024-01-19');
+('Avalanche', 'x', '2024-03-07'),
+('Avalanche', 'c', '2024-03-07'),
+('Avalanche', 'p', '2024-03-07');
 
 INSERT INTO metric_table (metric_name, description) VALUES
 ('trx_per_second', 'Number of transactions processed each second'),
@@ -142,42 +151,42 @@ CREATE TABLE consumed_utxos_feature_mappings (
 );
 
 
-INSERT INTO transactions_feature_mappings (blockchain, subchain, sourceField, targetField, type, info) VALUES
-('Avalanche', 'x', 'txHash', 'txHash', 'feature', NULL),
-('Avalanche', 'x', 'blockHash', 'blockHash', 'feature', NULL),
-('Avalanche', 'x', 'blockHeight', 'blockHeight', 'feature', NULL),
-('Avalanche', 'x', 'timestamp', 'timestamp', 'feature', NULL),
-('Avalanche', 'x', 'memo', 'memo', 'feature', NULL),
-('Avalanche', 'x', 'chainFormat', 'chainFormat', 'feature', NULL),
-('Avalanche', 'x', 'txType', 'txType', 'feature', NULL),
-('Avalanche', 'x', 'amount_unlocked', 'amountUnlocked', 'function', 'calculate_amount_unlocked'),
-('Avalanche', 'x', 'amount_created', 'amountCreated', 'function', 'calculate_amount_created');
-
-INSERT INTO emitted_utxos_feature_mappings (blockchain, subchain, sourceField, targetField, type, info) VALUES
-('x', 'default', 'addresses', 'addresses', 'feature', NULL),
-('x', 'default', 'utxoId', 'utxoId', 'feature', NULL),
-('x', 'default', 'txHash', 'txHash', 'feature', NULL),
-('x', 'default', 'txType', 'txType', 'feature', NULL),
-('x', 'default', 'assetId', 'assetId', 'function', 'getAssetId'),
-('x', 'default', 'asset_name', 'assetName', 'function', 'getAssetName'),
-('x', 'default', 'symbol', 'symbol', 'function', 'getSymbol'),
-('x', 'default', 'denomination', 'denomination', 'function', 'getDenomination'),
-('x', 'default', 'asset_type', 'assetType', 'function', 'getAsset_type'),
-('x', 'default', 'amount', 'amount', 'function', 'getAmount');
-
-
-INSERT INTO consumed_utxos_feature_mappings (blockchain, subchain, sourceField, targetField, type, info) VALUES
-('x', 'default', 'addresses', 'addresses', 'feature', NULL),
-('x', 'default', 'utxoId', 'utxoId', 'feature', NULL),
-('x', 'default', 'txHash', 'txHash', 'feature', NULL),
-('x', 'default', 'txType', 'txType', 'feature', NULL),
-('x', 'default', 'blockHash', 'blockHash', 'feature', NULL),
-('x', 'default', 'assetId', 'assetId', 'function', 'getAssetId'),
-('x', 'default', 'asset_name', 'assetName', 'function', 'getAssetName'),
-('x', 'default', 'symbol', 'symbol', 'function', 'getSymbol'),
-('x', 'default', 'denomination', 'denomination', 'function', 'getDenomination'),
-('x', 'default', 'asset_type', 'assetType', 'function', 'getAsset_type'),
-('x', 'default', 'amount', 'amount', 'function', 'getAmount');
+--INSERT INTO transactions_feature_mappings (blockchain, subchain, sourceField, targetField, type, info) VALUES
+--('Avalanche', 'x', 'txHash', 'txHash', 'feature', NULL),
+--('Avalanche', 'x', 'blockHash', 'blockHash', 'feature', NULL),
+--('Avalanche', 'x', 'blockHeight', 'blockHeight', 'feature', NULL),
+--('Avalanche', 'x', 'timestamp', 'timestamp', 'feature', NULL),
+--('Avalanche', 'x', 'memo', 'memo', 'feature', NULL),
+--('Avalanche', 'x', 'chainFormat', 'chainFormat', 'feature', NULL),
+--('Avalanche', 'x', 'txType', 'txType', 'feature', NULL),
+--('Avalanche', 'x', 'amount_unlocked', 'amountUnlocked', 'function', 'calculate_amount_unlocked'),
+--('Avalanche', 'x', 'amount_created', 'amountCreated', 'function', 'calculate_amount_created');
+--
+--INSERT INTO emitted_utxos_feature_mappings (blockchain, subchain, sourceField, targetField, type, info) VALUES
+--('x', 'default', 'addresses', 'addresses', 'feature', NULL),
+--('x', 'default', 'utxoId', 'utxoId', 'feature', NULL),
+--('x', 'default', 'txHash', 'txHash', 'feature', NULL),
+--('x', 'default', 'txType', 'txType', 'feature', NULL),
+--('x', 'default', 'assetId', 'assetId', 'function', 'getAssetId'),
+--('x', 'default', 'asset_name', 'assetName', 'function', 'getAssetName'),
+--('x', 'default', 'symbol', 'symbol', 'function', 'getSymbol'),
+--('x', 'default', 'denomination', 'denomination', 'function', 'getDenomination'),
+--('x', 'default', 'asset_type', 'assetType', 'function', 'getAsset_type'),
+--('x', 'default', 'amount', 'amount', 'function', 'getAmount');
+--
+--
+--INSERT INTO consumed_utxos_feature_mappings (blockchain, subchain, sourceField, targetField, type, info) VALUES
+--('x', 'default', 'addresses', 'addresses', 'feature', NULL),
+--('x', 'default', 'utxoId', 'utxoId', 'feature', NULL),
+--('x', 'default', 'txHash', 'txHash', 'feature', NULL),
+--('x', 'default', 'txType', 'txType', 'feature', NULL),
+--('x', 'default', 'blockHash', 'blockHash', 'feature', NULL),
+--('x', 'default', 'assetId', 'assetId', 'function', 'getAssetId'),
+--('x', 'default', 'asset_name', 'assetName', 'function', 'getAssetName'),
+--('x', 'default', 'symbol', 'symbol', 'function', 'getSymbol'),
+--('x', 'default', 'denomination', 'denomination', 'function', 'getDenomination'),
+--('x', 'default', 'asset_type', 'assetType', 'function', 'getAsset_type'),
+--('x', 'default', 'amount', 'amount', 'function', 'getAmount');
 
 
 

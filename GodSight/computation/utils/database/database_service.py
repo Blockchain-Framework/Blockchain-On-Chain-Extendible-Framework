@@ -105,26 +105,39 @@ def batch_insert_dataframes(dfs_to_insert, config):
 
 
 def get_transactions(blockchain, subchain, date, config):
-    query = f"SELECT * FROM {subchain}_transactions WHERE date = '{date}'"
-    return get_query_results(query, config)
+    query = f"""
+    SELECT * FROM transaction_data
+    WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND date = '{date}'
+    """
+    results = get_query_results(query, config)
+    return pd.DataFrame(results)
 
-def get_emitted_utxos(blockchain, subchain,date, config):
-    query = f"SELECT * FROM {subchain}_emitted_utxos WHERE date = '{date}'"
-    return get_query_results(query, config)
+def get_emitted_utxos(blockchain, subchain, date, config):
+    query = f"""
+    SELECT * FROM emitted_utxo_data
+    WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND date = '{date}'
+    """
+    results = get_query_results(query, config)
+    return pd.DataFrame(results)
 
 def get_consumed_utxos(blockchain, subchain, date, config):
-    query = f"SELECT * FROM {subchain}_consumed_utxos WHERE date = '{date}'"
-    return get_query_results(query, config)
+    query = f"""
+    SELECT * FROM consumed_utxo_data
+    WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND date = '{date}'
+    """
+    results = get_query_results(query, config)
+    return pd.DataFrame(results)
+
 
 def get_blockchains(config):
     query = "SELECT DISTINCT blockchain FROM blockchain_table;"
     return get_query_results(query, config)
 
 def get_subchains(blockchain, config):
-    query =f"SELECT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND sub_chain != 'default'"
+    query =f"SELECT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND original = true"
     return get_query_results(query, config)
 
-def get_metrics(blockchain, subchain, config):
+def get_subchain_metrics(blockchain, subchain, config):
     query = f"""
     SELECT m.metric_name 
     FROM metric_table m 
@@ -133,3 +146,86 @@ def get_metrics(blockchain, subchain, config):
     WHERE b.blockchain = '{blockchain}' AND b.sub_chain = '{subchain}';
     """
     return get_query_results(query, config)
+
+def get_chain_basic_metrics(blockchain, config):
+    query = f"""
+    SELECT m.metric_name, m.grouping_type
+    FROM metric_table m 
+    JOIN chain_metric cm ON m.metric_name = cm.metric_name 
+    JOIN blockchain_table b ON cm.blockchain_id = b.id 
+    WHERE b.blockchain = '{blockchain}' AND m.type = 'basic';
+    """
+    return get_query_results(query, config)
+
+def load_model_fields(config, table_name):
+    query = f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}'"
+    return get_query_results(query, config)
+
+def load_transaction_model_fields(config):
+    query = f"SELECT field_name FROM transaction_model"
+    return get_query_results(query, config)
+
+def get_general_data(blockchain, subchain, date, config):
+    # Load the model fields from the database
+    # transaction_model_fields = load_transaction_model_fields(config)
+    # # utxo_model_fields = load_model_fields(config, 'utxo_model')
+    #
+    # print(transaction_model_fields['field_name'])
+    #
+    # # Construct the SELECT statement with all the required fields
+    # transaction_fields = ', '.join([f"t.{field}" for field in transaction_model_fields['field_name']])
+    #
+    # emit_utxo_fields = ', '.join([
+    #     f"(SELECT COUNT(*) FROM emitted_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS input_utxo_count",
+    #     f"(SELECT AVG(amount) FROM emitted_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS input_utxo_amount_mean",
+    #     f"(SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount) FROM emitted_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS input_utxo_amount_median",
+    #     f"(SELECT MIN(amount) FROM emitted_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS input_utxo_amount_min",
+    #     f"(SELECT MAX(amount) FROM emitted_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS input_utxo_amount_max",
+    #     f"(SELECT STDDEV_POP(amount) FROM emitted_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS input_utxo_amount_std_dev"
+    # ])
+    #
+    # consume_utxo_fields = ', '.join([
+    #     f"(SELECT COUNT(*) FROM consumed_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS output_utxo_count",
+    #     f"(SELECT AVG(amount) FROM consumed_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS output_utxo_amount_mean",
+    #     f"(SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount) FROM consumed_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS output_utxo_amount_median",
+    #     f"(SELECT MIN(amount) FROM consumed_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS output_utxo_amount_min",
+    #     f"(SELECT MAX(amount) FROM consumed_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS output_utxo_amount_max",
+    #     f"(SELECT STDDEV_POP(amount) FROM consumed_utxo_data WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND txHash = t.txHash) AS output_utxo_amount_std_dev"
+    # ])
+    #
+    # query = f"""
+    #     SELECT {transaction_fields}, {emit_utxo_fields}, {consume_utxo_fields}
+    #     FROM transaction_data t
+    #     WHERE t.blockchain = '{blockchain}' AND t.sub_chain = '{subchain}' AND t.date = '{date}'
+    # """
+
+    query = f"""
+    SELECT 
+        t.*,
+        (SELECT COUNT(*) FROM emitted_utxo_data e WHERE e.blockchain = t.blockchain AND e.sub_chain = t.sub_chain AND e.tx_hash = t.tx_hash AND e.date = t.date) AS input_utxo_count,
+        (SELECT AVG(amount) FROM emitted_utxo_data e WHERE e.blockchain = t.blockchain AND e.sub_chain = t.sub_chain AND e.tx_hash = t.tx_hash AND e.date = t.date) AS input_utxo_amount_mean,
+        (SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount) FROM emitted_utxo_data e WHERE e.blockchain = t.blockchain AND e.sub_chain = t.sub_chain AND e.tx_hash = t.tx_hash AND e.date = t.date) AS input_utxo_amount_median,
+        (SELECT MIN(amount) FROM emitted_utxo_data e WHERE e.blockchain = t.blockchain AND e.sub_chain = t.sub_chain AND e.tx_hash = t.tx_hash AND e.date = t.date) AS input_utxo_amount_min,
+        (SELECT MAX(amount) FROM emitted_utxo_data e WHERE e.blockchain = t.blockchain AND e.sub_chain = t.sub_chain AND e.tx_hash = t.tx_hash AND e.date = t.date) AS input_utxo_amount_max,
+        (SELECT STDDEV_POP(amount) FROM emitted_utxo_data e WHERE e.blockchain = t.blockchain AND e.sub_chain = t.sub_chain AND e.tx_hash = t.tx_hash AND e.date = t.date) AS input_utxo_amount_std_dev,
+        (SELECT COUNT(*) FROM consumed_utxo_data c WHERE c.blockchain = t.blockchain AND c.sub_chain = t.sub_chain AND c.tx_hash = t.tx_hash AND c.date = t.date) AS output_utxo_count,
+        (SELECT AVG(amount) FROM consumed_utxo_data c WHERE c.blockchain = t.blockchain AND c.sub_chain = t.sub_chain AND c.tx_hash = t.tx_hash AND c.date = t.date) AS output_utxo_amount_mean,
+        (SELECT PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount) FROM consumed_utxo_data c WHERE c.blockchain = t.blockchain AND c.sub_chain = t.sub_chain AND c.tx_hash = t.tx_hash AND c.date = t.date) AS output_utxo_amount_median,
+        (SELECT MIN(amount) FROM consumed_utxo_data c WHERE c.blockchain = t.blockchain AND c.sub_chain = t.sub_chain AND c.tx_hash = t.tx_hash AND c.date = t.date) AS output_utxo_amount_min,
+        (SELECT MAX(amount) FROM consumed_utxo_data c WHERE c.blockchain = t.blockchain AND c.sub_chain = t.sub_chain AND c.tx_hash = t.tx_hash AND c.date = t.date) AS output_utxo_amount_max,
+        (SELECT STDDEV_POP(amount) FROM consumed_utxo_data c WHERE c.blockchain = t.blockchain AND c.sub_chain = t.sub_chain AND c.tx_hash = t.tx_hash AND c.date = t.date) AS output_utxo_amount_std_dev
+    FROM 
+        transaction_data t
+    WHERE 
+        t.blockchain = '{blockchain}' AND t.sub_chain = '{subchain}' AND t.date = '{date}';
+    """
+
+    # print(query)
+
+    # Execute the query and fetch the results
+    results = get_query_results(query, config)
+
+    # Assuming get_query_results function returns data in a format that can directly be converted into a DataFrame
+    general_data = pd.DataFrame(results)
+
+    return general_data
