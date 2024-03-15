@@ -15,8 +15,12 @@ logger = Logger("GodSight")
 
 
 def start_api():
+    import sys
+    sys.path.append('GodSight/metrics_controller')
+
     from GodSight.utils.database.db import test_connection, initialize_database
-    from GodSight.api.app import create_app
+    # from GodSight.api.app import create_app
+    from GodSight.metrics_controller.start_server import start_django_server
 
     logger.log_info("Starting the GodSight API server...")
 
@@ -26,9 +30,13 @@ def start_api():
     logger.log_info(f"Database is connected")
     initialize_database(config)
 
-    app = create_app(config)
-    app.run(host=config.api_host, port=config.api_port,
-            debug=app.config.get('DEBUG', True))
+    # app = create_app(config)
+    # app.run(host=config.api_host, port=config.api_port,
+    #         debug=app.config.get('DEBUG', True))
+
+    path = "GodSight.metrics_controller.metric_controller.settings.development"
+
+    start_django_server(config, path)
 
 
 def add_blockchain(file_name):
