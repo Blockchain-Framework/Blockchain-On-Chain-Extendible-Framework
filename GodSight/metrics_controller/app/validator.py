@@ -1,6 +1,7 @@
-from .helper import get_column_details
+from app.handler import query_all_general_models, check_field_name_exists
 
-def validate_json_structure(self, formula, formula_type):
+
+def validate_json_structure(formula, formula_type):
     # Define the expected keys for both formats
     expected_keys_aggregation = {'name', 'column', 'function'}
     expected_keys_arithmetic = {'name', 'operation', 'operands'}
@@ -56,15 +57,15 @@ def validate_json_structure(self, formula, formula_type):
     return True, ""
 
 
-def validate_columns_existence_and_type(self, formula, formula_type, blockchain, sub_chain):
-    column_details = get_column_details(blockchain, sub_chain)
+def validate_columns_existence_and_type(formula, formula_type, blockchain, sub_chain):
 
     # Validate columns in 'aggregations'
     for aggregation in formula['aggregations']:
         column_name = aggregation['column']
-        if column_name not in column_details:
+        column_detail = check_field_name_exists(column_name)
+        if column_detail is None:
             return False, f"Column '{column_name}' does not exist for blockchain {blockchain} and sub-chain {sub_chain}."
-        if column_details[column_name] != 'numerical':
+        if column_detail.data_type != 'numerical':
             return False, f"Column '{column_name}' is not suitable for numerical operations."
 
     # Additional validation for 'arithmetic' in Format 2
@@ -83,13 +84,13 @@ def validate_columns_existence_and_type(self, formula, formula_type, blockchain,
             return False, f"The final answer '{formula['final_answer']}' is not defined in the formula."
 
         # Additional check: Ensure the operations are in valid order
-        if not self.validate_arithmetic_order(formula['arithmetic'], defined_variables):
+        if not validate_arithmetic_order(formula['arithmetic'], defined_variables):
             return False, "Arithmetic operations are not in a valid order."
 
     return True, ""
 
 
-def validate_arithmetic_order(self, arithmetic_operations, defined_variables):
+def validate_arithmetic_order(arithmetic_operations, defined_variables):
     """
     Validates that arithmetic operations are defined in an order that ensures
     all operands are defined before being used in an operation.
