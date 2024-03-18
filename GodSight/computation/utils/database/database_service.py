@@ -10,6 +10,7 @@ from ...config import Config
 
 config = Config()
 
+
 def execute_query(query, config):
     """
     Execute a database query safely.
@@ -19,7 +20,8 @@ def execute_query(query, config):
         return get_query_results(query, config)
     except Exception as error:
         raise
-    
+
+
 def convert_dict_to_json(x):
     if isinstance(x, dict) or (isinstance(x, list) and all(isinstance(elem, dict) for elem in x)):
         return json.dumps(x)
@@ -36,7 +38,7 @@ def append_dataframe_to_sql(table_name, df, config):
     """
     for col in df.columns:
         df[col] = df[col].apply(convert_dict_to_json)
-    
+
     try:
         # Create the database engine
         engine = create_engine(config.db_url)
@@ -59,8 +61,8 @@ def append_dataframe_to_sql(table_name, df, config):
     except Exception as e:
         print(f"An unexpected error occurred: {e}")
 
+
 def get_query_results(query, config):
-    
     """
     Executes a SQL query and returns the results as a DataFrame.
 
@@ -85,10 +87,9 @@ def get_query_results(query, config):
         return None
 
 
-
 def batch_insert_dataframes(dfs_to_insert, config):
     engine = create_engine(config.db_url)
-    
+
     # Start a single transaction
     with engine.begin() as connection:
         for df in dfs_to_insert:
@@ -112,6 +113,7 @@ def get_transactions(blockchain, subchain, date, config):
     results = get_query_results(query, config)
     return pd.DataFrame(results)
 
+
 def get_emitted_utxos(blockchain, subchain, date, config):
     query = f"""
     SELECT * FROM emitted_utxo_data
@@ -119,6 +121,7 @@ def get_emitted_utxos(blockchain, subchain, date, config):
     """
     results = get_query_results(query, config)
     return pd.DataFrame(results)
+
 
 def get_consumed_utxos(blockchain, subchain, date, config):
     query = f"""
@@ -133,9 +136,11 @@ def get_blockchains(config):
     query = "SELECT DISTINCT blockchain FROM blockchain_table;"
     return get_query_results(query, config)
 
+
 def get_subchains(blockchain, config):
-    query =f"SELECT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND original = true"
+    query = f"SELECT sub_chain FROM blockchain_table WHERE blockchain = '{blockchain}' AND original = true"
     return get_query_results(query, config)
+
 
 def get_subchain_metrics(blockchain, subchain, config):
     query = f"""
@@ -147,6 +152,7 @@ def get_subchain_metrics(blockchain, subchain, config):
     """
     return get_query_results(query, config)
 
+
 def get_chain_basic_metrics(blockchain, config):
     query = f"""
     SELECT m.metric_name, m.grouping_type
@@ -157,13 +163,16 @@ def get_chain_basic_metrics(blockchain, config):
     """
     return get_query_results(query, config)
 
+
 def load_model_fields(config, table_name):
     query = f"SELECT column_name, data_type FROM information_schema.columns WHERE table_name = '{table_name}'"
     return get_query_results(query, config)
 
+
 def load_transaction_model_fields(config):
     query = f"SELECT field_name FROM transaction_model"
     return get_query_results(query, config)
+
 
 def get_general_data(blockchain, subchain, date, config):
     # Load the model fields from the database

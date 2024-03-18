@@ -37,8 +37,8 @@ class MetricCalculationWorkflowManager:
         try:
             logger.log_info(f"Computing metrics for {blockchain} subchain {subchain}...")
             # Assuming the environment variable or some config holds the paths
-            custom_metric_script_path = f"GodSight/computation/metrics/custom/{blockchain}.py"
-            base_metric_script_path = r"GodSight/computation/metrics/base/metrics.py"
+            custom_metric_script_path = f"/metrics/custom/{blockchain}.py"
+            base_metric_script_path = r"/metrics/base/metrics.py"
 
             basic_metric_results = []
             custom_metric_results = []
@@ -80,7 +80,7 @@ class MetricCalculationWorkflowManager:
                     if metric_type == 'transaction':
 
                         # Get the combined data as a DataFrame
-                        data = get_general_data(blockchain, subchain, date, config)
+                        data = get_transactions(blockchain, subchain, date, config)
 
                     elif metric_type == 'emitted':
                         data = get_emitted_utxos(blockchain, subchain, date, config)
