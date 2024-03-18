@@ -307,6 +307,7 @@ def extract_date(date):
 
 def extract_date_range(start_date, end_date):
     try:
+        sys.path.append('GodSight/extraction')
         from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.extraction.main import extract_data_for_date_range
 
@@ -340,6 +341,7 @@ def compute_date(date):
 
 def compute_date_range(start_date, end_date):
     try:
+        sys.path.append('GodSight/computation')
         from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.computation.main import compute_data_for_date_range
 
