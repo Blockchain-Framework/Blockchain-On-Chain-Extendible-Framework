@@ -6,8 +6,8 @@ from psycopg2.extras import execute_values
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy import create_engine, exc
-from GodSight.extraction.logs.log import Logger
-from GodSight.extraction.utils.database.db import connect_database
+from extraction.logs.log import Logger
+from extraction.utils.database.db import connect_database
 
 logger = Logger("GodSight")
 
@@ -147,7 +147,6 @@ def store_all_extracted_data(blockchain, subchain, date, transformed_trxs, trans
 
                 # Commit the transaction
                 conn.commit()
-                print("Successfully inserted all data")
 
     except Exception as e:
         # Rollback in case of error

@@ -4,8 +4,8 @@ import sys
 import os
 import uuid
 from config import Config
-from GodSight.computation.utils.database.db import test_connection, initialize_database
-from GodSight.computation.utils.database.services import get_all_metrics, create_metric_tables_if_not_exist
+from computation.utils.database.db import test_connection, initialize_database
+from computation.utils.database.services import get_all_metrics, create_metric_tables_if_not_exist
 from .workflow import MetricCalculationWorkflowManager
 from .logs.log import Logger
 

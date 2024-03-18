@@ -2,9 +2,9 @@ import sys
 from pathlib import Path
 import pandas as pd
 
-from GodSight.computation.utils.model.metric import BaseMetric
-from GodSight.computation.utils.database.database_service import execute_query
-from GodSight.computation.config.config import Config
+from computation.utils.model.metric import BaseMetric
+from computation.utils.database.database_service import execute_query
+from computation.config.config import Config
 
 class TransactionPerSecond(BaseMetric):
     def __init__(self):

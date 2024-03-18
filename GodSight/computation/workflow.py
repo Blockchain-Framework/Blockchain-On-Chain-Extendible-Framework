@@ -13,14 +13,14 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(current_dir)
 
 from .config import Config
-from GodSight.computation.utils.database.database_service import get_transactions, get_emitted_utxos, \
+from computation.utils.database.database_service import get_transactions, get_emitted_utxos, \
     get_consumed_utxos, get_blockchains, get_subchains, get_subchain_metrics, get_chain_basic_metrics, get_general_data, \
     load_model_fields
-from GodSight.computation.utils.scripts.utils import log_workflow_status
-from GodSight.computation.utils.scripts.metric_calculate_helper import load_metrics, insert_metric_results, \
+from computation.utils.scripts.utils import log_workflow_status
+from computation.utils.scripts.metric_calculate_helper import load_metrics, insert_metric_results, \
     load_custom_metrics, calculate_utxo_stats
-from GodSight.computation.utils.database.database_service import batch_insert_dataframes
-from GodSight.computation.utils.database.services import Is_original_subchain, check_metric_last_computed_date, \
+from computation.utils.database.database_service import batch_insert_dataframes
+from computation.utils.database.services import Is_original_subchain, check_metric_last_computed_date, \
     get_subchain_start_date, insert_blockchain_metrics
 from logs.log import Logger
 

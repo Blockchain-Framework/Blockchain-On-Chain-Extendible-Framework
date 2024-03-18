@@ -1,6 +1,6 @@
-from GodSight.extraction.utils.database.database_service import store_all_extracted_data
-from GodSight.extraction.utils.database.services import check_subchain_last_extracted_date, get_subchain_start_date
-from GodSight.extraction.utils.scripts.utils.log_utils import log_workflow_status
+from extraction.utils.database.database_service import store_all_extracted_data
+from extraction.utils.database.services import check_subchain_last_extracted_date, get_subchain_start_date
+from extraction.utils.scripts.utils.log_utils import log_workflow_status
 
 import os
 from datetime import datetime, timedelta
@@ -9,11 +9,11 @@ from .logs.log import Logger
 logger = Logger("GodSight")
 
 # Assuming the necessary imports are correctly set up
-from GodSight.extraction.utils.scripts.mappers import data_mapper, transform_data
-from GodSight.extraction.utils.scripts.extraction_helper import store_data, dataframe_to_mapping_dict, \
+from extraction.utils.scripts.mappers import data_mapper, transform_data
+from extraction.utils.scripts.extraction_helper import store_data, dataframe_to_mapping_dict, \
     extract_function_names, get_function, load_functions_from_file, get_transaction_mappings, get_emitted_utxo_mappings, \
     get_consumed_utxo_mappings
-from GodSight.extraction.utils.scripts.mapper_helper import load_config_from_file, insert_feature_mapping_to_df
+from extraction.utils.scripts.mapper_helper import load_config_from_file, insert_feature_mapping_to_df
 
 
 # def store_configuration(blockchain, subchain, id):
@@ -73,7 +73,7 @@ def extract_and_store_data(blockchain, subchain, end_date, id, config):
                                           extract_function_names(consumed_utxo_mappings_df)))
 
             # functions_file_path = f'user_functions/{id}.py'
-            functions_file_path = os.path.join('GodSight/extraction/user_functions', str(id) + '.py')
+            functions_file_path = os.path.join('/user_functions', str(id) + '.py')
             functions = load_functions_from_file(functions_file_path, all_function_names)
 
             # Extract data using the extract function
@@ -82,14 +82,11 @@ def extract_and_store_data(blockchain, subchain, end_date, id, config):
 
             logger.log_info(f"Transaction extraction finished for {blockchain} {subchain}  date:{date}")
 
-            print(1)
-
             # Map and store data
             # trxs, emitted_utxos, consumed_utxos = data_mapper(config_, trxs, emitted_utxos, consumed_utxos, config)
 
             transformed_trxs, transformed_emitted_utxos, transformed_consumed_utxos= transform_data(blockchain, subchain, trxs, emitted_utxos, consumed_utxos, functions, config)
 
-            print(2)
 
             logger.log_info(f"Started storing transactions for {blockchain} {subchain} on date: {date}")
             # store_data(subchain, date, trxs, emitted_utxos, consumed_utxos, config)
