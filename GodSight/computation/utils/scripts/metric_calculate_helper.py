@@ -2,8 +2,8 @@ import importlib.util
 import os
 import pandas as pd
 
-from GodSight.computation.utils.database.services import get_base_metrics
-from GodSight.computation.utils.model.metric import BaseMetric, CustomMetric
+from computation.utils.database.services import get_base_metrics
+from computation.utils.model.metric import BaseMetric, CustomMetric
 
 
 def load_metric_classes(type_, script_path, metric_base_class, target_subchain,

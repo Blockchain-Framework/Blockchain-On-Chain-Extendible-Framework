@@ -1,7 +1,7 @@
 import psycopg2
-from GodSight.extraction.utils.database.database_service import batch_insert_dataframes, get_query_results
+from extraction.utils.database.database_service import batch_insert_dataframes, get_query_results
 # from GodSight.extraction.utils.database.db import initialize_duck_db
-from GodSight.extraction.utils.database.services import delete_existing_records
+from extraction.utils.database.services import delete_existing_records
 import pandas as pd
 import importlib.util
 from sqlalchemy import text

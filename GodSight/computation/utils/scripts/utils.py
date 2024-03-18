@@ -1,6 +1,7 @@
-from GodSight.computation.utils.database.database_service import append_dataframe_to_sql
+from computation.utils.database.database_service import append_dataframe_to_sql
 import pandas as pd
 from datetime import datetime
+
 
 def log_workflow_status(chain, subchain, status, task, error, config):
     data = {

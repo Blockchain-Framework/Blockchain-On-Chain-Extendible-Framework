@@ -1,6 +1,6 @@
 import pandas as pd
 
-from GodSight.computation.config.config import Config
+from computation.config.config import Config
 
 
 class BaseMetric:

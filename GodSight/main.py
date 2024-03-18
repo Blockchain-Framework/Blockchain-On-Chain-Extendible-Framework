@@ -290,6 +290,7 @@ def add_blockchain(file_name):
 
 def extract_date(date):
     try:
+        sys.path.append('GodSight/extraction')
         from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.extraction.main import extract_data
 
@@ -322,6 +323,7 @@ def extract_date_range(start_date, end_date):
 
 def compute_date(date):
     try:
+        sys.path.append('GodSight/computation')
         from GodSight.utils.database.db import test_connection, initialize_database
         from GodSight.computation.main import compute_data
 

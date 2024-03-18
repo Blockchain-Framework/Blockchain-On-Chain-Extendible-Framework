@@ -189,7 +189,7 @@ def handle_metric_route():
         },
     },
 })
-def get_daily_transaction_count():
+def get_data():
     try:
         response, status_code = handle_metric_route()
         data_properties = {}

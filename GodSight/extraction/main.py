@@ -1,4 +1,4 @@
-from GodSight.extraction.utils.database.services import create_extraction_tables_if_missing, get_blockchains, \
+from extraction.utils.database.services import create_extraction_tables_if_missing, get_blockchains, \
     get_subchains, get_chain_id, Is_original_subchain
 from .workflow import extract_and_store_data
 from .config import Config

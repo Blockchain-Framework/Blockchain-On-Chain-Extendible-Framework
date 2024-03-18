@@ -1,5 +1,5 @@
-from GodSight.extraction.utils.database.services import fetch_feature_mappings
-from GodSight.extraction.utils.scripts.model import get_models
+from extraction.utils.database.services import fetch_feature_mappings
+from extraction.utils.scripts.model import get_models
 
 # Mapping of function names to actual functions for dynamic invocation
 def data_mapper(mapper_config, raw_trxs, raw_emitted_utxos, raw_consumed_utxos, config):

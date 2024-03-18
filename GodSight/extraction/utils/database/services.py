@@ -1,5 +1,5 @@
 from .db import connect_database
-from GodSight.extraction.logs.log import Logger
+from extraction.logs.log import Logger
 from sqlalchemy import MetaData, Table, Column, String, Integer, Float
 from sqlalchemy.exc import NoSuchTableError
 import psycopg2
