@@ -1,5 +1,6 @@
 from extraction.utils.database.services import create_extraction_tables_if_missing, get_blockchains, \
     get_subchains, get_chain_id, Is_original_subchain
+from extraction.utils.database.db import initialize_database
 from .workflow import extract_and_store_data
 from .config import Config
 import argparse
@@ -27,7 +28,7 @@ def extract_data(date, config):
 
         for blockchain in blockchains:
             subchains = get_subchains(config, blockchain)
-            create_extraction_tables_if_missing(config, subchains)
+            # create_extraction_tables_if_missing(config, subchains)
             for subchain in subchains:
                 if subchain == 'default':
                     is_original = Is_original_subchain(config, blockchain, subchain)
@@ -56,7 +57,7 @@ def extract_data_for_date_range(start_date_str, end_date_str, config):
             current_date_str = current_date.strftime("%Y-%m-%d")
             for blockchain in blockchains:
                 subchains = get_subchains(config, blockchain)
-                create_extraction_tables_if_missing(config, subchains)
+                # create_extraction_tables_if_missing(config, subchains)
                 for subchain in subchains:
                     id = get_chain_id(config, blockchain, subchain)
                     extract_and_store_data(blockchain, subchain, current_date_str, id, config)
@@ -76,6 +77,7 @@ def process(config):
 
     for date in args.dates:
         for blockchain in blockchains:
+            subchains = get_subchains(config, blockchain)
             for subchain in subchains:
                 id = get_chain_id(config, blockchain, subchain)
                 extract_and_store_data(blockchain, subchain, date, id, config)
@@ -85,8 +87,5 @@ if __name__ == "__main__":
     config = Config()
     blockchains = get_blockchains(config)
     logger.log_info(f"Processing for blockchains {blockchains}")
-    for blockchain in blockchains:
-        subchains = get_subchains(config, blockchain)
-        create_extraction_tables_if_missing(config, subchains)
-
+    initialize_database(config)
     process(config)

@@ -4,7 +4,7 @@ import os
 
 class Config:
     def __init__(self):
-        dotenv_path = os.path.join(os.path.dirname(__file__), '.env1')
+        dotenv_path = os.path.join(os.path.dirname(__file__), '.env')
         load_dotenv(dotenv_path=dotenv_path, override=True)
         self.db_host = os.getenv('DB_HOST')
         self.db_name = os.getenv('DB_NAME')
@@ -19,8 +19,8 @@ class Config:
         self.meta_path = os.getenv('META_PATH', 'GodSight/data/meta/')
         self.metric_path = os.getenv('METRIC_PATH', 'GodSight/data/metric')
 
-        self.extract_exec_path = os.getenv('EXTRACT_EXEC_PATH', 'extraction/')
-        self.compute_exec_path = os.getenv('COMPUTE_EXEC_PATH', 'computation/')
+        self.extract_exec_path = os.getenv('EXTRACT_EXEC_PATH', 'GodSight/extraction/')
+        self.compute_exec_path = os.getenv('COMPUTE_EXEC_PATH', 'GodSight/computation/')
 
         self.api_host = os.getenv('API_HOST', 'localhost')
         self.api_port = os.getenv('API_PORT', '5000')

@@ -32,7 +32,7 @@ def compute_data(date_str, config):
         if config is None:
             config = Config()
 
-        create_metric_tables(config)
+        # create_metric_tables(config)
 
         manager = MetricCalculationWorkflowManager()
         manager.run_workflow(date_str, config)
@@ -48,7 +48,7 @@ def compute_data_for_date_range(start_date_str, end_date_str, config):
 
         manager = MetricCalculationWorkflowManager()
 
-        create_metric_tables(config)
+        # create_metric_tables(config)
 
         start_date = datetime.strptime(start_date_str, "%Y-%m-%d").date()
         end_date = datetime.strptime(end_date_str, "%Y-%m-%d").date()
@@ -80,5 +80,5 @@ if __name__ == "__main__":
     config = Config()
     test_connection(config)
     logger.log_info(f"Database is connected")
-    create_metric_tables(config)
+    initialize_database(config)
     process(config)
