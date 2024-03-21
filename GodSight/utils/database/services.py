@@ -73,8 +73,8 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta
             pbar.update(20)
 
             insert_stmt_metric = """
-                INSERT INTO chain_metric (blockchain_id, blockchain, sub_chain, metric_name)
-                VALUES (%(blockchain_id)s, %(blockchain)s, %(sub_chain)s, %(metric_name)s)
+                INSERT INTO chain_metric (id, blockchain_id, metric_name)
+                VALUES (%(id)s, %(blockchain_id)s, %(metric_name)s)
             """
             cur.executemany(insert_stmt_metric, metric_chain_meta)
 
@@ -106,7 +106,10 @@ def delete_blockchain_data(blockchain, config):
 
             delete_stmt_blockchain_metric = """
                                         DELETE FROM chain_metric
-                                        WHERE blockchain = %s;
+                                        WHERE blockchain_id IN (
+                                            SELECT id FROM blockchain_table
+                                            WHERE blockchain = %s
+                                        );
                                     """
             cur.execute(delete_stmt_blockchain_metric, (blockchain,))
 

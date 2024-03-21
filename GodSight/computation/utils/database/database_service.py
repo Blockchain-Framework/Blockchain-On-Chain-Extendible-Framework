@@ -108,7 +108,7 @@ def batch_insert_dataframes(dfs_to_insert, config):
 def get_transactions(blockchain, subchain, date, config):
     query = f"""
     SELECT * FROM transaction_data
-    WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND date = '{date}'
+    WHERE blockchain = '{blockchain}' AND sub_chain = '{subchain}' AND date = '{date}'
     """
     results = get_query_results(query, config)
     return pd.DataFrame(results)
@@ -117,7 +117,7 @@ def get_transactions(blockchain, subchain, date, config):
 def get_emitted_utxos(blockchain, subchain, date, config):
     query = f"""
     SELECT * FROM emitted_utxo_data
-    WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND date = '{date}'
+    WHERE blockchain = '{blockchain}' AND sub_chain = '{subchain}' AND date = '{date}'
     """
     results = get_query_results(query, config)
     return pd.DataFrame(results)
@@ -126,7 +126,7 @@ def get_emitted_utxos(blockchain, subchain, date, config):
 def get_consumed_utxos(blockchain, subchain, date, config):
     query = f"""
     SELECT * FROM consumed_utxo_data
-    WHERE blockchain = '{blockchain}' AND subchain = '{subchain}' AND date = '{date}'
+    WHERE blockchain = '{blockchain}' AND sub_chain = '{subchain}' AND date = '{date}'
     """
     results = get_query_results(query, config)
     return pd.DataFrame(results)

@@ -156,6 +156,7 @@ def add_blockchain(file_name):
 
             for metric in chain_basic_metrics:
                 metric_chain_meta.append({
+                    'id': str(uuid.uuid4()),
                     'blockchain_id': chain_unique_id,
                     'blockchain': metadata['name'],
                     'sub_chain': subchain['name'],
@@ -191,6 +192,7 @@ def add_blockchain(file_name):
             for metric in unique_metrics:
                 if sys_base_metrics.get(metric) in allowed_agg:
                     metric_chain_meta.append({
+                        'id': str(uuid.uuid4()),
                         'blockchain_id': chain_unique_id,
                         'blockchain': metadata['name'],
                         'sub_chain': 'default',

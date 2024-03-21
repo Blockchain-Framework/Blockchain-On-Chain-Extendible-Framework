@@ -9,12 +9,9 @@ class MetricSerializer(serializers.ModelSerializer):
 
 
 class MetricsDataSerializer(serializers.ModelSerializer):
-    metric_name = serializers.CharField(source='metric.metric_name', read_only=True)
-
     class Meta:
         model = MetricsData
-        fields = ['date', 'blockchain', 'subchain', 'metric', 'metric_name', 'value']
-        depth = 1  # Adjust depth as needed for nested relationships
+        fields = ['date', 'value']
 
 
 class BlockchainSerializer(serializers.ModelSerializer):

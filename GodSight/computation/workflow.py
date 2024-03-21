@@ -37,8 +37,8 @@ class MetricCalculationWorkflowManager:
         try:
             logger.log_info(f"Computing metrics for {blockchain} subchain {subchain}...")
             # Assuming the environment variable or some config holds the paths
-            custom_metric_script_path = f"/metrics/custom/{blockchain}.py"
-            base_metric_script_path = r"/metrics/base/metrics.py"
+            custom_metric_script_path = config.compute_exec_path + f"/metrics/custom/{blockchain}.py"
+            base_metric_script_path = config.compute_exec_path + r"/metrics/base/metrics.py"
 
             basic_metric_results = []
             custom_metric_results = []

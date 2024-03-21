@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from pathlib import Path
 import importlib.util
@@ -423,6 +424,7 @@ def load_metrics(script_path, meta_data, metrics, metric_chain_meta):
             chain_id = get_chain_id(meta_data, chain)
 
             metric_chain_meta.append({
+                'id': str(uuid.uuid4()),
                 'blockchain_id': chain_id,
                 'blockchain': metric_instance.blockchain,
                 'sub_chain': metric_instance.chain,

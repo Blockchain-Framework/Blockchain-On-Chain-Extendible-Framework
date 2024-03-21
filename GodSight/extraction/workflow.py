@@ -73,7 +73,7 @@ def extract_and_store_data(blockchain, subchain, end_date, id, config):
                                           extract_function_names(consumed_utxo_mappings_df)))
 
             # functions_file_path = f'user_functions/{id}.py'
-            functions_file_path = os.path.join('/user_functions', str(id) + '.py')
+            functions_file_path = os.path.join(config.extract_exec_path + '/user_functions', str(id) + '.py')
             functions = load_functions_from_file(functions_file_path, all_function_names)
 
             # Extract data using the extract function

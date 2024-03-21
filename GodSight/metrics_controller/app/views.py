@@ -8,12 +8,13 @@ from rest_framework.pagination import PageNumberPagination
 from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from datetime import datetime, timedelta
-from django.db.models import Sum, Q
+from django.db.models import Sum, Q, Avg
 from django.core.exceptions import ValidationError
 from .models import Metric, MetricsData, Blockchain, ChainMetric
-from .serializers import MetricsDataSerializer, MetricSerializer
+from .serializers import MetricsDataSerializer, MetricSerializer, BlockchainSerializer
 from .utils import APIResponse
 from .validator import validate_json_structure, validate_columns_existence_and_type
+from django.db.models import Prefetch
 
 
 class StandardResultsSetPagination(PageNumberPagination):
@@ -63,10 +64,32 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
                 metric__metric_name=metric_name
             )
 
-            if subchain != 'default':
-                queryset = queryset.filter(subchain=subchain)
+            try:
+                blockchain_obj = Blockchain.objects.get(blockchain=blockchain, sub_chain=subchain)
+            except Blockchain.DoesNotExist:
+                raise Exception('Invalid Blockchain')
 
-            queryset = queryset.annotate(sum_value=Sum('value')).order_by('date')
+            if blockchain_obj and not blockchain_obj.original:
+                try:
+                    metric_obj = Metric.objects.get(metric_name=metric_name)
+                except Metric.DoesNotExist:
+                    raise Exception('Metric Finding failed')
+
+                aggregation_mapping = {
+                    'sum': Sum('value'),
+                    'avg': Avg('value'),
+                }
+
+                aggregation = aggregation_mapping.get(metric_obj.grouping_type, Sum('value'))
+
+                # Apply aggregation and alias it as 'value'
+                queryset = queryset.values('date').annotate(value=aggregation).order_by('date')
+            else:
+                if subchain != 'default':
+                    queryset = queryset.filter(subchain=subchain)
+
+            # At this point, queryset is ready for serialization
+            serializer = MetricsDataSerializer(queryset, many=True)
 
             page = self.paginate_queryset(queryset, request, view=self)
             if page is not None:
@@ -111,7 +134,8 @@ class GetSelectionDataView(APIView):
     )
     def get(self, request, *args, **kwargs):
         try:
-            blockchains = Blockchain.objects.prefetch_related('metrics').all()
+            blockchains = Blockchain.objects.all().prefetch_related('metrics')
+
             blockchain_data = {}
 
             for blockchain in blockchains:
@@ -119,18 +143,28 @@ class GetSelectionDataView(APIView):
                 if blockchain_key not in blockchain_data:
                     blockchain_data[blockchain_key] = {}
 
-                sub_chain_key = blockchain.sub_chain or 'default'  # Adjust based on your model; assume 'default' if None
+                sub_chain_key = blockchain.sub_chain or 'default'
                 if sub_chain_key not in blockchain_data[blockchain_key]:
                     blockchain_data[blockchain_key][sub_chain_key] = []
 
-                # Add metrics for each subchain
-                metrics = [metric.metric_name for metric in blockchain.metrics.all()]
+                # Assuming metrics is a related name for ChainMetric or direct metric relationship
+                # And metric_name is a field on the Metric model
+                metrics = [metric.metric_name.metric_name for metric in blockchain.metrics.all()]
                 blockchain_data[blockchain_key][sub_chain_key].extend(metrics)
 
-            return JsonResponse(APIResponse(True, data=blockchain_data).to_dict(), status=status.HTTP_200_OK)
+            final_data = []
+            for blockchain, subchains in blockchain_data.items():
+                for sub_chain, metrics in subchains.items():
+                    final_data.append({
+                        "blockchain": blockchain,
+                        "sub_chain": sub_chain,
+                        "metrics": metrics
+                    })
+            return Response({"data": final_data}, status=status.HTTP_200_OK)
         except Exception as e:
             # Here, consider using logging instead of print for production code
-            return JsonResponse(APIResponse(False, error=f"An unexpected error occurred: {str(e)}").to_dict(), status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return JsonResponse(APIResponse(False, error=f"An unexpected error occurred: {str(e)}").to_dict(),
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CreateMetricView(APIView):

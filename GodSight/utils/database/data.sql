@@ -7,7 +7,8 @@ CREATE TABLE IF NOT EXISTS blockchain_table (
     description VARCHAR(255) NULL,
     create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id, blockchain, sub_chain)
+    PRIMARY KEY (id),
+    UNIQUE (blockchain, sub_chain)
 );
 
 CREATE TABLE IF NOT EXISTS metric_table (
@@ -22,13 +23,12 @@ CREATE TABLE IF NOT EXISTS metric_table (
 );
 
 CREATE TABLE IF NOT EXISTS chain_metric (
+    id UUID PRIMARY KEY NOT NULL,
     blockchain_id UUID NOT NULL,
-    blockchain VARCHAR(255) NOT NULL,
-    sub_chain VARCHAR(255) NOT NULL,
     metric_name VARCHAR(255),
-    FOREIGN KEY (blockchain_id, blockchain, sub_chain) REFERENCES blockchain_table(id, blockchain, sub_chain),
+    FOREIGN KEY (blockchain_id) REFERENCES blockchain_table(id),
     FOREIGN KEY (metric_name) REFERENCES metric_table(metric_name),
-    PRIMARY KEY (blockchain_id, metric_name),
+    UNIQUE (blockchain_id, metric_name),
 	create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

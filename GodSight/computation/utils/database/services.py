@@ -30,8 +30,8 @@ def get_base_metrics(config, blockchain, subchain):
         with connect_database(config) as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT DISTINCT metric_table.metric_name FROM metric_table INNER JOIN chain_metric ON "
-                            "metric_table.metric_name=chain_metric.metric_name WHERE chain_metric.blockchain=%s AND "
-                            "chain_metric.sub_chain=%s AND metric_table.type=%s;", (blockchain, subchain, 'basic',))
+                            "metric_table.metric_name=chain_metric.metric_name INNER JOIN blockchain_table ON blockchain_table.id = chain_metric.blockchain_id WHERE blockchain_table.blockchain=%s AND "
+                            "blockchain_table.sub_chain=%s AND metric_table.type=%s;", (blockchain, subchain, 'basic',))
                 # Fetch all results
                 metrics = cur.fetchall()
                 # Extract metric names from the query result and add to the list
