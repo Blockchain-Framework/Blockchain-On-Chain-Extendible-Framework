@@ -49,9 +49,13 @@ INSTALLED_APPS = [
     "GodSight.metrics_controller.app",
     "drf_yasg",
     'django_filters',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Add this
+    'django.middleware.common.CommonMiddleware',  # Make sure CorsMiddleware is above this
+
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -133,6 +137,7 @@ STATIC_URL = "/static/"
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+CORS_ALLOW_ALL_ORIGINS = True
 
 REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'rest_framework_json_api.exceptions.exception_handler',

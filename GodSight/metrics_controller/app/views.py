@@ -24,6 +24,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 class MetricsDataView(APIView, StandardResultsSetPagination):
+    print("--------1")
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('blockchain', openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True,
                           description='Blockchain to query metrics for'),
@@ -35,6 +36,7 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
                           description='The time range for the metric data, e.g., "7_days"'),
     ])
     def get(self, request, *args, **kwargs):
+        print("--------2")
         blockchain = request.query_params.get('blockchain')
         subchain = request.query_params.get('subChain')
         metric_name = request.query_params.get('metric')
@@ -53,10 +55,12 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
             else:
                 raise ValueError("Invalid time range parameter.")
         except ValueError as e:
+            print("--------2e")
             return JsonResponse(APIResponse(False, error=str(e)).to_dict(),
                                 status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            print("--------3")
             # Query database
             queryset = MetricsData.objects.filter(
                 date__range=(start_date, end_date),
@@ -65,14 +69,19 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
             )
 
             try:
+                print("--------4")
                 blockchain_obj = Blockchain.objects.get(blockchain=blockchain, sub_chain=subchain)
             except Blockchain.DoesNotExist:
+                print("--------4e")
                 raise Exception('Invalid Blockchain')
 
             if blockchain_obj and not blockchain_obj.original:
+                print("--------5")
                 try:
+                    print("--------6")
                     metric_obj = Metric.objects.get(metric_name=metric_name)
                 except Metric.DoesNotExist:
+                    print("--------6e")
                     raise Exception('Metric Finding failed')
 
                 aggregation_mapping = {
@@ -85,14 +94,18 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
                 # Apply aggregation and alias it as 'value'
                 queryset = queryset.values('date').annotate(value=aggregation).order_by('date')
             else:
+                print("--------7")
                 if subchain != 'default':
                     queryset = queryset.filter(subchain=subchain)
 
             # At this point, queryset is ready for serialization
             serializer = MetricsDataSerializer(queryset, many=True)
-
+            print("--------50")
+            print(str(queryset.query))
             page = self.paginate_queryset(queryset, request, view=self)
+            print("--------10")
             if page is not None:
+                print("--------8")
                 serializer = MetricsDataSerializer(page, many=True)
                 return JsonResponse(APIResponse(
                     True,
@@ -102,13 +115,17 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
                     current_page=self.page.number,
                     total_items=self.page.paginator.count
                 ).to_dict(), status=status.HTTP_200_OK)
+            print("--------5")
+
 
             serializer = MetricsDataSerializer(queryset, many=True)
             return JsonResponse(APIResponse(True, serializer.data).to_dict(), status=status.HTTP_200_OK)
         except ValidationError as e:
+            print("--------3e")
             return JsonResponse(APIResponse(False, error="Invalid query parameters.").to_dict(),
                                 status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print("--------3e2")
             # Log the error for server-side debugging.
             print("Internal server error: ", e)  # Consider using logging instead of print in production
             return JsonResponse(APIResponse(False, error="Internal server error").to_dict(),
