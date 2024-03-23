@@ -73,7 +73,7 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta
             pbar.update(20)
 
             insert_stmt_metric = """
-                INSERT INTO chain_metric (id, blockchain_id, metric_name)
+                INSERT INTO chain_metric (id, blockchain_id, metric_id)
                 VALUES (%(id)s, %(blockchain_id)s, %(metric_name)s)
             """
             cur.executemany(insert_stmt_metric, metric_chain_meta)

@@ -167,7 +167,7 @@ class GetSelectionDataView(APIView):
 
                 # Assuming metrics is a related name for ChainMetric or direct metric relationship
                 # And metric_name is a field on the Metric model
-                metrics = [metric.metric_name.id for metric in blockchain.metrics.all()]
+                metrics = [metric.metric_id for metric in blockchain.metrics.all()]
                 blockchain_data[blockchain_key][sub_chain_key].extend(metrics)
 
             final_data = []
