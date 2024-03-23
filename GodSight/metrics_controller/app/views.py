@@ -25,6 +25,7 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 class MetricsDataView(APIView, StandardResultsSetPagination):
     print("--------1")
+
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('blockchain', openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True,
                           description='Blockchain to query metrics for'),
@@ -65,7 +66,7 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
             queryset = MetricsData.objects.filter(
                 date__range=(start_date, end_date),
                 blockchain=blockchain,
-                metric__metric_name=metric_name
+                metric__id=metric_name
             )
 
             try:
@@ -79,7 +80,7 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
                 print("--------5")
                 try:
                     print("--------6")
-                    metric_obj = Metric.objects.get(metric_name=metric_name)
+                    metric_obj = Metric.objects.get(id=metric_name)
                 except Metric.DoesNotExist:
                     print("--------6e")
                     raise Exception('Metric Finding failed')
@@ -95,18 +96,19 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
                 queryset = queryset.values('date').annotate(value=aggregation).order_by('date')
             else:
                 print("--------7")
-                if subchain != 'default':
-                    queryset = queryset.filter(subchain=subchain)
+                queryset = queryset.filter(sub_chain=subchain)
 
             # At this point, queryset is ready for serialization
-            serializer = MetricsDataSerializer(queryset, many=True)
+            # serializer = MetricsDataSerializer(queryset, many=True)
             print("--------50")
             print(str(queryset.query))
             page = self.paginate_queryset(queryset, request, view=self)
             print("--------10")
+            print(page)
             if page is not None:
                 print("--------8")
                 serializer = MetricsDataSerializer(page, many=True)
+                print(serializer.data)
                 return JsonResponse(APIResponse(
                     True,
                     serializer.data,
@@ -116,7 +118,6 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
                     total_items=self.page.paginator.count
                 ).to_dict(), status=status.HTTP_200_OK)
             print("--------5")
-
 
             serializer = MetricsDataSerializer(queryset, many=True)
             return JsonResponse(APIResponse(True, serializer.data).to_dict(), status=status.HTTP_200_OK)
@@ -166,7 +167,7 @@ class GetSelectionDataView(APIView):
 
                 # Assuming metrics is a related name for ChainMetric or direct metric relationship
                 # And metric_name is a field on the Metric model
-                metrics = [metric.metric_name.metric_name for metric in blockchain.metrics.all()]
+                metrics = [metric.metric_name.id for metric in blockchain.metrics.all()]
                 blockchain_data[blockchain_key][sub_chain_key].extend(metrics)
 
             final_data = []

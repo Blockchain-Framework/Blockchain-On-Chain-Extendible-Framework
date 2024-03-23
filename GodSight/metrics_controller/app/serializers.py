@@ -25,5 +25,5 @@ class ChainMetricSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ChainMetric
-        fields = ['blockchain', 'blockchain_name', 'metric_name']
+        fields = ['blockchain', 'blockchain_name', 'metric_id']
         depth = 1

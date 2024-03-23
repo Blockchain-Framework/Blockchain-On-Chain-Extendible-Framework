@@ -6,6 +6,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.engine.reflection import Inspector
 from sqlalchemy import create_engine, exc
 
+from .db import connect_database
 from ...config import Config
 
 config = Config()
@@ -71,6 +72,7 @@ def get_query_results(query, config):
     :return: DataFrame containing the query results.
     """
     try:
+        database_uri = f"postgresql+psycopg2://{config.db_user}:{config.db_password}@{config.db_host}:{config.db_port}/{config.db_name}"
         # Create the database engine
         engine = create_engine(config.db_url)
         # Execute the query and fetch the results
@@ -144,9 +146,9 @@ def get_subchains(blockchain, config):
 
 def get_subchain_metrics(blockchain, subchain, config):
     query = f"""
-    SELECT m.metric_name 
+    SELECT m.id 
     FROM metric_table m 
-    JOIN chain_metric cm ON m.metric_name = cm.metric_name 
+    JOIN chain_metric cm ON m.id = cm.metric_id 
     JOIN blockchain_table b ON cm.blockchain_id = b.id 
     WHERE b.blockchain = '{blockchain}' AND b.sub_chain = '{subchain}';
     """
@@ -155,11 +157,11 @@ def get_subchain_metrics(blockchain, subchain, config):
 
 def get_chain_basic_metrics(blockchain, config):
     query = f"""
-    SELECT m.metric_name, m.grouping_type
-    FROM metric_table m 
-    JOIN chain_metric cm ON m.metric_name = cm.metric_name 
+    SELECT mt.id, mt.grouping_type
+    FROM metric_table mt 
+    JOIN chain_metric cm ON mt.id = cm.metric_id 
     JOIN blockchain_table b ON cm.blockchain_id = b.id 
-    WHERE b.blockchain = '{blockchain}' AND m.type = 'basic';
+    WHERE b.blockchain = '{blockchain}' AND mt.type = 'basic';
     """
     return get_query_results(query, config)
 

@@ -65,8 +65,8 @@ def insert_blockchain_metadata_and_mappings(meta_data, mapping_data, metric_meta
             pbar.update(30)
 
             insert_stmt_metric_meta = """
-                INSERT INTO metric_table (metric_name, description, category, type)
-                VALUES (%(metric_name)s, %(description)s, %(category)s, %(type)s)
+                INSERT INTO metric_table (id, description, category, type, grouping_type, formula)
+                VALUES (%(id)s, %(description)s, %(category)s, %(type)s, %(grouping_type)s, %(formula)s)
             """
             cur.executemany(insert_stmt_metric_meta, metric_meta)
 
@@ -136,7 +136,7 @@ def get_all_metrics(config):
     try:
         with connect_database(config) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT DISTINCT metric_name FROM metric_table")
+                cur.execute("SELECT DISTINCT id FROM metric_table")
                 # Fetch all results
                 metrics = cur.fetchall()
                 # Extract metric names from the query result and add to the list
@@ -152,7 +152,7 @@ def check_metrics_and_grouping_type(config):
         with connect_database(config) as conn:
             with conn.cursor() as cur:
                 # Fetch metric_name and grouping_type
-                cur.execute("SELECT metric_name, grouping_type FROM metric_table WHERE type = 'basic'")
+                cur.execute("SELECT id, grouping_type FROM metric_table WHERE type = 'basic'")
                 queried_metrics = cur.fetchall()
 
                 # Convert queried data into a dict for easier lookup

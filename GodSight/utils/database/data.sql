@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS blockchain_table (
 );
 
 CREATE TABLE IF NOT EXISTS metric_table (
-    metric_name VARCHAR(255) PRIMARY KEY,
+    id VARCHAR(255) PRIMARY KEY,
     display_name VARCHAR(255),
     description TEXT,
     category VARCHAR(255),
@@ -26,9 +26,9 @@ CREATE TABLE IF NOT EXISTS metric_table (
 CREATE TABLE IF NOT EXISTS chain_metric (
     id UUID PRIMARY KEY NOT NULL,
     blockchain_id UUID NOT NULL,
-    metric_name VARCHAR(255),
+    metric_id VARCHAR(255),
     FOREIGN KEY (blockchain_id) REFERENCES blockchain_table(id),
-    FOREIGN KEY (metric_name) REFERENCES metric_table(metric_name),
+    FOREIGN KEY (metric_id) REFERENCES metric_table(id),
     UNIQUE (blockchain_id, metric_name),
 	create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -68,11 +68,13 @@ CREATE TABLE IF NOT EXISTS consumed_utxos_feature_mappings (
 );
 
 CREATE TABLE IF NOT EXISTS metrics_data (
+    id SERIAL PRIMARY KEY,
     date DATE NOT NULL,
     blockchain VARCHAR(255) NOT NULL,
-    subchain VARCHAR(255) NOT NULL,
-    metric VARCHAR(255) NOT NULL,
-    value FLOAT NOT NULL
+    sub_chain VARCHAR(255) NOT NULL,
+    metric_id VARCHAR(255) NOT NULL,
+    value FLOAT NOT NULL,
+    FOREIGN KEY (metric_id) REFERENCES metric_table(id)
 );
 
 CREATE TABLE IF NOT EXISTS workflow_meta_table (
@@ -189,7 +191,7 @@ CREATE INDEX IF NOT EXISTS idx_consumed_utxo_data_blockchain_subchain_date ON co
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM metric_table LIMIT 1) THEN
-        INSERT INTO metric_table (metric_name, display_name, description, category, type, grouping_type, formula) VALUES
+        INSERT INTO metric_table (id, display_name, description, category, type, grouping_type, formula) VALUES
         ('trx_per_second','Transactions Per Second', 'Transactions Per Second (TPS) is a crucial metric that quantifies the blockchain''s throughput, offering a clear view of the average number of transactions processed each second throughout a day. This metric is instrumental in assessing the network''s performance and scalability, with a higher TPS signifying a more robust and efficient blockchain capable of handling increasing transaction demands seamlessly. For businesses and developers evaluating blockchain platforms for high-throughput applications, TPS is a key decision-making factor, reflecting the network''s capacity to support operational requirements without delays. TPS provides a snapshot of network efficiency, positioning itself as an indispensable metric for anyone involved in blockchain development, investment, or analysis, aiming to optimize for speed and reliability.', 'Chain Throughput and Efficiency', 'basic', 'avg', 'final_answer'),
         ('trx_per_day','Daily Transactions', 'Transactions Per Day (TPD) encapsulates the total number of transactions processed on the blockchain within a 24-hour timeframe, providing a comprehensive overview of the network''s daily operational activity. This metric is a direct reflection of the blockchain''s vibrancy and user engagement, with higher transaction volumes indicating a lively and participatory network. Conversely, lower transaction volumes may point to reduced usage or interest. For network operators and investors, TPD is an invaluable metric that influences decisions regarding infrastructure investments and market strategy. A consistent uptick in daily transactions signals increasing demand and the potential need for network enhancements to sustain performance levels. TPD offers an unobstructed view of the network''s daily rhythm, essential for those tasked with managing or investing in blockchain technologies.', 'Chain Throughput and Efficiency', 'basic', 'sum', 'final_answer'),
         ('total_transactions', 'Total Transactions', 'Total Transactions is a comprehensive metric that tallies the cumulative number of transactions within a specific blockchain subchain, offering a broad perspective on the blockchain''s transactional volume over time. This metric, calculated by simply counting every transaction recorded in the subchain, serves as a crucial indicator of the blockchain''s vibrancy and growth. A high transaction count typically reflects a dynamic and actively used blockchain, showcasing user engagement and network utility. It''s invaluable for blockchain analysts and strategists, enabling them to compare activity levels across different periods, identify trends, and pinpoint potential areas for expansion. Total Transactions provides a macroscopic overview of the blockchain''s development and adoption scale, highlighting its ongoing journey.', 'Network Health and Activity', 'basic', 'sum', 'final_answer'),

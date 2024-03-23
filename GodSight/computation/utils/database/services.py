@@ -13,7 +13,7 @@ def get_all_metrics(config):
     try:
         with connect_database(config) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT DISTINCT metric_name FROM metric_table")
+                cur.execute("SELECT DISTINCT id FROM metric_table")
                 # Fetch all results
                 metrics = cur.fetchall()
                 # Extract metric names from the query result and add to the list
@@ -29,8 +29,8 @@ def get_base_metrics(config, blockchain, subchain):
     try:
         with connect_database(config) as conn:
             with conn.cursor() as cur:
-                cur.execute("SELECT DISTINCT metric_table.metric_name FROM metric_table INNER JOIN chain_metric ON "
-                            "metric_table.metric_name=chain_metric.metric_name INNER JOIN blockchain_table ON blockchain_table.id = chain_metric.blockchain_id WHERE blockchain_table.blockchain=%s AND "
+                cur.execute("SELECT DISTINCT metric_table.id FROM metric_table INNER JOIN chain_metric ON "
+                            "metric_table.id=chain_metric.metric_id INNER JOIN blockchain_table ON blockchain_table.id = chain_metric.blockchain_id WHERE blockchain_table.blockchain=%s AND "
                             "blockchain_table.sub_chain=%s AND metric_table.type=%s;", (blockchain, subchain, 'basic',))
                 # Fetch all results
                 metrics = cur.fetchall()
@@ -69,7 +69,7 @@ def check_metric_last_computed_date(config, blockchain_name, subchain_name, metr
     conn = connect_database(config)
     if conn is not None:
         with conn.cursor() as cur:
-            cur.execute("SELECT date FROM metrics_data WHERE blockchain = %s AND subchain = %s AND metric = %s ORDER BY date DESC LIMIT 1", (blockchain_name, subchain_name, metric_name,))
+            cur.execute("SELECT date FROM metrics_data WHERE blockchain = %s AND sub_chain = %s AND metric_id = %s ORDER BY date DESC LIMIT 1", (blockchain_name, subchain_name, metric_name,))
             result = cur.fetchone()
             if result:
                 return result[0]
@@ -101,7 +101,7 @@ def insert_blockchain_metrics(data_list, config):
         try:
             with conn.cursor() as cur:
                 # Prepare the SQL command
-                insert_query = "INSERT INTO metrics_data (date, blockchain, subchain, metric, value) VALUES (%s, %s, %s, %s, %s)"
+                insert_query = "INSERT INTO metrics_data (date, blockchain, sub_chain, metric_id, value) VALUES (%s, %s, %s, %s, %s)"
 
                 insert_values = [
                     (data['date'], data['blockchain'], data['subchain'], data['metric'], float(data['value']) if data['value'] is not None else 0.0)

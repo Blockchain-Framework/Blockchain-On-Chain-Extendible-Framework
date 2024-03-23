@@ -17,7 +17,7 @@ class Blockchain(models.Model):
         db_table = 'blockchain_table'
 
 class Metric(models.Model):
-    metric_name = models.CharField(max_length=255, primary_key=True)
+    id = models.CharField(max_length=255, primary_key=True)
     display_name = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
     category = models.CharField(max_length=255)
@@ -33,26 +33,27 @@ class Metric(models.Model):
 class ChainMetric(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     blockchain = models.ForeignKey(Blockchain, on_delete=models.CASCADE, db_column='blockchain_id', related_name='metrics')
-    metric_name = models.ForeignKey(Metric, on_delete=models.CASCADE, db_column='metric_name')
+    metric = models.ForeignKey(Metric, on_delete=models.CASCADE, db_column='metric_id')
     create_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = 'chain_metric'
-        unique_together = (('blockchain', 'metric_name'),)
+        unique_together = (('blockchain', 'metric'),)
 
 
 
 
 class MetricsData(models.Model):
+    id = models.AutoField(primary_key=True)
     date = models.DateField()
     blockchain = models.CharField(max_length=255)
-    subchain = models.CharField(max_length=255)
+    sub_chain = models.CharField(max_length=255)
     metric = models.ForeignKey(Metric, on_delete=models.CASCADE, related_name='metrics_data')
     value = models.FloatField()
 
     class Meta:
-        unique_together = ('date', 'blockchain', 'subchain', 'metric',)
+        unique_together = ('date', 'blockchain', 'sub_chain', 'metric',)
         db_table = 'metrics_data'
 
 

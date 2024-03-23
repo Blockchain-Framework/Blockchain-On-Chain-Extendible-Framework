@@ -411,12 +411,13 @@ def load_metrics(script_path, meta_data, metrics, metric_chain_meta):
                 raise Exception(f"Duplicate metric name: {metric_instance.name}")
 
             metric_meta.append({
-                'metric_name': metric_instance.name,
+                'id': metric_instance.name,
                 'description': metric_instance.description,
                 'category': metric_instance.category,
                 'display_name': metric_instance.display_name,
                 'type': 'custom',
-                'grouping_type': None
+                'grouping_type': None,
+                'formula': None
             })
 
             chain = metric_instance.chain
