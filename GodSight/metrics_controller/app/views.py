@@ -24,7 +24,6 @@ class StandardResultsSetPagination(PageNumberPagination):
 
 
 class MetricsDataView(APIView, StandardResultsSetPagination):
-    print("--------1")
 
     @swagger_auto_schema(manual_parameters=[
         openapi.Parameter('blockchain', openapi.IN_QUERY, type=openapi.TYPE_STRING, required=True,
@@ -37,7 +36,6 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
                           description='The time range for the metric data, e.g., "7_days"'),
     ])
     def get(self, request, *args, **kwargs):
-        print("--------2")
         blockchain = request.query_params.get('blockchain')
         subchain = request.query_params.get('subChain')
         metric_name = request.query_params.get('metric')
@@ -56,12 +54,10 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
             else:
                 raise ValueError("Invalid time range parameter.")
         except ValueError as e:
-            print("--------2e")
             return JsonResponse(APIResponse(False, error=str(e)).to_dict(),
                                 status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            print("--------3")
             # Query database
             queryset = MetricsData.objects.filter(
                 date__range=(start_date, end_date),
@@ -70,19 +66,17 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
             )
 
             try:
-                print("--------4")
                 blockchain_obj = Blockchain.objects.get(blockchain=blockchain, sub_chain=subchain)
             except Blockchain.DoesNotExist:
-                print("--------4e")
                 raise Exception('Invalid Blockchain')
 
             if blockchain_obj and not blockchain_obj.original:
-                print("--------5")
+
                 try:
-                    print("--------6")
+
                     metric_obj = Metric.objects.get(id=metric_name)
                 except Metric.DoesNotExist:
-                    print("--------6e")
+
                     raise Exception('Metric Finding failed')
 
                 aggregation_mapping = {
@@ -95,20 +89,19 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
                 # Apply aggregation and alias it as 'value'
                 queryset = queryset.values('date').annotate(value=aggregation).order_by('date')
             else:
-                print("--------7")
+
                 queryset = queryset.filter(sub_chain=subchain)
 
             # At this point, queryset is ready for serialization
             # serializer = MetricsDataSerializer(queryset, many=True)
-            print("--------50")
-            print(str(queryset.query))
+
+
             page = self.paginate_queryset(queryset, request, view=self)
-            print("--------10")
-            print(page)
+
             if page is not None:
-                print("--------8")
+
                 serializer = MetricsDataSerializer(page, many=True)
-                print(serializer.data)
+
                 return JsonResponse(APIResponse(
                     True,
                     serializer.data,
@@ -117,16 +110,16 @@ class MetricsDataView(APIView, StandardResultsSetPagination):
                     current_page=self.page.number,
                     total_items=self.page.paginator.count
                 ).to_dict(), status=status.HTTP_200_OK)
-            print("--------5")
+
 
             serializer = MetricsDataSerializer(queryset, many=True)
             return JsonResponse(APIResponse(True, serializer.data).to_dict(), status=status.HTTP_200_OK)
         except ValidationError as e:
-            print("--------3e")
+
             return JsonResponse(APIResponse(False, error="Invalid query parameters.").to_dict(),
                                 status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print("--------3e2")
+
             # Log the error for server-side debugging.
             print("Internal server error: ", e)  # Consider using logging instead of print in production
             return JsonResponse(APIResponse(False, error="Internal server error").to_dict(),
@@ -186,6 +179,7 @@ class GetSelectionDataView(APIView):
 
 
 class CreateMetricView(APIView):
+    parser_classes = [JSONParser]
     @swagger_auto_schema(request_body=openapi.Schema(
         type=openapi.TYPE_OBJECT,
         required=['metric_name', 'blockchain'],
@@ -241,7 +235,9 @@ class CreateMetricView(APIView):
                                                       "exists.").to_dict(),
                                     status=400)
 
-            formula = json.loads(data.get('formula')) if data.get('formula') else {}
+            formula_input = data.get('formula')
+            formula = json.loads(formula_input) if isinstance(formula_input, str) else formula_input if isinstance(
+                formula_input, dict) else {}
 
             success_structure, error = validate_json_structure(formula, data.get('type'))
 
@@ -264,7 +260,7 @@ class CreateMetricView(APIView):
                 display_name=data.get('display_name', ''),
                 description=data.get('description', ''),
                 category=data.get('category', 'Default Category'),
-                type=data.get('type', 'Default Type'),
+                type=data.get('type', 'user defined'),
                 formula=data.get('formula', None)  # Ensure your Metric model supports JSONField or similar
             )
 

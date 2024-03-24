@@ -332,14 +332,14 @@ DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM general_model LIMIT 1) THEN
     INSERT INTO general_model (field_name, data_type, description) VALUES
-    ('tx_hash', 'VARCHAR(64)', 'Unique identifier for the transaction'),
-    ('tx_type', 'VARCHAR(32)', 'Type of transaction (e.g., send, receive)'),
-    ('timestamp', 'BIGINT', 'Unix timestamp of the transaction'),
-    ('block_hash', 'VARCHAR(64)', 'Hash of the block containing the transaction'),
-    ('block_height', 'INT', 'Height of the block in the blockchain'),
-    ('amount', 'DECIMAL(18,8)', 'Amount transferred in the transaction'),
-    ('input_address', 'VARCHAR(64)', 'Sending address in the transaction'),
-    ('output_address', 'VARCHAR(64)', 'Receiving address in the transaction'),
-    ('fee', 'DECIMAL(18,8)', 'Fee paid for the transaction');
+    ('tx_hash', 'string', 'Unique identifier for the transaction'),
+    ('tx_type', 'string', 'Type of transaction (e.g., send, receive)'),
+    ('timestamp', 'time', 'Unix timestamp of the transaction'),
+    ('block_hash', 'string', 'Hash of the block containing the transaction'),
+    ('block_height', 'string', 'Height of the block in the blockchain'),
+    ('amount', 'numerical', 'Amount transferred in the transaction'),
+    ('input_address', 'string', 'Sending address in the transaction'),
+    ('output_address', 'string', 'Receiving address in the transaction'),
+    ('fee', 'numerical', 'Fee paid for the transaction');
     END IF;
 END $$;
