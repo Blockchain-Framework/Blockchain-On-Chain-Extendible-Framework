@@ -208,6 +208,9 @@ class CreateMetricView(APIView):
         try:
             data = request.data
 
+            if 'metric_name' in data:
+                data['metric_name'] = data['metric_name'].lower().replace(' ', '_')
+
             # Preliminary validation for required fields
             required_fields = ['metric_name', 'blockchain', 'sub_chain', 'formula', 'type']
             if not all(field in data for field in required_fields):
@@ -229,7 +232,7 @@ class CreateMetricView(APIView):
 
             metric_exists = ChainMetric.objects.filter(
                 blockchain=blockchain,
-                metric_name=data.get('metric_name')
+                metric__id=data.get('metric_name')
             ).exists()
 
             if metric_exists:
@@ -257,7 +260,7 @@ class CreateMetricView(APIView):
                     status=400)
 
             metric = Metric.objects.create(
-                metric_name=data.get('metric_name'),
+                id=data.get('metric_name'),
                 display_name=data.get('display_name', ''),
                 description=data.get('description', ''),
                 category=data.get('category', 'Default Category'),
@@ -267,7 +270,7 @@ class CreateMetricView(APIView):
 
             ChainMetric.objects.create(
                 blockchain=blockchain,
-                metric_name=metric.metric_name
+                metric=metric
             )
 
             serializer = MetricSerializer(metric)
