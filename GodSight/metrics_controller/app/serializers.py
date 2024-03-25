@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Metric, MetricsData, Blockchain, ChainMetric
+from .models import Metric, MetricsData, Blockchain, ChainMetric, GeneralModel
 
 
 class MetricSerializer(serializers.ModelSerializer):
@@ -27,3 +27,9 @@ class ChainMetricSerializer(serializers.ModelSerializer):
         model = ChainMetric
         fields = ['blockchain', 'blockchain_name', 'metric_id']
         depth = 1
+
+
+class GeneralModelSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GeneralModel
+        fields = '__all__'

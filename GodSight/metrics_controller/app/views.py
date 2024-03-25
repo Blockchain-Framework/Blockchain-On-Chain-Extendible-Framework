@@ -10,8 +10,9 @@ from drf_yasg import openapi
 from datetime import datetime, timedelta
 from django.db.models import Sum, Q, Avg
 from django.core.exceptions import ValidationError
-from .models import Metric, MetricsData, Blockchain, ChainMetric
-from .serializers import MetricsDataSerializer, MetricSerializer, BlockchainSerializer
+from django.db import DatabaseError
+from .models import Metric, MetricsData, Blockchain, ChainMetric, GeneralModel
+from .serializers import MetricsDataSerializer, MetricSerializer, BlockchainSerializer, GeneralModelSerializer
 from .utils import APIResponse
 from .validator import validate_json_structure, validate_columns_existence_and_type
 from django.db.models import Prefetch
@@ -274,3 +275,30 @@ class CreateMetricView(APIView):
 
         except Exception as e:  # General exception catch, consider more specific exception handling
             return JsonResponse(APIResponse(False, error=str(e)).to_dict(), status=500)
+
+
+class GeneralModelDataView(APIView):
+
+    @swagger_auto_schema(
+        responses={
+            200: GeneralModelSerializer(many=True),
+            500: 'Internal server error'
+        },
+        operation_description="Get all General Features Info"
+    )
+    def get(self, request, *args, **kwargs):
+        try:
+            try:
+                all_entries = GeneralModel.objects.all()
+            except DatabaseError as e:
+                return JsonResponse(APIResponse(False, error="General Model Data Fetching Failed").to_dict(), status=500)
+
+            serializer = GeneralModelSerializer(all_entries,many=True)
+            return JsonResponse(APIResponse(True, data=serializer.data).to_dict(), status=201)
+
+        except Exception as e:
+
+            # Log the error for server-side debugging.
+            print("Internal server error: ", e)  # Consider using logging instead of print in production
+            return JsonResponse(APIResponse(False, error="Internal server error").to_dict(),
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR)
